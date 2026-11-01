@@ -215,26 +215,6 @@
   margin-top: 0.15rem;
 }
 
-/* Global Typography Helpers */
-.tf-text-primary {
-  color: var(--tf-text-primary) !important;
-}
-.tf-text-secondary {
-  color: var(--tf-text-secondary) !important;
-}
-.tf-text-muted {
-  color: var(--tf-text-muted) !important;
-}
-.tf-text-amber {
-  color: var(--tf-accent-amber) !important;
-}
-.tf-text-emerald {
-  color: var(--tf-accent-emerald) !important;
-}
-.tf-text-rose {
-  color: var(--tf-accent-rose) !important;
-}
-
 /* ================= INTERACTIVE KPI METRIC CARDS ================= */
 .tf-kpi-interactive {
   background-color: var(--tf-bg-card);
@@ -2152,25 +2132,11 @@ body.operator-mode .owner-mask {
 }
 
 /* ================= TOAST NOTIFICATION TOPMOST STACK OVERLAY ================= */
-/* Guarantees that toast notifications and undo banners always float on top of ALL screens & modals */
-#toast-container {
-  z-index: 999999 !important;
-  position: fixed !important;
-  pointer-events: none !important;
-}
-
-#toast-container > div {
-  z-index: 999999 !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3) !important;
-}
-
-.tf-floating-undo-toast {
-  z-index: 999999 !important;
-}
-
-#mobile-snap-slidein-container {
-  z-index: 999998 !important;
-}
+/* Messages and undo banners sit on the top layer (see design-system.css) */
+#toast-container { z-index: var(--tf-z-toast, 300); position: fixed; pointer-events: none; }
+#toast-container > div { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3); }
+.tf-floating-undo-toast { z-index: var(--tf-z-toast, 300); }
+#mobile-snap-slidein-container { z-index: var(--tf-z-toast, 300); }
 
 /* ================= MODERN 2026 VISUAL CRAFT & MICRO-INTERACTIONS ================= */
 /* Micro Gradient Top Accent Bars for KPI Blocks */
@@ -2267,7 +2233,7 @@ body.operator-mode .owner-mask {
   border-left: 3px solid transparent;
 }
 #orders-master-table tbody tr:hover {
-  border-left-color: #f59e0b;
+  border-left-color: var(--tf-brand, #047857);
 }
 
 /* ---- Live field validation (js/form-guard.js) ---- */
@@ -2672,31 +2638,6 @@ html.dark .pu-map { background: repeating-linear-gradient(0deg, transparent 0 46
   .pu-step small { font-size: 12px; }
 }
 
-/* ===================== Dashboard: same warm, clean look as the partner pages ===================== */
-#view-orders { --db-card: #ffffff; --db-warm: #f7f4ec; --db-soft: #faf8f3; --db-line: #e7e2d6; --db-line2: #f1ece0; }
-html.dark #view-orders { --db-card: #111827; --db-warm: #1a1f2b; --db-soft: #161c28; --db-line: #2a3242; --db-line2: #222a38; }
-#view-orders .tf-kpi-interactive { background: var(--db-card) !important; background-image: none !important; border: 1px solid var(--db-line) !important; border-radius: 16px !important; box-shadow: 0 1px 2px rgba(15,23,42,.05) !important; }
-#view-orders .tf-kpi-interactive:hover { border-color: #cfc6b2 !important; box-shadow: 0 6px 18px rgba(15,23,42,.08) !important; }
-html.dark #view-orders .tf-kpi-interactive:hover { border-color: #3b4558 !important; }
-#view-orders .kpi-accent-bar { height: 3px !important; opacity: .9; }
-#view-orders .tf-kpi-interactive .text-2xl { letter-spacing: -.01em; }
-/* Panels: warm header strips, soft borders, rounder corners */
-#view-orders #dashboard-orders-panel > div.bg-white, #view-orders #dashboard-orders-panel .rounded-xl.border,
-#view-orders #dashboard-audit-panel > div { border-color: var(--db-line) !important; border-radius: 16px !important; box-shadow: 0 1px 2px rgba(15,23,42,.05) !important; }
-#view-orders #dashboard-audit-panel > div > div:first-child,
-#view-orders #dashboard-orders-panel thead tr { background: var(--db-soft) !important; border-color: var(--db-line) !important; }
-#view-orders #dashboard-orders-panel thead th { color: #475569; font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 12px; }
-html.dark #view-orders #dashboard-orders-panel thead th { color: #a3b1c4; }
-#view-orders #orders-table-body > tr { transition: background-color .12s ease; }
-#view-orders #orders-table-body > tr:hover { background: var(--db-soft) !important; }
-#view-orders #orders-table-body { border-color: var(--db-line2) !important; }
-#view-orders #orders-table-body > tr + tr { border-top-color: var(--db-line2) !important; }
-/* Filter chips: one height, one shape */
-#view-orders .tf-chip-filter { min-height: 34px; padding: 0 14px !important; border-radius: 999px !important; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
-/* Audit list cards */
-#view-orders #dashboard-audit-panel .rounded-lg, #view-orders #dashboard-audit-panel .rounded-xl { border-radius: 12px !important; }
-/* Urgent banner keeps its colour but matches the new corner radius */
-#view-orders #urgent-action-banner > div { border-radius: 16px !important; }
 
 /* v5: partner page header extras */
 .pu-balance { display: inline-flex; align-items: baseline; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--pu-line); background: var(--pu-card); color: var(--pu-text); font: inherit; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; cursor: pointer; align-items: center; }

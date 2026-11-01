@@ -55,7 +55,7 @@ window.TFComponents = {
           </div>
 
           <!-- Direct In-App Preview Trigger -->
-          <button onclick="app.previewDocument('${tfEscapeHtml(tfEscapeJs(doc.id))}')" class="btn-tactile mt-3 w-full py-1.5 px-3 rounded-lg text-xs font-bold text-amber-800 dark:text-amber-300 bg-emerald-700/10 hover:bg-emerald-800/20 border border-amber-500/30 flex items-center justify-center gap-1.5 transition-all">
+          <button onclick="app.previewDocument('${tfEscapeHtml(tfEscapeJs(doc.id))}')" class="btn-tactile mt-3 w-full py-1.5 px-3 rounded-lg text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 flex items-center justify-center gap-1.5 transition-all">
             <i data-lucide="eye" class="w-3.5 h-3.5 text-amber-500"></i>
             <span>View Bill Copy</span>
           </button>

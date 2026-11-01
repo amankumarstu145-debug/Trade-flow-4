@@ -139,7 +139,7 @@
               </span>
               <span id="sidebar-exceptions-badge" class="px-1.5 py-0.2 rounded-full text-xs font-black bg-rose-500/20 text-rose-700 dark:text-rose-300">0</span>
             </button>
-            <button id="sidebar-urgent-btn" onclick="app.openUrgentActionsModal()" class="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold rounded-lg text-amber-800 dark:text-amber-300 bg-emerald-700/10 hover:bg-emerald-800/20 border border-amber-500/25 transition-all duration-150 hover:-translate-y-0.5 group" title="View all critical & urgent business matters sorted by time">
+            <button id="sidebar-urgent-btn" onclick="app.openUrgentActionsModal()" class="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold rounded-lg text-amber-800 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 transition-all duration-150 hover:-translate-y-0.5 group" title="View all critical & urgent business matters sorted by time">
               <span class="flex items-center gap-2.5 min-w-0">
                 <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500 shrink-0 group-hover:scale-110 transition-transform"></i>
                 <span class="truncate">Urgent Actions</span>
@@ -245,33 +245,11 @@
   <div class="flex-1 flex flex-col h-full overflow-hidden">
     
     <!-- Top Action Header -->
-    <header class="relative z-50 h-16 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-[#0e1117]/95 backdrop-blur px-3 sm:px-4 flex items-center justify-between gap-2 lg:gap-3 shrink-0 no-print">
-      
-      <!-- Header Left Controls (AI Mode, Mobile Scan, Backups) -->
-      <div class="flex items-center gap-1.5 shrink-0">
+    <header class="tf-topbar relative z-50 h-16 border-b px-3 sm:px-4 flex items-center gap-2 lg:gap-3 shrink-0 no-print">
         <!-- Menu button: opens the sidebar on phones and tablets -->
         <button id="tf-menu-btn" type="button" onclick="app.toggleMobileSidebar()" aria-label="Open menu" aria-controls="app-sidebar" aria-expanded="false" class="tf-menu-btn btn-tactile w-9 h-9 rounded-lg items-center justify-center text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
           <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
-        <!-- Topbar AI Intelligence Control Gate (OFF = 100% Deterministic Local, ON = AI Vision Assist) -->
-        <button id="topbar-ai-toggle-btn" type="button" onclick="app.toggleAIMode()" class="tf-topbar-pill btn-tactile text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-2xs flex items-center gap-1.5 transition-all" title="Toggle AI Assistance: OFF = 100% Offline Local Engine, ON = Vision & Semantic Assist">
-          <span id="ai-toggle-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
-          <span id="ai-toggle-text" class="text-xs font-bold tracking-tight">AI ● OFF</span>
-        </button>
-
-        <!-- Mobile Camera QR-Scan / Smart Fill Button -->
-        <button id="topbar-mobile-scan-btn" type="button" onclick="app.openMobileSnapModal('smart-fill')" class="tf-topbar-pill btn-tactile text-white bg-gradient-to-r from-emerald-600 via-emerald-600 to-emerald-600 hover:from-emerald-500 hover:to-emerald-500 border border-emerald-400/40 shadow-xs shadow-emerald-600/20 flex items-center gap-1.5 font-bold cursor-pointer group transition-all" title="Mobile Camera QR-Scan: Scan with phone to snap bills, receipts & documents directly into Smart Fill">
-          <i data-lucide="smartphone" class="w-3.5 h-3.5 text-emerald-100 group-hover:scale-110 transition-transform"></i>
-          <span class="text-xs font-bold tracking-tight">Mobile Scan</span>
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
-        </button>
-
-        <!-- Backups Center Button -->
-        <button id="topbar-backups-btn" onclick="app.openBackupModal()" class="tf-topbar-pill btn-tactile text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-2xs" title="Backup & Recovery Center">
-          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400"></i>
-          <span class="hidden md:inline">Backups</span>
-        </button>
-      </div>
 
       <!-- Universal 360° Search Bar (Centered, Expanded & Prominent) -->
       <div class="flex-1 max-w-xl relative z-50">
@@ -294,8 +272,44 @@
         </div>
       </div>
 
-      <!-- Header Right Controls (Standardized Sleek 32px Height & Perfect Alignment) -->
-      <div class="flex items-center gap-1.5 shrink-0 justify-end">
+      <!-- Slim top bar: Inbox, New and More (the other tools live in the More menu) -->
+      <div class="tf-topbar-actions flex items-center gap-2 shrink-0 ml-auto">
+        <button id="tf-inbox-btn" type="button" class="tf-btn tf-btn--sm" onclick="app.openUrgentActionsModal()" title="Inbox · things to do">
+          <i data-lucide="inbox" class="w-4 h-4"></i><span class="tf-hide-sm">Inbox</span><span id="tf-inbox-count" class="tf-badge tf-badge--warn" hidden>0</span>
+        </button>
+        <div class="tf-menu-wrap">
+          <button type="button" class="tf-btn tf-btn--primary tf-btn--sm" aria-haspopup="menu" aria-expanded="false" aria-controls="tf-new-menu" onclick="TFShell.toggle('tf-new-menu')">
+            <i data-lucide="plus" class="w-4 h-4"></i><span class="tf-hide-sm">New</span><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+          </button>
+          <div id="tf-new-menu" class="tf-menu" role="menu" aria-label="Create new" hidden>
+          <button type="button" role="menuitem" class="tf-menu-item" onclick="TFShell.run(() => app.openNewOrderModal())"><i data-lucide="package-plus" class="w-4 h-4 "></i><span>New order</span></button>
+          <button type="button" role="menuitem" class="tf-menu-item" onclick="TFShell.run(() => app.openPaymentModal())"><i data-lucide="indian-rupee" class="w-4 h-4 "></i><span>Record payment</span></button>
+          <button type="button" role="menuitem" class="tf-menu-item" onclick="TFShell.run(() => app.openEditContactModal(null, 'retailer'))"><i data-lucide="user-plus" class="w-4 h-4 "></i><span>Add partner</span></button>
+          <button type="button" role="menuitem" class="tf-menu-item" onclick="TFShell.run(() => TradeFlowSmartFill.open('auto'))"><i data-lucide="sparkles" class="w-4 h-4 tf-ai-icon"></i><span>Smart Fill (AI)</span></button>
+          <button type="button" role="menuitem" class="tf-menu-item" onclick="TFShell.run(() => app.openMobileSnapModal('smart-fill'))"><i data-lucide="smartphone" class="w-4 h-4 "></i><span>Scan with phone</span></button>
+          </div>
+        </div>
+        <div class="tf-menu-wrap">
+          <button type="button" class="tf-btn tf-btn--sm tf-btn--icon" aria-label="More tools" title="More tools" aria-haspopup="menu" aria-expanded="false" aria-controls="tf-more-menu" onclick="TFShell.toggle('tf-more-menu')">
+            <i data-lucide="ellipsis" class="w-4 h-4"></i>
+          </button>
+          <div id="tf-more-menu" class="tf-menu tf-menu--tools" role="menu" aria-label="More tools" hidden>
+        <!-- Topbar AI Intelligence Control Gate (OFF = 100% Deterministic Local, ON = AI Vision Assist) -->
+        <button id="topbar-ai-toggle-btn" type="button" onclick="app.toggleAIMode()" class="tf-topbar-pill btn-tactile text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-2xs flex items-center gap-1.5 transition-all" title="Toggle AI Assistance: OFF = 100% Offline Local Engine, ON = Vision & Semantic Assist">
+          <span id="ai-toggle-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+          <span id="ai-toggle-text" class="text-xs font-bold tracking-tight">AI ● OFF</span>
+        </button>
+        <!-- Mobile Camera QR-Scan / Smart Fill Button -->
+        <button id="topbar-mobile-scan-btn" type="button" onclick="app.openMobileSnapModal('smart-fill')" class="tf-topbar-pill btn-tactile text-white bg-gradient-to-r from-emerald-600 via-emerald-600 to-emerald-600 hover:from-emerald-500 hover:to-emerald-500 border border-emerald-400/40 shadow-xs shadow-emerald-600/20 flex items-center gap-1.5 font-bold cursor-pointer group transition-all" title="Mobile Camera QR-Scan: Scan with phone to snap bills, receipts & documents directly into Smart Fill">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5 text-emerald-100 group-hover:scale-110 transition-transform"></i>
+          <span class="text-xs font-bold tracking-tight">Mobile Scan</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+        </button>
+        <!-- Backups Center Button -->
+        <button id="topbar-backups-btn" onclick="app.openBackupModal()" class="tf-topbar-pill btn-tactile text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-2xs" title="Backup & Recovery Center">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400"></i>
+          <span class="hidden md:inline">Backups</span>
+        </button>
         <!-- End-of-Day Daily Diary Button (English) -->
         <button id="topbar-daily-diary-btn" onclick="app.openDailyDiaryModal()" class="tf-topbar-pill btn-tactile text-emerald-800 dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-800/80 shadow-2xs group" title="End-of-Day Business Closing Summary & Daily Ledger">
           <i data-lucide="book-open" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform"></i>
@@ -311,7 +325,7 @@
         </button>
 
         <!-- Operator Mode vs Owner Mode (Sethji Mode) Toggle -->
-        <button id="topbar-role-mode-btn" onclick="app.toggleUserRoleMode()" class="tf-topbar-pill btn-tactile bg-emerald-700/10 hover:bg-emerald-800/20 text-amber-800 dark:text-amber-300 border border-amber-500/30 shadow-2xs" title="Toggle Operator Mode (Floor Staff) vs Owner Mode (Full Margin Visibility)">
+        <button id="topbar-role-mode-btn" onclick="app.toggleUserRoleMode()" class="tf-topbar-pill btn-tactile bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30 shadow-2xs" title="Toggle Operator Mode (Floor Staff) vs Owner Mode (Full Margin Visibility)">
           <i id="topbar-role-icon" data-lucide="shield" class="w-3.5 h-3.5 text-amber-500"></i>
           <span id="topbar-role-label">Operator Mode</span>
         </button>
@@ -348,13 +362,13 @@
             </div>
           </div>
         </div>
-
+          </div>
+        </div>
         <!-- Compact Icon-Only Theme Toggle Button (Saves Space) -->
         <button class="theme-toggle-btn btn-tactile w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors shadow-2xs shrink-0" title="Switch Theme (Light / Dark)">
           <i data-lucide="moon" class="theme-toggle-icon w-3.5 h-3.5 text-amber-500"></i>
         </button>
       </div>
-
     </header>
 
     <!-- Persistent System Notice & File Lock Alert Banner -->
@@ -572,7 +586,7 @@
                   <input id="orders-inline-search" oninput="app.setOrderSearchQuery(this.value)" type="text" placeholder="Search order, buyer, LR..." class="w-full pl-8 pr-7 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-emerald-600">
                   <button id="orders-search-clear" aria-label="Clear order search query" onclick="app.clearOrderSearchQuery()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white"><i data-lucide="x" class="w-3 h-3"></i></button>
                 </div>
-                <button id="btn-show-audit-panel" onclick="app.toggleAuditPanel()" class="hidden px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-700/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 hover:bg-emerald-800/20 transition-all flex items-center gap-1.5 shrink-0" title="Show Attention &amp; Missing Files Panel">
+                <button id="btn-show-audit-panel" onclick="app.toggleAuditPanel()" class="hidden px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all flex items-center gap-1.5 shrink-0" title="Show Attention &amp; Missing Files Panel">
                   <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
                   <span>Missing Files (<span id="audit-min-badge">0</span>)</span>
                 </button>
@@ -1737,7 +1751,7 @@
           <div class="min-w-0">
             <div class="flex items-center gap-2">
               <h3 id="order-modal-title" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">Create FMCG Batch & Trade Order</h3>
-              <span class="px-2 py-0.5 text-xs font-black uppercase tracking-wider rounded bg-amber-400 text-slate-950">Multi-SKU Cockpit</span>
+              <span class="tf-badge">Multi-SKU</span>
             </div>
             <p class="text-xs text-slate-500 dark:text-slate-400">Paste marketeer WhatsApp messages, compute case-to-jar math, and forward production orders to factory.</p>
           </div>
@@ -1758,17 +1772,17 @@
       <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 bg-slate-50/70 dark:bg-slate-950/70">
         
         <!-- SECTION 1: SMART WHATSAPP MARKETEER ORDER PARSER -->
-        <div class="bg-white dark:bg-slate-900 border border-amber-300/80 dark:border-amber-600/40 rounded-xl shadow-xs overflow-hidden">
-          <div class="bg-gradient-to-r from-amber-500/10 via-slate-100 to-transparent dark:from-amber-500/15 dark:via-slate-800 dark:to-transparent px-4 py-3 border-b border-amber-200/80 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
+        <div class="tf-box">
+          <div class="tf-box__head flex-wrap justify-between gap-2">
             <div class="flex items-center gap-2">
-              <span class="p-1 bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded">
+              <span class="tf-icon-tile">
                 <i data-lucide="zap" class="w-4 h-4"></i>
               </span>
               <span class="text-xs font-bold text-slate-900 dark:text-white tracking-wide uppercase">Smart WhatsApp Marketeer Order Parser</span>
               <span class="hidden sm:inline text-xs text-slate-500 dark:text-slate-400 font-normal">(Directly paste message received from marketeer / broker)</span>
             </div>
             <div class="flex items-center gap-2">
-              <button type="button" onclick="app.loadS3MDemoOrder()" class="btn-tactile px-2.5 py-1 text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-700 rounded-lg flex items-center gap-1 shadow-2xs">
+              <button type="button" onclick="app.loadS3MDemoOrder()" class="tf-btn tf-btn--sm">
                 <i data-lucide="clipboard-paste" class="w-3.5 h-3.5"></i>
                 <span>Load Sample Message</span>
               </button>
@@ -1892,9 +1906,9 @@ Carrot 2case, Red chilli 1case..."></textarea>
           </div>
 
           <!-- Carton Packing Master Settings Bar (Edit Jars per Case for 500g, 1kg, 5kg) -->
-          <div class="px-4 py-2.5 bg-amber-50/70 dark:bg-amber-950/20 border-b border-amber-200/70 dark:border-slate-800 flex items-center justify-between flex-wrap gap-3 text-xs">
+          <div class="px-4 py-2.5 border-b flex items-center justify-between flex-wrap gap-3 text-xs tf-strip-soft">
             <div class="flex items-center gap-2">
-              <span class="p-1 bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded">
+              <span class="tf-icon-tile">
                 <i data-lucide="boxes" class="w-3.5 h-3.5"></i>
               </span>
               <span class="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-xs">Carton Packaging Config:</span>
@@ -3615,7 +3629,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
               Cancel
             </button>
             <div class="flex items-center gap-2">
-              <button type="button" onclick="app.reanalyzeCurrentDocument()" class="btn-tactile px-3.5 py-2 font-semibold text-amber-600 dark:text-amber-400 bg-emerald-700/10 hover:bg-emerald-800/20 rounded-lg flex items-center gap-1.5" title="Re-run intelligent analysis">
+              <button type="button" onclick="app.reanalyzeCurrentDocument()" class="btn-tactile px-3.5 py-2 font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 rounded-lg flex items-center gap-1.5" title="Re-run intelligent analysis">
                 <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                 <span>Re-Analyze</span>
               </button>
@@ -5877,7 +5891,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
 
   <!-- Floating Notification Toast Container (Topmost Stack Layer: Always Visible Above All Screens & Modals) -->
   <div id="tf-sidebar-backdrop" onclick="app.toggleMobileSidebar(false)" aria-hidden="true"></div>
-  <div id="toast-container" class="fixed bottom-5 right-5 z-[999999] pointer-events-none flex flex-col gap-2"></div>
+  <div id="toast-container" class="fixed bottom-5 right-5 pointer-events-none flex flex-col gap-2"></div>
 
   <!-- ================= UNIVERSAL OMNIBOX MODAL (Ctrl+K) ================= -->
   <div id="universal-omnibox-modal" class="fixed inset-0 z-[180] hidden no-print">
@@ -6095,7 +6109,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
             Cancel
           </button>
           <div class="flex items-center gap-2">
-            <button type="button" onclick="app.dispatchWithPendingLr()" class="btn-tactile px-3.5 py-2 text-xs font-bold rounded-lg bg-emerald-700/10 hover:bg-emerald-800/20 text-amber-800 dark:text-amber-300 border border-amber-500/30 transition-all flex items-center gap-1.5" title="Advance order immediately and assign actual LR tracking number later">
+            <button type="button" onclick="app.dispatchWithPendingLr()" class="btn-tactile px-3.5 py-2 text-xs font-bold rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30 transition-all flex items-center gap-1.5" title="Advance order immediately and assign actual LR tracking number later">
               <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-500"></i>
               <span>Dispatch with Pending LR</span>
             </button>
@@ -7555,6 +7569,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
   <script src="data/mock-data.js"></script>
   <script src="js/components.js"></script>
   <script src="js/partner-ui.js"></script>
+  <script src="js/shell.js"></script>
   <script src="js/app.js"></script>
   <script src="js/smart-fill.js"></script>
   <script src="js/form-guard.js"></script>

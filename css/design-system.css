@@ -127,3 +127,58 @@ html.dark { --tf-border-card-hover: #3b4558; }
 .studio-invoice-sheet .text-sm, #printable-invoice-container .text-sm { font-size: 12px; line-height: 16px; }
 /* Icons and text inside green main buttons that used to be yellow stay readable */
 .bg-emerald-700 .text-slate-950, .bg-emerald-700 .text-slate-900, .dark .dark\:bg-emerald-700 .dark\:text-slate-950 { color: #ffffff !important; }
+
+/* =====================================================================================
+   Step 3: app shell and screens in the design system (ID-scoped, no !important needed)
+   ===================================================================================== */
+/* ---- Top bar: search, Inbox, New, More, theme ---- */
+header.tf-topbar { background: var(--tf-surface); border-color: var(--tf-line); }
+.tf-btn--icon { width: 36px; padding: 0; }
+.tf-menu-wrap { position: relative; }
+.tf-menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 230px; padding: 6px; background: var(--tf-surface); border: 1px solid var(--tf-line); border-radius: var(--tf-r-md); box-shadow: var(--tf-shadow-2); z-index: var(--tf-z-menu); display: flex; flex-direction: column; gap: 2px; }
+.tf-menu[hidden] { display: none; }
+.tf-menu-item, #tf-more-menu .tf-topbar-pill, #tf-more-menu #topbar-live-clock { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 0 10px; border-radius: var(--tf-r-sm); border: 0; background: transparent; box-shadow: none; font: inherit; font-size: var(--tf-fs-14); font-weight: var(--tf-fw-medium); color: var(--tf-text); text-align: left; cursor: pointer; justify-content: flex-start; height: auto; }
+.tf-menu-item:hover, .tf-menu-item:focus-visible, #tf-more-menu .tf-topbar-pill:hover, #tf-more-menu .tf-topbar-pill:focus-visible, #tf-more-menu #topbar-live-clock:hover { background: var(--tf-soft); outline: none; }
+#tf-more-menu .tf-topbar-pill > span.hidden { display: inline; }
+#tf-more-menu .tf-topbar-pill span:not([id$="badge"]):not([id$="dot"]):not(.rounded-full), #tf-more-menu #topbar-live-clock span:not(.rounded-full) { font-size: var(--tf-fs-14); font-weight: var(--tf-fw-medium); color: var(--tf-text); }
+#tf-more-menu #topbar-mobile-scan-btn { background: transparent; color: var(--tf-text); }
+#tf-more-menu #topbar-mobile-scan-btn svg { color: var(--tf-brand-text); }
+#tf-more-menu #topbar-clock-popover { position: static; width: auto; margin: 4px 0 0; box-shadow: none; }
+.tf-menu .relative { position: static; }
+.tf-ai-icon { color: var(--tf-ai); }
+#tf-inbox-btn .tf-badge { padding: 1px 8px; }
+@media (max-width: 640px) { .tf-hide-sm { display: none; } header.tf-topbar .tf-btn--sm { padding: 0 10px; } }
+
+/* ---- Sidebar ---- */
+#app-sidebar { background: var(--tf-surface); border-color: var(--tf-line); }
+
+/* ---- Workspace tab strip ---- */
+#workspace-tabs-bar { background: var(--tf-soft); border-color: var(--tf-line); }
+#workspace-tabs-bar .btn-tactile { background: var(--tf-surface); border-color: var(--tf-line); color: var(--tf-text-2); }
+#workspace-tabs-bar .btn-tactile svg { color: var(--tf-text-2); }
+#workspace-tabs-bar .btn-tactile:hover { border-color: var(--tf-faint); }
+
+/* ---- Dashboard ---- */
+#view-orders .tf-kpi-interactive { background: var(--tf-surface); background-image: none; border: 1px solid var(--tf-line); border-radius: var(--tf-r-lg); box-shadow: var(--tf-shadow-1); }
+#view-orders .tf-kpi-interactive:hover { border-color: var(--tf-border-card-hover); box-shadow: var(--tf-shadow-2); }
+#view-orders .kpi-accent-bar { height: 3px; opacity: .9; }
+#view-orders #dashboard-orders-panel > div.bg-white, #view-orders #dashboard-orders-panel .rounded-xl.border, #view-orders #dashboard-audit-panel > div { border-color: var(--tf-line); border-radius: var(--tf-r-lg); box-shadow: var(--tf-shadow-1); }
+#view-orders #dashboard-audit-panel > div > div:first-child, #view-orders #dashboard-orders-panel thead tr { background: var(--tf-soft); border-color: var(--tf-line); }
+#view-orders #dashboard-orders-panel thead th { color: var(--tf-muted); font-weight: var(--tf-fw-semibold); font-size: var(--tf-fs-12); }
+#view-orders #orders-table-body > tr { transition: background-color .12s ease; }
+#view-orders #orders-table-body > tr:hover { background: var(--tf-soft); }
+#view-orders #orders-table-body, #view-orders #orders-table-body > tr + tr { border-color: var(--tf-line-2); }
+#view-orders .tf-chip-filter { min-height: 34px; padding: 0 14px; border-radius: var(--tf-r-full); font-weight: var(--tf-fw-semibold); display: inline-flex; align-items: center; gap: 6px; }
+#view-orders #dashboard-audit-panel .rounded-lg, #view-orders #dashboard-audit-panel .rounded-xl { border-radius: var(--tf-r-md); }
+#view-orders #urgent-action-banner > div { border-radius: var(--tf-r-lg); }
+
+/* ---- Pop-up windows: one shape, warm header and footer strips, neutral icon tiles ---- */
+[id$="-modal"] .shadow-2xl { border-radius: 18px; border-color: var(--tf-line); }
+[id$="-modal"] .shadow-2xl > .border-b:first-child { background: var(--tf-soft); border-color: var(--tf-line); }
+[id$="-modal"] .shadow-2xl > .border-t:last-child { background: var(--tf-soft); border-color: var(--tf-line); }
+[id$="-modal"] .shadow-2xl > .border-b:first-child [class*="/10"][class*="rounded-xl"][class*="p-2"],
+[id$="-modal"] .shadow-2xl > .border-b:first-child [class*="/10"][class*="rounded-lg"][class*="p-2"] { background: var(--tf-surface); border: 1px solid var(--tf-line); color: var(--tf-brand-text); }
+[id$="-modal"] input[type="text"], [id$="-modal"] input[type="number"], [id$="-modal"] input[type="date"], [id$="-modal"] input[type="email"], [id$="-modal"] input[type="tel"], [id$="-modal"] select, [id$="-modal"] textarea { border-radius: var(--tf-r-sm); }
+[id$="-modal"] input:focus-visible, [id$="-modal"] select:focus-visible, [id$="-modal"] textarea:focus-visible { outline: 2px solid var(--tf-brand); outline-offset: 1px; }
+.tf-icon-tile { display: inline-flex; align-items: center; justify-content: center; padding: 5px; border-radius: var(--tf-r-sm); background: var(--tf-surface); border: 1px solid var(--tf-line); color: var(--tf-brand-text); }
+.tf-strip-soft { background: var(--tf-soft); border-color: var(--tf-line); }

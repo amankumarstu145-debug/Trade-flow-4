@@ -1692,7 +1692,7 @@ class TradeFlowApp {
               </div>
             </div>
             ${canRollback ? `
-              <button type="button" onclick="app.rollbackChange('${tfEscapeHtml(tfEscapeJs(l.id))}')" class="btn-tactile px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-700/15 hover:bg-emerald-800/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1 shrink-0 transition-all" title="Rollback this edit and restore previous state">
+              <button type="button" onclick="app.rollbackChange('${tfEscapeHtml(tfEscapeJs(l.id))}')" class="btn-tactile px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1 shrink-0 transition-all" title="Rollback this edit and restore previous state">
                 <i data-lucide="undo-2" class="w-3.5 h-3.5"></i>
                 <span>Rollback</span>
               </button>
@@ -2503,7 +2503,7 @@ class TradeFlowApp {
                 <span>${tfEscapeHtml(topItem.actionLabel)}</span>
               </button>
               ${urgentItems.length > 1 ? `
-                <button onclick="app.openUrgentActionsModal()" class="btn-tactile px-3 py-2 text-xs font-bold text-amber-900 dark:text-amber-200 bg-emerald-700/20 hover:bg-emerald-800/30 border border-amber-500/30 rounded-lg whitespace-nowrap flex items-center gap-1">
+                <button onclick="app.openUrgentActionsModal()" class="btn-tactile px-3 py-2 text-xs font-bold text-amber-900 dark:text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 rounded-lg whitespace-nowrap flex items-center gap-1">
                   <span>View All (${tfEscapeHtml(urgentItems.length)})</span>
                 </button>
               ` : ''}
@@ -10839,7 +10839,7 @@ class TradeFlowApp {
                 <span id="hub-view-fssai" class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">—</span>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Food Safety &amp; Standards Authority</p>
               </div>
-              <button type="button" onclick="app.copyStudioValue('hub-view-fssai', 'FSSAI')" class="p-1.5 rounded-lg bg-emerald-700/10 hover:bg-emerald-800/20 text-amber-700 dark:text-amber-300 transition-colors shrink-0" title="Copy FSSAI">
+              <button type="button" onclick="app.copyStudioValue('hub-view-fssai', 'FSSAI')" class="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 transition-colors shrink-0" title="Copy FSSAI">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
               </button>
             </div>
@@ -11005,7 +11005,7 @@ class TradeFlowApp {
                     <i data-lucide="map-pin" class="w-3.5 h-3.5 text-amber-600"></i>
                     <span>Head Office &amp; Facility</span>
                   </span>
-                  <button type="button" onclick="app.copyStudioValue('hub-view-address', 'Address')" class="p-1 rounded bg-emerald-700/10 text-amber-700 dark:text-amber-300 hover:bg-emerald-800/20" title="Copy Address">
+                  <button type="button" onclick="app.copyStudioValue('hub-view-address', 'Address')" class="p-1 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20" title="Copy Address">
                     <i data-lucide="copy" class="w-3 h-3"></i>
                   </button>
                 </div>
@@ -16074,7 +16074,7 @@ BANKING & PAYMENT COORDINATES:
               <iframe src="${tfEscapeHtml(tfSafeUrl(prevUrl))}#toolbar=0&navpanes=0" class="w-full flex-1 rounded-t border border-slate-700 bg-white" style="min-height: 68vh;"></iframe>
               <div class="px-3 py-1.5 bg-slate-800 border-t border-slate-700 flex items-center justify-between text-xs text-slate-300">
                 <span class="truncate">${tfEscapeHtml(existing?.fileName || 'Registered Bank Slip (PDF)')}</span>
-                <a href="${tfEscapeHtml(tfSafeUrl(prevUrl))}" target="_blank" class="px-2 py-0.5 rounded bg-emerald-700/20 text-amber-300 font-bold hover:bg-emerald-800/30 flex items-center gap-1 shrink-0">
+                <a href="${tfEscapeHtml(tfSafeUrl(prevUrl))}" target="_blank" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold hover:bg-amber-500/30 flex items-center gap-1 shrink-0">
                   <span>Open Full PDF ↗</span>
                 </a>
               </div>
@@ -16086,7 +16086,7 @@ BANKING & PAYMENT COORDINATES:
               <img src="${tfEscapeHtml(tfSafeUrl(prevUrl))}" class="max-w-full max-h-[68vh] rounded shadow object-contain">
               <div class="w-full px-3 py-1.5 bg-slate-800 border-t border-slate-700 flex items-center justify-between text-xs text-slate-300 mt-2">
                 <span class="truncate">${tfEscapeHtml(existing?.fileName || 'Registered Bank Slip')}</span>
-                <a href="${tfEscapeHtml(tfSafeUrl(prevUrl))}" target="_blank" class="px-2 py-0.5 rounded bg-emerald-700/20 text-amber-300 font-bold hover:bg-emerald-800/30 flex items-center gap-1 shrink-0">
+                <a href="${tfEscapeHtml(tfSafeUrl(prevUrl))}" target="_blank" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold hover:bg-amber-500/30 flex items-center gap-1 shrink-0">
                   <span>Open Image ↗</span>
                 </a>
               </div>
@@ -19279,7 +19279,7 @@ BANKING & PAYMENT COORDINATES:
               ${tfEscapeHtml(cleanName(i))} <strong class="font-mono-num text-amber-600 dark:text-amber-400 font-bold">${tfEscapeHtml(i.cases || 0)} ${tfEscapeHtml((i.cases || 0) === 1 ? 'Case' : 'Cases')}</strong> (${tfEscapeHtml(i.packSize || '500g')})
             </span>
           `).join('')}
-          <button type="button" onclick="event.stopPropagation(); app.toggleOrderSkuDrawer('${tfEscapeHtml(tfEscapeJs(drawerId))}', this, ${tfEscapeHtml(hiddenCount)})" class="btn-tactile px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-700/15 hover:bg-emerald-800/25 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1 transition-colors">
+          <button type="button" onclick="event.stopPropagation(); app.toggleOrderSkuDrawer('${tfEscapeHtml(tfEscapeJs(drawerId))}', this, ${tfEscapeHtml(hiddenCount)})" class="btn-tactile px-2 py-0.5 rounded-md text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1 transition-colors">
             <span>+${tfEscapeHtml(hiddenCount)} more varieties</span>
             <i data-lucide="chevron-down" class="w-3 h-3"></i>
           </button>
