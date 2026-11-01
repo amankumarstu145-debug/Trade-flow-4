@@ -2256,6 +2256,7 @@ class TradeFlowApp {
         this.closePaymentModal();
         this.closePaymentDetailDrawer();
         this.closeDocPreview();
+        this.closeSettingsModal();
       }
     });
 

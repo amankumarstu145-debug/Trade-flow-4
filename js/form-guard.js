@@ -436,10 +436,13 @@
   }
   // Order ids, invoice numbers and document numbers belong to real records: never invent them.
   const NEVER_FILL = /\border id\b|\binvoice number\b|\binvoice no\b|\boriginal invoice\b/;
-  function topContainer() {
-    const open = [...document.querySelectorAll('[id$="-modal"]:not(.hidden), [role="dialog"]:not(.hidden)')]
+  function openFormModals() {
+    return [...document.querySelectorAll('[id$="-modal"]:not(.hidden), [role="dialog"]:not(.hidden)')]
       .filter(el => el.offsetParent !== null || getComputedStyle(el).position === 'fixed')
       .filter(el => eligibleFields(el).length);
+  }
+  function topContainer() {
+    const open = openFormModals();
     if (open.length) return open.sort((a, b) => (Number(getComputedStyle(b).zIndex) || 0) - (Number(getComputedStyle(a).zIndex) || 0) || (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? 1 : -1))[0];
     return document.querySelector('main') || document.body;
   }
@@ -491,10 +494,12 @@
     button.addEventListener('click', () => fillDemo());
     document.body.appendChild(button);
     refreshDemoButton();
+    if (typeof setInterval === 'function') setInterval(refreshDemoButton, 500);
   }
   function refreshDemoButton() {
     const button = document.getElementById('tf-demo-fill-btn');
-    if (button) button.hidden = !demoToolsEnabled();
+    // Only shown while a form pop-up is open, so it never covers page content (Alt+Shift+D works anywhere).
+    if (button) button.hidden = !demoToolsEnabled() || !openFormModals().length;
   }
   document.addEventListener('keydown', event => {
     if (event.altKey && event.shiftKey && (event.key === 'D' || event.key === 'd') && demoToolsEnabled()) { event.preventDefault(); fillDemo(); }
