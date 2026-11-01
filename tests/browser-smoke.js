@@ -109,6 +109,30 @@ function browserPath() {
     assert.match(demo.liveMessage, /check digit/i, 'live GSTIN message');
     assert.equal(demo.failures, 0); assert.equal(demo.nativeInvalid, 0); assert.equal(demo.added, 1); assert(demo.button);
     passed.push('Live field validation and demo fill: a demo-filled partner form saves');
+    const ledger = await page.evaluate(async () => {
+      app.showModalConfirm = async () => true; // accept confirmation dialogs in this check
+      const amounts = [app.parseAmount('1,25,000'), app.parseAmount('₹ 2,500.50'), app.parseAmount('1000+250'), app.parseAmount('abc')];
+      const order = app.data.orders.find(o => o.id === 'ORD-TEST');
+      order.totalInvoiceAmount = 118; order.customerAdvanceReceived = 0; order.customerBalanceDue = 118;
+      const payment = { id: 'PAY-SMOKE', orderRef: 'ORD-TEST', direction: 'received', amount: 50, partyName: 'Test Buyer', date: '2026-10-30', utr: 'SMOKEUTR123456' };
+      app.data.payments.push(payment); app.applyPaymentToOrder(payment, 1);
+      const afterRecord = order.customerBalanceDue;
+      await app.deletePayment('PAY-SMOKE');
+      const afterDelete = order.customerBalanceDue;
+      app.restoreDeletedPayment('PAY-SMOKE');
+      const afterRestore = order.customerBalanceDue;
+      const inter = app.newOrderFinancials([{ totalAmount: 1000, gstRate: 18, quantity: 1 }], { gstin: '29AAACR5055K1Z3' }, 0, null);
+      await app.deleteOrder('ORD-TEST');
+      const deleted = { inOrders: app.data.orders.some(o => o.id === 'ORD-TEST'), inBin: app.deletedOrdersList().some(o => o.id === 'ORD-TEST') };
+      app.restoreDeletedOrder('ORD-TEST');
+      return { amounts, afterRecord, afterDelete, afterRestore, igst: inter.gst.igst, deleted, restored: app.data.orders.some(o => o.id === 'ORD-TEST'), longQr: app.createQrDataUrl('x'.repeat(5000)) };
+    });
+    assert.deepEqual(ledger.amounts, [125000, 2500.5, 1250, 0]);
+    assert.deepEqual([ledger.afterRecord, ledger.afterDelete, ledger.afterRestore], [68, 118, 68], 'deleting a payment reverses it, restoring re-applies it');
+    assert.equal(ledger.igst, 180, 'buyer in another state (from GSTIN) pays IGST');
+    assert.deepEqual(ledger.deleted, { inOrders: false, inBin: true }); assert(ledger.restored);
+    assert.equal(ledger.longQr, '');
+    passed.push('Amount parsing, payment delete/restore balances, order recycle bin, interstate GST and QR guard');
     await page.evaluate(() => app.openInvoiceStudioModal('ORD-TEST'));
     passed.push('Invoice studio opens for the test order');
     await assertCleanTemplates();

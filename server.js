@@ -2917,6 +2917,31 @@ Format:
         let rawResponse = '';
         const signal = AbortSignal.timeout(90000); // 90s timeout for multimodal vision models
 
+        // File, PDF flag and OCR text are shared by every provider below.
+        const resolvedFile = resolveFileBufferAndBase64(fileData, mimeType);
+        const isPdfRaw = (mimeType === 'application/pdf') || 
+                         (resolvedFile && resolvedFile.mime === 'application/pdf') ||
+                         (typeof fileData === 'string' && (fileData.startsWith('data:application/pdf') || fileData.startsWith('JVBERi0')));
+
+        let effectiveRawText = (rawText || '').trim();
+        if (effectiveRawText.startsWith('[Document:') && !effectiveRawText.includes('\n')) {
+          effectiveRawText = '';
+        } else if (effectiveRawText.startsWith('[Document:')) {
+          effectiveRawText = effectiveRawText.replace(/^\[Document:[^\n]+\]\s*/i, '').trim();
+        }
+
+        if (resolvedFile && (!effectiveRawText || effectiveRawText.length < 20)) {
+          try {
+            const ocrExt = isPdfRaw ? '.pdf' : (resolvedFile.mime === 'image/png' ? '.png' : '.jpg');
+            const ocrRes = await runRapidOcrBuffer(resolvedFile.buffer, ocrExt);
+            if (ocrRes && ocrRes.success && ocrRes.text) {
+              effectiveRawText = (effectiveRawText ? effectiveRawText + '\n\n' : '') + ocrRes.text;
+            }
+          } catch (e) {
+            // RapidOCR fallback
+          }
+        }
+
         if (targetProvider === 'nvidia' || targetProvider === 'openai' || targetProvider === 'openrouter' || targetProvider === 'groq' || targetProvider === 'custom') {
           const endpoint = targetProvider === 'nvidia'
             ? (baseUrl ? (baseUrl.endsWith('/chat/completions') ? baseUrl : `${baseUrl.replace(/\/+$/, '')}/chat/completions`) : 'https://integrate.api.nvidia.com/v1/chat/completions')
@@ -2932,31 +2957,7 @@ Format:
                 ? 'llama-3.2-11b-vision-preview'
                 : (targetProvider === 'openrouter' ? 'openai/gpt-4o-mini' : 'gpt-4o-mini'));
 
-          const resolvedFile = resolveFileBufferAndBase64(fileData, mimeType);
           const userContent = [];
-          const isPdfRaw = (mimeType === 'application/pdf') || 
-                           (resolvedFile && resolvedFile.mime === 'application/pdf') ||
-                           (typeof fileData === 'string' && (fileData.startsWith('data:application/pdf') || fileData.startsWith('JVBERi0')));
-
-          let effectiveRawText = (rawText || '').trim();
-          if (effectiveRawText.startsWith('[Document:') && !effectiveRawText.includes('\n')) {
-            effectiveRawText = '';
-          } else if (effectiveRawText.startsWith('[Document:')) {
-            effectiveRawText = effectiveRawText.replace(/^\[Document:[^\n]+\]\s*/i, '').trim();
-          }
-
-          if (resolvedFile && (!effectiveRawText || effectiveRawText.length < 20)) {
-            try {
-              const ocrExt = isPdfRaw ? '.pdf' : (resolvedFile.mime === 'image/png' ? '.png' : '.jpg');
-              const ocrRes = await runRapidOcrBuffer(resolvedFile.buffer, ocrExt);
-              if (ocrRes && ocrRes.success && ocrRes.text) {
-                effectiveRawText = (effectiveRawText ? effectiveRawText + '\n\n' : '') + ocrRes.text;
-              }
-            } catch (e) {
-              // RapidOCR fallback
-            }
-          }
-
           if (resolvedFile && !isPdfRaw) {
             userContent.push({
               type: 'image_url',

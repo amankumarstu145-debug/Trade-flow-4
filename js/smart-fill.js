@@ -1386,7 +1386,7 @@
           this.addLogLine('💳', `Detected Bank: ${ext.bankName}`, 'amber');
         }
         if (/out|paid/i.test(ext.direction)) {
-          this.addLogLine('🏢', `Payer: ${ext.payFromAccount || 'MAGIC ROOTS ENTERPRISES'} (Company Account -> Money Out / Paid)`, 'emerald');
+          this.addLogLine('🏢', `Payer: ${ext.payFromAccount || window.app?.config?.().brand || 'our account'} (Company Account -> Money Out / Paid)`, 'emerald');
         } else {
           this.addLogLine('📥', 'Direction: Money In (Received from Customer)', 'emerald');
         }

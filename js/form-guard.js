@@ -89,8 +89,8 @@
       if (days > 400) return warn('Date is more than a year ahead: check the year');
       return none();
     },
-    personName: v => /[A-Za-zऀ-ॿ]/.test(v) && !/[0-9<>{}]/.test(v) ? none() : err('Name should contain letters only'),
-    name: v => /[A-Za-z0-9ऀ-ॿ]/.test(v) && !/[<>{}]/.test(v) ? (v.length > 150 ? err('Keep the name under 150 characters') : none()) : err('Enter a name (letters or digits; < > { } not allowed)'),
+    personName: v => /\p{L}/u.test(v) && !/[0-9<>{}]/.test(v) ? none() : err('Name should contain letters only'),
+    name: v => /[\p{L}\p{N}]/u.test(v) && !/[<>{}]/.test(v) ? (v.length > 150 ? err('Keep the name under 150 characters') : none()) : err('Enter a name (letters or digits; < > { } not allowed)'),
     text: v => /[<>]/.test(v) && /<\s*\/?\s*(script|iframe|img|svg|a)\b/i.test(v) ? err('HTML tags are not allowed here') : (v.length > 2000 ? warn('Text is very long (over 2000 characters)') : none())
   };
   function err(msg) { return { level: 'error', msg }; }

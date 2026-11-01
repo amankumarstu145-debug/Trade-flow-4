@@ -108,11 +108,17 @@ class TradeFlowApp {
     ) || null;
   }
 
+  // QR image as a data URL, or '' when the text is too long for a QR code.
   createQrDataUrl(text) {
-    const code = qrcode(0, 'M');
-    code.addData(String(text));
-    code.make();
-    return code.createDataURL(5, 4);
+    try {
+      const code = qrcode(0, 'M');
+      code.addData(String(text));
+      code.make();
+      return code.createDataURL(5, 4);
+    } catch (err) {
+      console.warn('QR code not generated:', err.message);
+      return '';
+    }
   }
 
   /* ---------- UNIVERSAL CONTACT & HARD-RULE PROFILE RESOLUTION ENGINE ---------- */
@@ -186,6 +192,28 @@ class TradeFlowApp {
     return `CNT-${String(this.nextSequenceNumber('contact', ['CNT'], this.data.contacts || [])).padStart(2, '0')}`;
   }
 
+  // Adds (sign 1) or reverses (sign -1) one payment's effect on its order's running totals.
+  // Used when a payment is recorded, edited, deleted, restored or undone, so balances never drift.
+  applyPaymentToOrder(payment, sign = 1) {
+    if (!payment || !payment.orderRef) return;
+    const order = this.findOrder(payment.orderRef);
+    if (!order) return;
+    const amount = (Number(payment.amount) || 0) * sign;
+    const round2 = v => Math.round(v * 100) / 100;
+    const type = payment.partyType || payment.category;
+    if (payment.direction === 'received') {
+      order.customerAdvanceReceived = Math.max(0, round2((Number(order.customerAdvanceReceived) || 0) + amount));
+      order.customerBalanceDue = Math.max(0, round2((Number(order.totalInvoiceAmount) || 0) - order.customerAdvanceReceived));
+      if (order.customerBalanceDue === 0 && order.status === 'delivered_overdue') order.status = 'settled';
+      else if (order.customerBalanceDue > 0 && order.status === 'settled') order.status = 'delivered_overdue';
+    } else if (type === 'manufacturer') {
+      order.manufacturerAdvancePaid = Math.max(0, round2((Number(order.manufacturerAdvancePaid) || 0) + amount));
+      if (sign > 0 && order.status === 'action_needed') { order.status = 'in_production'; order.urgentAlert = null; }
+    } else if (type === 'packaging') {
+      order.packagingAdvancePaid = Math.max(0, round2((Number(order.packagingAdvancePaid) || 0) + amount));
+    }
+  }
+
   // Total of payments recorded as paid to a partner (matched by partner id, else by name).
   paymentsPaidToContact(contact) {
     const name = String(contact.name || '').trim().toLowerCase();
@@ -252,6 +280,7 @@ class TradeFlowApp {
     if (item && valid(item.gstRate)) return Number(item.gstRate);
     const product = item && (this.data.products || []).find(p => (item.productId && p.id === item.productId) || (item.sku && p.sku === item.sku) || (item.name && p.name === item.name));
     if (product && valid(product.gstRate)) return Number(product.gstRate);
+    if (product && valid(product.gst)) return Number(product.gst); // older records
     return this.config().defaultGstRate;
   }
 
@@ -2886,7 +2915,7 @@ class TradeFlowApp {
       const mfgLogo = mfg.logo || mfg.logoUrl;
       const logoHtml = mfgLogo ? `
         <div class="tf-banner-avatar-v4">
-          <img src="${tfEscapeHtml(tfSafeUrl(mfgLogo))}" alt="${tfEscapeHtml(mfg.name)}" class="w-full h-full object-contain p-1" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'font-black text-emerald-950 text-lg\\'>${tfEscapeHtml(tfEscapeJs((mfg.name||'MF').substring(0,2).toUpperCase()))}</span>'">
+          <img src="${tfEscapeHtml(tfSafeUrl(mfgLogo))}" alt="${tfEscapeHtml(mfg.name)}" class="w-full h-full object-contain p-1" onerror="this.onerror=null; if (this.parentElement) this.parentElement.innerHTML='<span class=\\'font-black text-emerald-950 text-lg\\'>${tfEscapeHtml(tfEscapeJs((mfg.name||'MF').substring(0,2).toUpperCase()))}</span>'">
         </div>
       ` : `
         <div class="tf-banner-avatar-v4">
@@ -3198,7 +3227,7 @@ class TradeFlowApp {
       const pkgLogo = pkg.logo || pkg.logoUrl;
       const logoHtml = pkgLogo ? `
         <div class="tf-banner-avatar-v4" style="background: #dbeafe; color: #1e3a8a;">
-          <img src="${tfEscapeHtml(tfSafeUrl(pkgLogo))}" alt="${tfEscapeHtml(pkg.name)}" class="w-full h-full object-contain p-1" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'font-black text-blue-950 text-lg\\'>${tfEscapeHtml(tfEscapeJs((pkg.name||'PK').substring(0,2).toUpperCase()))}</span>'">
+          <img src="${tfEscapeHtml(tfSafeUrl(pkgLogo))}" alt="${tfEscapeHtml(pkg.name)}" class="w-full h-full object-contain p-1" onerror="this.onerror=null; if (this.parentElement) this.parentElement.innerHTML='<span class=\\'font-black text-blue-950 text-lg\\'>${tfEscapeHtml(tfEscapeJs((pkg.name||'PK').substring(0,2).toUpperCase()))}</span>'">
         </div>
       ` : `
         <div class="tf-banner-avatar-v4" style="background: #dbeafe; color: #1e3a8a;">
@@ -4701,6 +4730,12 @@ class TradeFlowApp {
           <button onclick="app.openEditOrderModal('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-3 py-1.5 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 border border-amber-500 rounded-lg flex items-center gap-1.5 shadow-xs" title="Edit this order, quantities, and rates">
             <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
             <span>Edit Order</span>
+          </button>
+
+          <!-- Delete (moves to Recycle Bin) -->
+          <button onclick="app.deleteOrder('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-3 py-1.5 text-xs font-bold text-rose-600 dark:text-rose-400 bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-300 dark:border-rose-800 rounded-lg flex items-center gap-1.5" title="Move this order to the Recycle Bin">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            <span>Delete</span>
           </button>
 
           <!-- 3. GST Invoice -->
@@ -12517,6 +12552,8 @@ BANKING & PAYMENT COORDINATES:
     text.textContent = String(message);
     toast.appendChild(text);
     container.appendChild(toast);
+    // Keep at most three messages on screen so they never cover the form.
+    while (container.children.length > 3) container.firstElementChild.remove();
     setTimeout(() => {
       toast.classList.remove('translate-y-2', 'opacity-0');
     }, 10);
@@ -12682,32 +12719,25 @@ BANKING & PAYMENT COORDINATES:
 
     this.populateNewOrderSelects();
 
+    // A new order starts with no advance and the default payment terms (the buyer's own terms apply when chosen).
+    const advanceInput = document.getElementById('new-order-advance');
+    if (advanceInput) advanceInput.value = '';
+    const termsInput = document.getElementById('new-order-payment-terms');
+    if (termsInput) termsInput.value = this.config().defaultPaymentTerms;
+    const dateInput = document.getElementById('new-order-date');
+    if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
+
     // Sync carton packaging config inputs
     ['500g', '1kg', '5kg'].forEach(ps => {
       const el = document.getElementById(`master-pack-${ps}`);
       if (el) el.value = this.casePackConfig[ps] || this.config().defaultCasePack;
     });
 
-    // If no items are in the table yet, add a starter row
+    // If no items are in the table yet, add a starter row from the first active product.
     if (!this.orderSkuItems || this.orderSkuItems.length === 0) {
-      const defaultProd = this.data.products.find(p => p.shortName === 'MIX') || this.data.products[0];
-      const initialCasePack = this.config().defaultCasePack;
-      this.orderSkuItems = [
-        {
-          productId: defaultProd.id,
-          name: defaultProd.name,
-          shortName: defaultProd.shortName || 'MIX',
-          variant: defaultProd.variant,
-          packSize: defaultProd.packSize || '500g',
-          casePack: initialCasePack,
-          cases: 4,
-          quantity: 4 * initialCasePack,
-          unitRate: defaultProd.standardSellingRate || 85.00,
-          totalAmount: 4 * initialCasePack * (defaultProd.standardSellingRate || 85.00),
-          baseCostPerUnit: defaultProd.baseMfgCost,
-          pkgCostPerUnit: defaultProd.packagingCost
-        }
-      ];
+      const defaultProd = (this.data.products || []).find(p => p.active !== false);
+      this.orderSkuItems = defaultProd ? [this.skuItemFromProduct(defaultProd, { cases: 1 })] : [];
+      if (!defaultProd) this.showToast('Add a product in the Products tab before creating an order.');
     }
 
     this.renderOrderSkuTable();
@@ -12842,6 +12872,7 @@ Della 1kg - 1case.`;
     const lines = rawText.split('\n');
     let currentPackSize = '500g';
     const parsedItems = [];
+    const unmatchedLines = [];
 
     for (let rawLine of lines) {
       const line = rawLine.trim();
@@ -12863,7 +12894,7 @@ Della 1kg - 1case.`;
       }
 
       // Skip lines that are purely brand names or headers without cases
-      if ((lower.includes('s3m') || lower.includes('magic root') || lower === 'order') && !line.includes('case')) {
+      if (lower === 'order' && !line.includes('case')) {
         continue;
       }
 
@@ -12912,46 +12943,15 @@ Della 1kg - 1case.`;
         flavourKey = 'MIX';
       }
 
-      // Match product from catalog
-      let product = this.data.products.find(p => 
-        (p.shortName || '').toUpperCase() === flavourKey.toUpperCase() && 
-        (p.packSize === itemPackSize || p.variant.includes(itemPackSize))
-      );
-
-      // Fallback if specific size not found
-      if (!product) {
-        product = this.data.products.find(p => (p.shortName || '').toUpperCase() === flavourKey.toUpperCase()) || this.data.products[0];
-      }
-
-      const casePack = this.casePackConfig[itemPackSize] || this.config().defaultCasePack;
-      const quantity = cases * casePack;
-      
-      // Determine pre-agreed contract price
-      let unitRate = product.standardSellingRate || 85.00;
-      if (currentRetailer && currentRetailer.agreedRates && currentRetailer.agreedRates[itemPackSize]) {
-        unitRate = currentRetailer.agreedRates[itemPackSize];
-      } else if (itemPackSize === '500g') {
-        unitRate = 85.00;
-      } else if (itemPackSize === '1kg') {
-        unitRate = 155.00;
-      } else if (itemPackSize === '5kg') {
-        unitRate = 590.00;
-      }
-
-      parsedItems.push({
-        productId: product.id,
-        name: product.name,
-        shortName: product.shortName || flavourKey,
-        variant: itemPackSize === '1kg' ? '1kg Glass Jar' : (itemPackSize === '5kg' ? '5kg Bulk Bucket' : '500g PET Jar'),
-        packSize: itemPackSize,
-        casePack: casePack,
-        cases: cases,
-        quantity: quantity,
-        unitRate: unitRate,
-        totalAmount: quantity * unitRate,
-        baseCostPerUnit: product.baseMfgCost,
-        pkgCostPerUnit: product.packagingCost
-      });
+      // Match a catalogue product named in the line (name or short name), preferring the same pack size;
+      // the keyword above is a fallback. Unknown products are reported, never swapped for another product.
+      const named = p => [p.name, p.shortName].filter(Boolean).some(n => lower.includes(String(n).toLowerCase()));
+      const sameSize = p => (p.defaultPackSize || p.packSize) === itemPackSize || (p.variant || '').includes(itemPackSize);
+      const byKey = p => flavourKey && (p.shortName || '').toUpperCase() === String(flavourKey).toUpperCase();
+      const product = this.data.products.find(p => named(p) && sameSize(p)) || this.data.products.find(p => byKey(p) && sameSize(p))
+        || this.data.products.find(named) || this.data.products.find(byKey);
+      if (!product) { unmatchedLines.push(line); continue; }
+      parsedItems.push(this.skuItemFromProduct(product, { packSize: itemPackSize, cases }));
     }
 
     if (parsedItems.length > 0) {
@@ -12966,7 +12966,7 @@ Della 1kg - 1case.`;
         status.innerHTML = `
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
           <span class="font-bold text-emerald-600 dark:text-emerald-400">
-            ✅ Parsed ${tfEscapeHtml(parsedItems.length)} SKUs (${tfEscapeHtml(totalCases)} Cases, ${tfEscapeHtml(totalJars.toLocaleString('en-IN'))} Jars). Pre-agreed rates auto-applied!
+            ✅ Parsed ${tfEscapeHtml(parsedItems.length)} SKUs (${tfEscapeHtml(totalCases)} Cases, ${tfEscapeHtml(totalJars.toLocaleString('en-IN'))} Units).${unmatchedLines.length ? ` ⚠️ Not in catalogue: ${tfEscapeHtml(unmatchedLines.join(' · '))}` : ''}
           </span>
         `;
       }
@@ -13245,22 +13245,27 @@ Della 1kg - 1case.`;
     this.recomputeOrderTotals();
   }
 
+  // One order line from a catalogue product: its own price (or the buyer's agreed rate), costs, GST and HSN.
+  skuItemFromProduct(prod, { packSize, cases = 1, unitRate } = {}) {
+    const size = packSize || prod.defaultPackSize || prod.packSize || '';
+    const casePack = (size === (prod.defaultPackSize || prod.packSize) && Number(prod.casePack)) || this.casePackConfig[size] || Number(prod.casePack) || this.config().defaultCasePack;
+    const retailerId = document.getElementById('new-order-retailer') ? document.getElementById('new-order-retailer').value : '';
+    const retailer = this.data.contacts.find(c => c.id === retailerId);
+    const agreed = retailer && retailer.agreedRates && retailer.agreedRates[size];
+    const rate = Number(unitRate ?? agreed ?? prod.defaultUnitRate ?? prod.standardSellingRate) || 0;
+    return {
+      productId: prod.id, name: prod.name, shortName: prod.shortName || prod.name, variant: prod.variant || size,
+      packSize: size, casePack, cases, quantity: cases * casePack, unitRate: rate, totalAmount: cases * casePack * rate,
+      baseCostPerUnit: prod.baseCostPerUnit ?? prod.baseMfgCost, pkgCostPerUnit: prod.pkgCostPerUnit ?? prod.pkgCost ?? prod.packagingCost,
+      gstRate: this.itemGstRate({ productId: prod.id }), hsn: prod.hsn
+    };
+  }
+
   updateSkuRowProduct(idx, productId) {
     const item = this.orderSkuItems[idx];
     const prod = this.data.products.find(p => p.id === productId);
     if (!item || !prod) return;
-
-    item.productId = prod.id;
-    item.name = prod.name;
-    item.shortName = prod.shortName || prod.name;
-    item.variant = prod.variant;
-    item.packSize = prod.packSize || (prod.variant.includes('1kg') ? '1kg' : '500g');
-    item.casePack = this.casePackConfig[item.packSize] || prod.casePack || this.config().defaultCasePack;
-    item.baseCostPerUnit = prod.baseMfgCost;
-    item.pkgCostPerUnit = prod.packagingCost;
-    item.quantity = item.cases * item.casePack;
-    item.totalAmount = item.quantity * item.unitRate;
-
+    this.orderSkuItems[idx] = this.skuItemFromProduct(prod, { cases: item.cases || 1 });
     this.renderOrderSkuTable();
     this.recomputeOrderTotals();
   }
@@ -13268,99 +13273,36 @@ Della 1kg - 1case.`;
   updateSkuRowPackSize(idx, packSize) {
     const item = this.orderSkuItems[idx];
     if (!item) return;
-
-    item.packSize = packSize;
-    item.casePack = this.casePackConfig[packSize] || this.config().defaultCasePack;
-    item.variant = packSize === '1kg' ? '1kg Glass Jar' : (packSize === '5kg' ? '5kg Bulk Bucket' : '500g PET Jar');
-    
-    // Check if retailer has agreed rate for this packSize
-    const retailer = this.data.contacts.find(c => c.id === (document.getElementById('new-order-retailer') ? document.getElementById('new-order-retailer').value : ''));
-    if (retailer && retailer.agreedRates && retailer.agreedRates[packSize]) {
-      item.unitRate = retailer.agreedRates[packSize];
-    } else {
-      item.unitRate = packSize === '1kg' ? 155.00 : (packSize === '5kg' ? 590.00 : 85.00);
-    }
-
-    item.quantity = item.cases * item.casePack;
-    item.totalAmount = item.quantity * item.unitRate;
-
+    // Prefer the catalogue product of the same name in that pack size; else keep the product and its price.
+    const sameLine = this.data.products.find(p => p.name === item.name && (p.defaultPackSize || p.packSize) === packSize);
+    const prod = sameLine || this.data.products.find(p => p.id === item.productId);
+    if (!prod) return;
+    this.orderSkuItems[idx] = this.skuItemFromProduct(prod, { packSize, cases: item.cases || 1, unitRate: sameLine ? undefined : item.unitRate });
     this.renderOrderSkuTable();
     this.recomputeOrderTotals();
   }
 
   addEmptySkuRow() {
-    const prod = this.data.products[0];
-    const packSize = prod.packSize || '500g';
-    const casePack = this.casePackConfig[packSize] || prod.casePack || this.config().defaultCasePack;
-    const rate = prod.standardSellingRate || 85.00;
-    this.orderSkuItems.push({
-      productId: prod.id,
-      name: prod.name,
-      shortName: prod.shortName || 'Mango',
-      variant: prod.variant,
-      packSize: packSize,
-      casePack: casePack,
-      cases: 2,
-      quantity: 2 * casePack,
-      unitRate: rate,
-      totalAmount: 2 * casePack * rate,
-      baseCostPerUnit: prod.baseMfgCost,
-      pkgCostPerUnit: prod.packagingCost
-    });
-
+    const prod = (this.data.products || []).find(p => p.active !== false);
+    if (!prod) { this.showToast('Add a product in the Products tab first.'); return; }
+    this.orderSkuItems.push(this.skuItemFromProduct(prod, { cases: 1 }));
     this.renderOrderSkuTable();
     this.recomputeOrderTotals();
   }
 
   quickAddSkuRow(packSize) {
-    const prod = this.data.products.find(p => p.packSize === packSize) || this.data.products[0];
-    const casePack = this.casePackConfig[packSize] || this.config().defaultCasePack;
-    const rate = packSize === '1kg' ? 155.00 : (packSize === '5kg' ? 590.00 : 85.00);
-
-    this.orderSkuItems.push({
-      productId: prod.id,
-      name: prod.name,
-      shortName: prod.shortName || prod.name,
-      variant: packSize === '1kg' ? '1kg Glass Jar' : (packSize === '5kg' ? '5kg Bulk Bucket' : '500g PET Jar'),
-      packSize: packSize,
-      casePack: casePack,
-      cases: 2,
-      quantity: 2 * casePack,
-      unitRate: rate,
-      totalAmount: 2 * casePack * rate,
-      baseCostPerUnit: prod.baseMfgCost,
-      pkgCostPerUnit: prod.packagingCost
-    });
-
+    const prod = (this.data.products || []).find(p => p.active !== false && (p.defaultPackSize || p.packSize) === packSize);
+    if (!prod) { this.showToast(`No product with pack size ${packSize} in the catalogue.`); return; }
+    this.orderSkuItems.push(this.skuItemFromProduct(prod, { packSize, cases: 1 }));
     this.renderOrderSkuTable();
     this.recomputeOrderTotals();
   }
 
   quickInsertFlavour(flavourKey, packSize, cases) {
-    const prod = this.data.products.find(p => 
-      (p.shortName || '').toUpperCase() === flavourKey.toUpperCase() && 
-      (p.packSize === packSize || p.variant.includes(packSize))
-    ) || this.data.products[0];
-
-    const casePack = this.casePackConfig[packSize] || this.config().defaultCasePack;
-    const retailer = this.data.contacts.find(c => c.id === (document.getElementById('new-order-retailer') ? document.getElementById('new-order-retailer').value : ''));
-    const rate = (retailer && retailer.agreedRates && retailer.agreedRates[packSize]) || (packSize === '1kg' ? 155.00 : (packSize === '5kg' ? 590.00 : 85.00));
-
-    this.orderSkuItems.push({
-      productId: prod.id,
-      name: prod.name,
-      shortName: prod.shortName || flavourKey,
-      variant: packSize === '1kg' ? '1kg Glass Jar' : (packSize === '5kg' ? '5kg Bulk Bucket' : '500g PET Jar'),
-      packSize: packSize,
-      casePack: casePack,
-      cases: cases,
-      quantity: cases * casePack,
-      unitRate: rate,
-      totalAmount: cases * casePack * rate,
-      baseCostPerUnit: prod.baseMfgCost,
-      pkgCostPerUnit: prod.packagingCost
-    });
-
+    const prod = this.data.products.find(p => (p.shortName || '').toUpperCase() === String(flavourKey).toUpperCase() && ((p.defaultPackSize || p.packSize) === packSize || (p.variant || '').includes(packSize)))
+      || this.data.products.find(p => (p.shortName || '').toUpperCase() === String(flavourKey).toUpperCase());
+    if (!prod) { this.showToast(`No product "${flavourKey}" in the catalogue.`); return; }
+    this.orderSkuItems.push(this.skuItemFromProduct(prod, { packSize, cases }));
     this.renderOrderSkuTable();
     this.recomputeOrderTotals();
   }
@@ -13374,8 +13316,11 @@ Della 1kg - 1case.`;
   // Real-Time Commercial Math & Profitability Engine
   // Totals for a new order. Freight is not known yet, so it starts at 0 (entered later on the order).
   newOrderFinancials(items, retailer, customerAdvance, marketeer) {
-    const profileState = this.data.businessProfile && this.data.businessProfile.stateCode;
-    const isInterstate = Boolean(retailer && retailer.stateCode && profileState && String(retailer.stateCode) !== String(profileState));
+    // State codes: the stored code, else the first two digits of the GSTIN.
+    const stateOf = party => party ? String(party.stateCode || (party.gstin ? String(party.gstin).slice(0, 2) : '')).padStart(party.stateCode || party.gstin ? 2 : 0, '0') : '';
+    const profileState = stateOf(this.data.businessProfile);
+    const buyerState = stateOf(retailer);
+    const isInterstate = Boolean(buyerState && profileState && buyerState !== profileState);
     const gst = this.computeGst(items, isInterstate);
     const costs = this.orderLineCosts(items);
     const commissionRate = marketeer ? (Number.isFinite(Number(marketeer.commissionRate)) && marketeer.commissionRate !== '' && marketeer.commissionRate !== undefined && marketeer.commissionRate !== null ? Number(marketeer.commissionRate) : this.config().defaultCommissionRate) : 0;
@@ -15183,6 +15128,7 @@ Della 1kg - 1case.`;
       const utr = document.getElementById('pay-input-utr')?.value?.trim();
       const fileData = document.getElementById('pay-hidden-filedata')?.value;
       const fileType = document.getElementById('pay-hidden-filetype')?.value;
+      const fileName = document.getElementById('pay-hidden-filename')?.value || '';
       if ((party || amount || fileData) && !localStorage.getItem('tradeflow_pending_intake_draft')) {
         try {
           const isPdf = fileType === 'application/pdf' || (fileName || '').toLowerCase().endsWith('.pdf') || (typeof fileData === 'string' && fileData.startsWith('data:application/pdf'));
@@ -15942,7 +15888,7 @@ Della 1kg - 1case.`;
     }
 
     const direction = this.paymentsState.paymentFormDirection || 'received';
-    const thisAmount = parseFloat(document.getElementById('pay-input-amount')?.value) || 0;
+    const thisAmount = Math.max(0, this.parseAmount(document.getElementById('pay-input-amount')?.value));
 
     let total = 0;
     let paid = 0;
@@ -16527,28 +16473,6 @@ Della 1kg - 1case.`;
     this.showToast('⚠️ Proceeding with separate transaction under manual override.');
   }
 
-  sendPaymentWhatsApp(payment) {
-    if (!payment) return;
-    const contact = (this.data.contacts || []).find(c => 
-      c.name.toLowerCase() === payment.partyName.toLowerCase() ||
-      c.name.toLowerCase().includes(payment.partyName.toLowerCase()) ||
-      payment.partyName.toLowerCase().includes(c.name.toLowerCase())
-    );
-    const phone = contact?.phone || contact?.whatsappPhone || '';
-    const cleanPhone = phone.replace(/[^0-9]/g, '');
-    const isPaid = payment.direction === 'paid';
-    const msg = `*TradeFlow Payment ${isPaid ? 'Disbursement' : 'Receipt'} Confirmation*\n\n` +
-      `*Party:* ${payment.partyName}\n` +
-      `*Order:* ${payment.orderRef || 'Settlement'}\n` +
-      `*Amount:* ${this.formatCurrency(payment.amount)}\n` +
-      `*Date:* ${this.formatDate(payment.date)}\n` +
-      `*Mode:* ${payment.mode || 'Bank Transfer'}\n` +
-      (payment.utr ? `*UTR / Ref:* ${payment.utr}\n` : '') +
-      (payment.notes ? `*Remarks:* ${payment.notes}\n` : '') +
-      `\n_Recorded and archived in TradeFlow Document Vault._`;
-    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-  }
-
   async submitPaymentCockpit() {
     const dateInput = document.getElementById('pay-input-date');
     const amountInput = document.getElementById('pay-input-amount');
@@ -16557,7 +16481,7 @@ Della 1kg - 1case.`;
     const orderErr = document.getElementById('pay-order-error');
 
     const date = dateInput?.value;
-    const amount = parseFloat(amountInput?.value) || 0;
+    const amount = this.parseAmount(amountInput?.value);
     const partyName = partyInput?.value?.trim();
     const partyType = document.getElementById('pay-select-category')?.value || 'other';
     const mode = document.getElementById('pay-select-mode')?.value || 'NEFT';
@@ -16611,6 +16535,25 @@ Della 1kg - 1case.`;
       return;
     }
 
+    // 5. Possible duplicate: same UTR, or same party, amount, date and direction, already in the ledger.
+    const sameUtr = utr.length >= 6 ? (this.data.payments || []).find(p => !p.isDeleted && p.id !== editId && String(p.utr || '').trim().toUpperCase() === utr) : null;
+    const sameEntry = (this.data.payments || []).find(p => !p.isDeleted && p.id !== editId && p.direction === direction && Number(p.amount) === amount && p.date === date && String(p.partyName || '').trim().toLowerCase() === partyName.toLowerCase());
+    const duplicate = sameUtr || sameEntry;
+    if (duplicate && !this._paymentDuplicateConfirmed) {
+      const recordAnyway = await this.showModalConfirm({
+        title: 'Possible Duplicate Payment',
+        subtitle: sameUtr ? 'Same UTR / reference' : 'Same party, amount and date',
+        message: `This looks like payment <b>${tfEscapeHtml(duplicate.id)}</b>: ${tfEscapeHtml(this.formatCurrency(duplicate.amount))} · ${tfEscapeHtml(duplicate.partyName || '')} · ${tfEscapeHtml(duplicate.date || '')}${duplicate.utr ? ` · UTR ${tfEscapeHtml(duplicate.utr)}` : ''}.<br><br>Recording it again would count the money twice.`,
+        confirmText: 'Record anyway',
+        confirmClass: 'bg-amber-600 hover:bg-amber-500',
+        icon: 'alert-triangle'
+      });
+      if (!recordAnyway) {
+        this.showToast('Not recorded: possible duplicate payment.');
+        return;
+      }
+    }
+
     // Smart file renaming
     const cleanParty = partyName.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30);
     const prefix = direction === 'paid' ? 'PaidTo' : 'RecvFrom';
@@ -16647,7 +16590,7 @@ Della 1kg - 1case.`;
         if (archResp.ok) {
           const archData = await archResp.json();
           if (archData && archData.success) {
-            savedDocUrl = archData.url || archData.path;
+            savedDocUrl = archData.fileUrl || archData.url || savedDocUrl; // web link, not the server's disk path
             isSavedToServer = true;
           }
         } else {
@@ -16690,27 +16633,12 @@ Della 1kg - 1case.`;
       }
     }
 
-    // Update order balances if attached to an order
-    if (orderRef) {
-      const order = this.findOrder(orderRef);
-      if (order) {
-        if (direction === 'received') {
-          order.customerAdvanceReceived = (order.customerAdvanceReceived || 0) + amount;
-          order.customerBalanceDue = Math.max(0, order.totalInvoiceAmount - order.customerAdvanceReceived);
-          if (order.customerBalanceDue === 0 && order.status === 'delivered_overdue') {
-            order.status = 'settled';
-          }
-        } else if (partyType === 'manufacturer') {
-          order.manufacturerAdvancePaid = (order.manufacturerAdvancePaid || 0) + amount;
-          if (order.status === 'action_needed') {
-            order.status = 'in_production';
-            order.urgentAlert = null;
-          }
-        } else if (partyType === 'packaging') {
-          order.packagingAdvancePaid = (order.packagingAdvancePaid || 0) + amount;
-        }
-      }
+    // Update order balances: when editing, first reverse the payment as it was saved, then apply the new values.
+    if (editId) {
+      const previous = (this.data.payments || []).find(p => p.id === editId);
+      if (previous && !previous.isDeleted) this.applyPaymentToOrder(previous, -1);
     }
+    this.applyPaymentToOrder({ orderRef, amount, direction, partyType }, 1);
 
     if (!this.data.payments) this.data.payments = [];
 
@@ -16735,7 +16663,7 @@ Della 1kg - 1case.`;
           direction,
           hasProof: !!(fileData || this.data.payments[idx].pd),
           pd: savedDocUrl || this.data.payments[idx].pd,
-          dataUrl: fileData || this.data.payments[idx].dataUrl,
+          dataUrl: isSavedToServer ? undefined : (fileData || this.data.payments[idx].dataUrl),
           pn: renamedFileName || this.data.payments[idx].pn,
           pt: fileType || this.data.payments[idx].pt,
           orderFolder: safeOrderFolder,
@@ -16762,7 +16690,7 @@ Della 1kg - 1case.`;
         direction,
         hasProof: !!fileData,
         pd: savedDocUrl,
-        dataUrl: fileData,
+        dataUrl: isSavedToServer ? undefined : fileData, // keep the file inline only if it could not be saved to disk
         pn: renamedFileName,
         pt: fileType,
         orderFolder: safeOrderFolder,
@@ -16802,22 +16730,7 @@ Della 1kg - 1case.`;
           this.data.payments.splice(idx, 1);
 
           // Revert order balance updates if attached
-          if (orderRef) {
-            const order = this.findOrder(orderRef);
-            if (order) {
-              if (direction === 'received') {
-                order.customerAdvanceReceived = Math.max(0, (order.customerAdvanceReceived || 0) - amount);
-                order.customerBalanceDue = Math.max(0, order.totalInvoiceAmount - order.customerAdvanceReceived);
-                if (order.status === 'settled' && order.customerBalanceDue > 0) {
-                  order.status = 'delivered_overdue';
-                }
-              } else if (partyType === 'manufacturer') {
-                order.manufacturerAdvancePaid = Math.max(0, (order.manufacturerAdvancePaid || 0) - amount);
-              } else if (partyType === 'packaging') {
-                order.packagingAdvancePaid = Math.max(0, (order.packagingAdvancePaid || 0) - amount);
-              }
-            }
-          }
+          this.applyPaymentToOrder({ orderRef, amount, direction, partyType }, -1);
 
           // Restore mobile snap to pending queue if it came from one
           if (paymentSnapshot.pendingMobileSnap) {
@@ -17849,10 +17762,11 @@ Della 1kg - 1case.`;
     });
     if (!confirmed) return;
 
-    // Soft Delete
+    // Soft Delete: the payment stops counting towards its order's balances.
     p.isDeleted = true;
     p.deletedAt = new Date().toISOString();
     p.deletedBy = 'Operator';
+    this.applyPaymentToOrder(p, -1);
 
     this.saveData();
     this.closePaymentDetailDrawer();
@@ -17863,9 +17777,11 @@ Della 1kg - 1case.`;
 
     // Trigger 10-Second Undo Toast
     this.showUndoToast(`🗑️ Payment of ${this.formatCurrency(p.amount)} moved to Recycle Bin.`, () => {
+      if (!p.isDeleted) return;
       p.isDeleted = false;
       delete p.deletedAt;
       delete p.deletedBy;
+      this.applyPaymentToOrder(p, 1);
       this.saveData();
       this.renderPaymentsLedger();
       this.updateSidebarUI();
@@ -20390,7 +20306,7 @@ Della 1kg - 1case.`;
 
     if (logoSrc && String(logoSrc).trim()) {
       const cleanSrc = String(logoSrc).trim();
-      previewEl.innerHTML = `<img src="${tfEscapeHtml(tfSafeUrl(cleanSrc))}" alt="Logo" class="w-full h-full object-contain bg-white dark:bg-slate-900 p-1 rounded-2xl" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'font-black text-xl text-amber-500\\'>${tfEscapeHtml(tfEscapeJs((name||'CO').substring(0,2).toUpperCase()))}</span>';">`;
+      previewEl.innerHTML = `<img src="${tfEscapeHtml(tfSafeUrl(cleanSrc))}" alt="Logo" class="w-full h-full object-contain bg-white dark:bg-slate-900 p-1 rounded-2xl" onerror="this.onerror=null; if (this.parentElement) this.parentElement.innerHTML='<span class=\\'font-black text-xl text-amber-500\\'>${tfEscapeHtml(tfEscapeJs((name||'CO').substring(0,2).toUpperCase()))}</span>';">`;
       if (dataInput) dataInput.value = cleanSrc;
       if (urlInput && !cleanSrc.startsWith('data:')) urlInput.value = cleanSrc;
     } else {
@@ -21299,6 +21215,8 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     }
     mergeField('city', newCity);
     mergeField('state', newState);
+    // GST state code follows the GSTIN (it decides CGST+SGST versus IGST on invoices).
+    if (/^[0-9]{2}/.test(contact.gstin || '')) contact.stateCode = String(contact.gstin).slice(0, 2);
     mergeField('pincode', newPincode);
     mergeField('landmark', newLandmark);
 
@@ -21365,13 +21283,16 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
   }
 
   /* ---------- SKU MASTER & PRICING CONTROLS ---------- */
+  // Edit a product, or add a new one when no id is given.
   openSkuEditModal(skuId) {
-    const product = (this.data.products || []).find(p => p.id === skuId) || (this.data.products || [])[0];
-    if (!product) {
+    const existing = skuId ? (this.data.products || []).find(p => p.id === skuId) : null;
+    if (skuId && !existing) {
       this.showToast('⚠️ SKU not found.');
       return;
     }
-
+    const cfg = this.config();
+    const product = existing || { id: '', name: '', variant: '', casePack: cfg.defaultCasePack, hsn: cfg.defaultHsn, gstRate: cfg.defaultGstRate };
+    this.editingSkuIsNew = !existing;
     const modal = document.getElementById('sku-edit-modal');
     if (!modal) return;
 
@@ -21383,14 +21304,14 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
 
     setVal('sku-edit-id', product.id);
     setVal('sku-edit-name', product.name);
-    setVal('sku-edit-variant', product.variant || '500g PET Jar');
-    setVal('sku-edit-casepack', product.casePack || 24);
+    setVal('sku-edit-variant', product.variant || '');
+    setVal('sku-edit-casepack', product.casePack || cfg.defaultCasePack);
     setVal('sku-edit-hsn', product.hsn || this.config().defaultHsn);
-    setVal('sku-edit-gst', product.gst || 12);
-    setVal('sku-edit-mfgcost', product.baseCostPerUnit || product.baseMfgCost || 48);
-    setVal('sku-edit-pkgcost', product.pkgCostPerUnit || product.packagingCost || 11.5);
-    setVal('sku-edit-price', product.defaultUnitRate || product.standardSellingRate || 85);
-    setVal('sku-edit-mrp', product.mrp || 120);
+    setVal('sku-edit-gst', this.itemGstRate({ productId: product.id, gstRate: product.gstRate ?? product.gst }));
+    setVal('sku-edit-mfgcost', product.baseCostPerUnit ?? product.baseMfgCost ?? '');
+    setVal('sku-edit-pkgcost', product.pkgCostPerUnit ?? product.pkgCost ?? product.packagingCost ?? '');
+    setVal('sku-edit-price', product.defaultUnitRate ?? product.standardSellingRate ?? '');
+    setVal('sku-edit-mrp', product.mrp ?? '');
 
     this.updateSkuEditPreview();
 
@@ -21411,7 +21332,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     const pkgCost = parseFloat(document.getElementById('sku-edit-pkgcost')?.value) || 0;
     const price = parseFloat(document.getElementById('sku-edit-price')?.value) || 0;
     const mrp = parseFloat(document.getElementById('sku-edit-mrp')?.value) || 0;
-    const casePack = parseInt(document.getElementById('sku-edit-casepack')?.value) || 24;
+    const casePack = parseInt(document.getElementById('sku-edit-casepack')?.value) || this.config().defaultCasePack;
 
     const unitCogs = mfgCost + pkgCost;
     const profit = price - unitCogs;
@@ -21448,17 +21369,18 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
   handleSaveSku(event) {
     if (event) event.preventDefault();
     const id = document.getElementById('sku-edit-id')?.value;
-    const product = (this.data.products || []).find(p => p.id === id);
-    if (!product) {
+    let product = id ? (this.data.products || []).find(p => p.id === id) : null;
+    if (id && !product) {
       this.showToast('⚠️ SKU not found to update.');
       return;
     }
 
     const name = (document.getElementById('sku-edit-name')?.value || '').trim();
     const variant = (document.getElementById('sku-edit-variant')?.value || '').trim();
-    const casePack = parseInt(document.getElementById('sku-edit-casepack')?.value) || 24;
+    const casePack = parseInt(document.getElementById('sku-edit-casepack')?.value) || this.config().defaultCasePack;
     const hsn = (document.getElementById('sku-edit-hsn')?.value || this.config().defaultHsn || '').trim();
-    const gst = parseFloat(document.getElementById('sku-edit-gst')?.value) || 12;
+    const gstInput = document.getElementById('sku-edit-gst')?.value;
+    const gst = gstInput === '' || gstInput === undefined || !Number.isFinite(Number(gstInput)) ? this.config().defaultGstRate : Number(gstInput);
     const mfgCost = parseFloat(document.getElementById('sku-edit-mfgcost')?.value) || 0;
     const pkgCost = parseFloat(document.getElementById('sku-edit-pkgcost')?.value) || 0;
     const price = parseFloat(document.getElementById('sku-edit-price')?.value) || 0;
@@ -21469,11 +21391,23 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
       return;
     }
 
+    const isNew = !product;
+    const duplicate = (this.data.products || []).find(p => p !== product && String(p.name || '').trim().toLowerCase() === name.toLowerCase() && String(p.variant || '').trim().toLowerCase() === variant.toLowerCase());
+    if (duplicate) {
+      this.showToast(`⚠️ "${name}${variant ? ' – ' + variant : ''}" already exists (${duplicate.id}). Edit that product instead.`);
+      return;
+    }
+    if (isNew) {
+      product = { id: `PRD-${String(this.nextSequenceNumber('product', ['PRD'], this.data.products || [])).padStart(2, '0')}`, active: true, createdAt: new Date().toISOString() };
+      this.data.products = this.data.products || [];
+      this.data.products.push(product);
+    }
     product.name = name;
     product.variant = variant;
     product.casePack = casePack;
     product.hsn = hsn;
-    product.gst = gst;
+    product.gstRate = gst;
+    delete product.gst; // older records stored the rate here; invoices read gstRate
     product.baseMfgCost = mfgCost;
     product.baseCostPerUnit = mfgCost;
     product.packagingCost = pkgCost;
@@ -21485,7 +21419,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     this.saveData();
     this.closeSkuEditModal();
     this.renderProductsGrid();
-    this.showToast(`✅ SKU "${name}" updated successfully! Standard Selling Rate: ${this.formatCurrency(price)}.`);
+    this.showToast(isNew ? `✅ Product "${name}" added (${product.id}).` : `✅ SKU "${name}" updated successfully! Standard Selling Rate: ${this.formatCurrency(price)}.`);
   }
 
   /* ---------- TRADE MARGIN & ORDER PROFIT CALCULATOR ENGINE ---------- */
@@ -23917,7 +23851,7 @@ Format as plain text line by line like:
       return;
     }
 
-    const num = parseFloat(rawVal.replace(/[^0-9.]/g, '')) || 0;
+    const num = this.parseAmount(rawVal);
     this.updatePaymentAmountWords(num);
     this.checkFatFingerZeroWarning(num);
     this.recalcPaymentLiveBalance();
@@ -23927,6 +23861,20 @@ Format as plain text line by line like:
     const words = this.convertNumberToIndianWords(amount);
     const enEl = document.getElementById('pay-words-en');
     if (enEl) enEl.innerText = words.english;
+  }
+
+  // Reads an amount typed as "1,25,000", "₹ 2500.50" or "1000+250"; returns 0 when it is not a number.
+  parseAmount(value) {
+    const clean = String(value ?? '').replace(/[₹,\s]/g, '');
+    if (!clean) return 0;
+    if (/^[0-9.+\-*\/()]+$/.test(clean) && /[+*\/]|\d-/.test(clean)) {
+      try {
+        const result = Function(`'use strict'; return (${clean})`)();
+        return Number.isFinite(result) ? Math.round(result * 100) / 100 : 0;
+      } catch (_) { return 0; }
+    }
+    const n = Number(clean);
+    return Number.isFinite(n) ? n : 0;
   }
 
   evaluateAmountMath(inputEl) {
@@ -24098,8 +24046,42 @@ Format as plain text line by line like:
     if (toast) toast.classList.remove('show');
   }
 
+  // Deleted orders live in their own list so no total, ledger or report counts them.
+  deletedOrdersList() {
+    return [...(this.data.deletedOrders || []), ...(this.data.orders || []).filter(o => o.isDeleted)];
+  }
+
+  async deleteOrder(orderId) {
+    const index = (this.data.orders || []).findIndex(o => o.id === orderId);
+    if (index === -1) return;
+    const order = this.data.orders[index];
+    const linkedPayments = (this.data.payments || []).filter(p => !p.isDeleted && p.orderRef && this.findOrder(p.orderRef) === order);
+    const confirmed = await this.showModalConfirm({
+      title: 'Delete Order',
+      subtitle: 'Move to Recycle Bin',
+      message: `Move order <b>${tfEscapeHtml(order.invoiceNumber || order.id)}</b> (${tfEscapeHtml(order.retailerName || '')}) to the Recycle Bin?` +
+        (linkedPayments.length ? `<br><br><span class="text-xs text-amber-600 font-bold">${tfEscapeHtml(linkedPayments.length)} payment(s) recorded against it stay in the payments ledger.</span>` : '') +
+        '<br><br><span class="text-xs text-slate-500">You can restore it from the Recycle Bin.</span>',
+      confirmText: 'Move to Recycle Bin',
+      confirmClass: 'bg-rose-600 hover:bg-rose-500',
+      icon: 'trash-2'
+    });
+    if (!confirmed) return;
+    this.data.orders.splice(index, 1);
+    Object.assign(order, { isDeleted: true, deletedAt: new Date().toISOString(), deletedBy: 'Operator' });
+    this.data.deletedOrders = this.data.deletedOrders || [];
+    this.data.deletedOrders.unshift(order);
+    this.saveData();
+    // Leave the deleted order's page and close any tab showing it.
+    (this.openTabs || []).filter(t => t.orderId === order.id || t.refId === order.id || String(t.id || '').includes(order.id)).forEach(t => this.closeWorkspaceTab(t.id));
+    if (this.activeOrderId === order.id || this.activeTab === 'order-detail') { this.activeOrderId = null; this.activeTab = 'orders'; }
+    this.render();
+    this.updateRecycleBinBadge();
+    this.showUndoToast(`🗑️ Order ${order.invoiceNumber || order.id} moved to Recycle Bin.`, () => this.restoreDeletedOrder(order.id));
+  }
+
   updateRecycleBinBadge() {
-    const deletedOrders = (this.data.orders || []).filter(o => o.isDeleted).length;
+    const deletedOrders = this.deletedOrdersList().length;
     const deletedPayments = (this.data.payments || []).filter(p => p.isDeleted).length;
     const total = deletedOrders + deletedPayments;
     const badge = document.getElementById('recycle-bin-badge');
@@ -24123,7 +24105,7 @@ Format as plain text line by line like:
     const listWrap = document.getElementById('recycle-bin-items-list');
     if (!listWrap) return;
 
-    const deletedOrders = (this.data.orders || []).filter(o => o.isDeleted);
+    const deletedOrders = this.deletedOrdersList();
     const deletedPayments = (this.data.payments || []).filter(p => p.isDeleted);
 
     if (deletedOrders.length === 0 && deletedPayments.length === 0) {
@@ -24196,10 +24178,11 @@ Format as plain text line by line like:
 
   restoreDeletedPayment(id) {
     const p = (this.data.payments || []).find(x => x.id === id);
-    if (!p) return;
+    if (!p || !p.isDeleted) return;
     p.isDeleted = false;
     delete p.deletedAt;
     delete p.deletedBy;
+    this.applyPaymentToOrder(p, 1);
     this.saveData();
     this.renderPaymentsLedger();
     this.renderRecycleBinList();
@@ -24227,7 +24210,15 @@ Format as plain text line by line like:
   }
 
   restoreDeletedOrder(id) {
-    const o = (this.data.orders || []).find(x => x.id === id);
+    const binIndex = (this.data.deletedOrders || []).findIndex(x => x.id === id);
+    let o;
+    if (binIndex !== -1) {
+      o = this.data.deletedOrders.splice(binIndex, 1)[0];
+      if ((this.data.orders || []).some(x => x.id === o.id)) { this.showToast(`An order with id ${o.id} already exists.`); this.data.deletedOrders.splice(binIndex, 0, o); return; }
+      this.data.orders.unshift(o);
+    } else {
+      o = (this.data.orders || []).find(x => x.id === id);
+    }
     if (!o) return;
     o.isDeleted = false;
     delete o.deletedAt;
@@ -24249,7 +24240,8 @@ Format as plain text line by line like:
       icon: 'trash-2'
     });
     if (!confirmed) return;
-    this.data.orders = (this.data.orders || []).filter(o => o.id !== id);
+    this.data.orders = (this.data.orders || []).filter(o => !(o.id === id && o.isDeleted));
+    this.data.deletedOrders = (this.data.deletedOrders || []).filter(o => o.id !== id);
     this.saveData();
     this.renderRecycleBinList();
     this.updateRecycleBinBadge();
@@ -24257,7 +24249,7 @@ Format as plain text line by line like:
   }
 
   async emptyRecycleBin() {
-    const count = ((this.data.orders || []).filter(o => o.isDeleted).length) +
+    const count = this.deletedOrdersList().length +
                   ((this.data.payments || []).filter(p => p.isDeleted).length);
     if (count === 0) {
       this.showToast('Recycle Bin is already empty.');
@@ -24273,6 +24265,7 @@ Format as plain text line by line like:
     });
     if (!confirmed) return;
     this.data.orders = (this.data.orders || []).filter(o => !o.isDeleted);
+    this.data.deletedOrders = [];
     this.data.payments = (this.data.payments || []).filter(p => !p.isDeleted);
     this.saveData();
     this.renderRecycleBinList();
@@ -24789,11 +24782,18 @@ Format as plain text line by line like:
     });
   }
 
+  // Payment receipt/disbursement message to the partner's own WhatsApp number (matched by id, else exact name).
+  findPaymentContact(payment) {
+    const name = String(payment.partyName || '').trim().toLowerCase();
+    return (this.data.contacts || []).find(c => (payment.partyId && c.id === payment.partyId) || (name && String(c.name || '').trim().toLowerCase() === name)) || null;
+  }
+
   sendPaymentWhatsApp(payment) {
     if (!payment) return;
+    const contact = this.findPaymentContact(payment);
     this.openWhatsAppDispatchModal({
       partyName: payment.partyName,
-      phone: '+91 98765 43210',
+      phone: (contact && (contact.whatsappPhone || contact.phone)) || '',
       type: 'receipt',
       data: {
         amount: payment.amount,

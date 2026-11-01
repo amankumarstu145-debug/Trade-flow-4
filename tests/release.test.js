@@ -347,3 +347,10 @@ test('validation: Indian formats and number rules reject bad input with a reason
   assert.equal(checks.gstRate('17').level, 'warn');
   assert.equal(checks.text('<script>alert(1)</script>').level, 'error');
 });
+test('ai scan: Anthropic and Gemini requests no longer crash on undefined variables', async () => {
+  for (const [provider, apiKey] of [['anthropic', 'sk-ant-test'], ['gemini', 'AIzaSyTest']]) {
+    // An unreachable base URL makes the provider call fail fast; the route must answer, not throw a ReferenceError.
+    const result = await post('/api/ai/test-scan', { provider, apiKey, baseUrl: 'http://127.0.0.1:9/v1/messages', rawText: 'Invoice INV-1 total 100', mimeType: 'text/plain' });
+    assert(!/is not defined/.test(JSON.stringify(result.data)), provider + ': ' + JSON.stringify(result.data));
+  }
+});

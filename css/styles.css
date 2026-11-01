@@ -2288,3 +2288,26 @@ input.tf-valid, textarea.tf-valid { border-color: #059669 !important; }
 .tf-demo-fill-btn:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }
 .tf-demo-fill-btn[hidden] { display: none; }
 @media print { .tf-demo-fill-btn, .tf-field-msg { display: none !important; } }
+
+/* ---- Phone width: modal headers wrap so actions never overlap the title or window controls ---- */
+@media (max-width: 640px) {
+  .modal-header-with-corner-controls {
+    flex-wrap: wrap !important;
+    row-gap: 8px !important;
+    padding-right: 96px !important;
+  }
+  .modal-header-with-corner-controls > div:last-of-type:not(.modal-window-controls) {
+    flex-basis: 100% !important;
+    margin-right: -80px !important;
+    justify-content: flex-end !important;
+    flex-wrap: wrap !important;
+  }
+  /* The side-by-side document preview needs a wide screen. */
+  #pay-btn-toggle-side-preview,
+  #pay-split-controls { display: none !important; }
+}
+/* Phone: the demo-data button becomes a small tab on the left edge, clear of toasts and form buttons. */
+@media (max-width: 640px) {
+  .tf-demo-fill-btn { left: 0; bottom: 45%; padding: 10px 8px; border-radius: 0 12px 12px 0; font-size: 0; }
+  .tf-demo-fill-btn::first-letter { font-size: 16px; }
+}
