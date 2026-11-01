@@ -298,3 +298,52 @@ test('security: upload content checks recognise each allowed type', () => {
   assert.equal(verifiedExtension(Buffer.from(PNG, 'base64'), '.jpg'), '.png');
   assert.equal(verifiedExtension(Buffer.from('echo hi'), '.bat'), null);
 });
+
+// ---- Form guard: field rules used for live validation and demo data ----
+function loadFormGuard() {
+  const vm = require('vm');
+  const noop = () => {};
+  const element = () => ({ addEventListener: noop, appendChild: noop, setAttribute: noop, classList: { add: noop, remove: noop }, style: {} });
+  const sandbox = { console, URL, Event: class {}, HTMLElement: class {}, HTMLInputElement: class {}, HTMLTextAreaElement: class {}, HTMLSelectElement: class {}, Node: {}, getComputedStyle: () => ({}),
+    document: { readyState: 'complete', addEventListener: noop, getElementById: () => null, createElement: element, querySelectorAll: () => [], body: element() } };
+  sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'js', 'form-guard.js'), 'utf8'), sandbox);
+  return sandbox.TFFormGuard;
+}
+test('validation: GSTIN check digit, state code and PAN structure are verified', () => {
+  const { checks, gstinCheckChar, makeIdentity } = loadFormGuard();
+  assert.equal(checks.gstin('27AAPFU0939F1ZV').level, 'ok');
+  assert.equal(checks.gstin('27AAPFU0939F1ZW').level, 'error', 'wrong check digit');
+  assert.equal(checks.gstin('25AAPFU0939F1ZV').level, 'error', 'not a state code');
+  assert.equal(checks.gstin('27AAPFU0939F1Z').level, 'error', 'too short');
+  for (let i = 0; i < 200; i++) {
+    const id = makeIdentity();
+    assert.equal(checks.gstin(id.gstin).level, 'ok', id.gstin);
+    assert.equal(id.gstin.slice(2, 12), id.pan);
+    assert.equal(checks.pan(id.pan).level, 'ok', id.pan);
+    assert.equal(checks.ifsc(id.ifsc).level, 'ok', id.ifsc);
+    assert.equal(checks.pincode(id.pincode).level, 'ok', id.pincode);
+    assert.equal(checks.phone(id.phone, {}).level, 'ok', id.phone);
+    assert.equal(checks.account(id.account).level, 'ok', id.account);
+  }
+  assert.equal(gstinCheckChar('27AAPFU0939F1Z'), 'V');
+});
+test('validation: Indian formats and number rules reject bad input with a reason', () => {
+  const { checks } = loadFormGuard();
+  const bad = [['pan', 'ABCDE1234F'], ['ifsc', 'HDFC1234567'], ['pincode', '012345'], ['email', 'abc@'], ['upi', 'shop@'], ['fssai', '1234'], ['hsn', '12345'],
+    ['stateCode', '25'], ['account', '12ab'], ['utr', 'SHORT'], ['vehicle', 'MH12'], ['percent', '150'], ['quantity', '2.5'], ['days', '-1']];
+  for (const [rule, value] of bad) {
+    const result = checks[rule](value, {});
+    assert.equal(result.level, 'error', `${rule} should reject ${value}`);
+    assert(result.msg.length > 10, `${rule} explains why`);
+  }
+  assert.equal(checks.phone('12345', {}).level, 'error');
+  assert.equal(checks.phone('+91 98765 43210', {}).level, 'ok');
+  assert.equal(checks.phone('011-28345678', { landline: true }).level, 'ok');
+  assert.equal(checks.money('-5', {}).level, 'error');
+  assert.equal(checks.money('1,25,000.50', {}).level, 'ok');
+  assert.equal(checks.money('1000+250', { allowExpression: true }).level, 'warn');
+  assert.equal(checks.gstRate('18').level, 'ok');
+  assert.equal(checks.gstRate('17').level, 'warn');
+  assert.equal(checks.text('<script>alert(1)</script>').level, 'error');
+});

@@ -61,12 +61,12 @@
             🌿
           </div>
           <div class="min-w-0">
-            <span id="sidebar-brand-name" class="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white block truncate max-w-[110px] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Magic Roots</span>
+            <span id="sidebar-brand-name" class="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white block truncate max-w-[110px] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" data-tf-brand>Company</span>
             <span class="text-[10px] font-mono-num font-semibold text-emerald-600 dark:text-emerald-400 block truncate">Trading Hub • v3.0</span>
           </div>
         </button>
         <div class="flex items-center gap-1.5 shrink-0">
-          <button id="sidebar-company-hub-btn" type="button" onclick="app.openCompanyExecutiveHub()" class="btn-tactile w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-200/80 dark:border-slate-800 transition-all cursor-pointer group" title="Magic Roots Executive Hub • Company Profile & Financials">
+          <button id="sidebar-company-hub-btn" type="button" onclick="app.openCompanyExecutiveHub()" class="btn-tactile w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-200/80 dark:border-slate-800 transition-all cursor-pointer group" title="Company Executive Hub • Company Profile & Financials">
             <i data-lucide="settings" class="w-4 h-4 transition-transform group-hover:rotate-45 duration-300"></i>
           </button>
           <span class="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" title="System Active & Ready"></span>
@@ -157,7 +157,7 @@
                 <span>Buyers & Retailers</span>
               </span>
             </button>
-            <button data-sidebar-tab="manufacturers" class="flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/60 transition-all duration-150 hover:-translate-y-0.5 group" title="Pickle Processing Units & Factories">
+            <button data-sidebar-tab="manufacturers" class="flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/60 transition-all duration-150 hover:-translate-y-0.5 group" title="Manufacturers & Processing Units">
               <span class="flex items-center gap-2.5">
                 <i data-lucide="factory" class="w-4 h-4 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform"></i>
                 <span>Manufacturers (Mfg)</span>
@@ -188,10 +188,10 @@
         <div>
           <span class="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1.5">Masters & Catalog</span>
           <div class="space-y-1">
-            <button data-sidebar-tab="products" class="flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/60 transition-all duration-150 hover:-translate-y-0.5 group" title="Pickle Master SKU Catalog & Pricing">
+            <button data-sidebar-tab="products" class="flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/60 transition-all duration-150 hover:-translate-y-0.5 group" title="Product SKU Catalog & Pricing">
               <span class="flex items-center gap-2.5">
                 <i data-lucide="tag" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform"></i>
-                <span>Pickle Products Master</span>
+                <span>Products Master</span>
               </span>
             </button>
           </div>
@@ -305,7 +305,7 @@
         </button>
 
         <!-- Operator Mode vs Owner Mode (Sethji Mode) Toggle -->
-        <button id="topbar-role-mode-btn" onclick="app.toggleUserRoleMode()" class="tf-topbar-pill btn-tactile bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30 shadow-2xs" title="Toggle Operator Mode (Floor Staff) vs Owner Mode (Sethji - Full Margin Visibility)">
+        <button id="topbar-role-mode-btn" onclick="app.toggleUserRoleMode()" class="tf-topbar-pill btn-tactile bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30 shadow-2xs" title="Toggle Operator Mode (Floor Staff) vs Owner Mode (Full Margin Visibility)">
           <i id="topbar-role-icon" data-lucide="shield" class="w-3.5 h-3.5 text-amber-500"></i>
           <span id="topbar-role-label">Operator Mode</span>
         </button>
@@ -1099,7 +1099,7 @@
             <select id="payments-category-filter" onchange="app.setPaymentCategoryFilter(this.value)" class="p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 font-medium outline-none text-xs">
               <option value="all">All Counterparties</option>
               <option value="retailer">Buyers / Retailers</option>
-              <option value="manufacturer">Pickle Factories (Mfg)</option>
+              <option value="manufacturer">Manufacturers</option>
               <option value="packaging">Packaging Vendors</option>
               <option value="transporter">Transporters</option>
               <option value="other">Other Parties</option>
@@ -1435,7 +1435,7 @@
               <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <span class="w-2 h-2 rounded-full bg-blue-500"></span> Node 3: Primary Manufacturer (Factory)
               </span>
-              <span id="drawer-mfg-name" class="text-xs font-bold text-slate-900 dark:text-white">Pickle Factory</span>
+              <span id="drawer-mfg-name" class="text-xs font-bold text-slate-900 dark:text-white">Manufacturer</span>
             </div>
             <div class="grid grid-cols-3 gap-3 pt-2 text-xs">
               <div>
@@ -1530,7 +1530,7 @@
                 <span id="drawer-float-pkg-need" class="font-mono-num font-medium text-rose-600 dark:text-rose-400">-₹0</span>
               </div>
               <div class="flex justify-between text-slate-600 dark:text-slate-300">
-                <span>Pickle Factory Advance Demanded:</span>
+                <span>Manufacturer Advance Demanded:</span>
                 <span id="drawer-float-mfg-need" class="font-mono-num font-medium text-rose-600 dark:text-rose-400">-₹0</span>
               </div>
               <div class="flex justify-between text-slate-600 dark:text-slate-300">
@@ -1840,7 +1840,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
             <div>
-              <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Pickle Factory (Mfg)</label>
+              <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Manufacturer</label>
               <select id="new-order-mfg" class="w-full p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
                 <!-- Populated dynamically -->
               </select>
@@ -1878,7 +1878,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
           <div class="p-3.5 sm:px-5 bg-slate-100/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-2">
               <i data-lucide="layers" class="w-4 h-4 text-amber-500"></i>
-              <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Multi-SKU Pickle Variety & Case-Pack Breakdown</span>
+              <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Multi-SKU Product & Case-Pack Breakdown</span>
               <span id="order-item-count-badge" class="px-2 py-0.5 text-[11px] font-black rounded-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200">0 SKUs</span>
             </div>
             <div class="flex items-center gap-2">
@@ -1970,7 +1970,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
               <thead>
                 <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider text-[11px]">
                   <th class="py-2.5 px-3 w-10 text-center">#</th>
-                  <th class="py-2.5 px-3 min-w-[200px]">Pickle Variety / Flavour</th>
+                  <th class="py-2.5 px-3 min-w-[200px]">Product / Variant</th>
                   <th class="py-2.5 px-3 w-32">Pack Size</th>
                   <th class="py-2.5 px-3 w-24 text-right">Cases</th>
                   <th class="py-2.5 px-3 w-28 text-center">Pack Math</th>
@@ -2099,7 +2099,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
           </span>
           <div class="min-w-0">
             <div class="flex items-center gap-2">
-              <h3 id="factory-po-title" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">Pickle Factory Production PO & Job Work Slip</h3>
+              <h3 id="factory-po-title" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">Manufacturer Production PO & Job Work Slip</h3>
               <span id="factory-po-badge" class="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded bg-emerald-400 text-slate-950">Rule 55 Challan</span>
             </div>
             <p id="factory-po-subtitle" class="text-[11px] text-slate-500 dark:text-slate-400">Official manufacturing batch requisition for Dhirajbhai (Shri Saurashtra Agro).</p>
@@ -2234,7 +2234,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
             <div class="flex items-center gap-2 flex-wrap">
               <h3 id="edit-contact-modal-title" class="text-base font-extrabold text-slate-900 dark:text-white truncate">Company Profile Dossier</h3>
               <span id="edit-contact-role-badge" class="px-2.5 py-0.5 text-xs font-bold rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                Pickle Factory
+                Manufacturer
               </span>
               <span class="text-xs text-slate-400 font-mono-num">ID: <strong id="edit-contact-id-display" class="text-slate-700 dark:text-slate-300">CNT-01</strong></span>
             </div>
@@ -2416,7 +2416,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
               <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Ecosystem Role *</label>
               <select id="edit-contact-role-select" name="role" onchange="app.onContactRoleSelectChange(this.value)" class="w-full p-2.5 text-xs font-bold rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 shadow-2xs focus:ring-1 focus:ring-amber-500">
                 <option value="retailer">Retailer / Buyer Account</option>
-                <option value="manufacturer">Pickle Factory (Contract Mfg)</option>
+                <option value="manufacturer">Manufacturer (Contract Mfg)</option>
                 <option value="packaging">Packaging &amp; Labels Supplier</option>
                 <option value="transporter">Freight &amp; Logistics Partner</option>
                 <option value="marketeer">Sales Marketeer (Trade Broker)</option>
@@ -3028,7 +3028,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
               </div>
               <select id="pay-select-category" onchange="app.onPaymentCategoryChanged(this.value)" class="w-full p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-medium outline-none transition-all">
                 <option value="retailer">Buyer / Retailer</option>
-                <option value="manufacturer">Pickle Factory (Mfg)</option>
+                <option value="manufacturer">Manufacturer</option>
                 <option value="packaging">Packaging Vendor</option>
                 <option value="transporter">Transporter</option>
                 <option value="other">Other Party</option>
@@ -3508,7 +3508,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
             <div>
               <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Document Category / Classification *</label>
               <select id="review-category" name="category" onchange="app.handleReviewCategoryChange(this.value)" required class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold text-slate-900 dark:text-white">
-                <option value="mfg_invoice">Pickle Factory Job-Work Tax Invoice (Manufacturer)</option>
+                <option value="mfg_invoice">Manufacturer Job-Work Tax Invoice</option>
                 <option value="pkg_invoice">Packaging Materials & Jars Invoice (Vendor)</option>
                 <option value="transport_bilty">Logistics Consignment LR / Bilty & Freight Bill</option>
                 <option value="retailer_invoice">Buyer Official Tax Invoice / PO Requisition</option>
@@ -3549,7 +3549,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
             <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2.5">
               <div class="flex items-center justify-between">
                 <span class="font-bold uppercase tracking-wider text-slate-500 text-[10px]">Financial & Tax Reconcile</span>
-                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">12% GST Pickles / Pack</span>
+                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">GST as per product rate</span>
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div>
@@ -3696,7 +3696,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
             <i data-lucide="tag" class="w-5 h-5"></i>
           </span>
           <div>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white">Edit Pickle SKU &amp; Costing Recipe</h3>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Edit Product SKU &amp; Costing</h3>
             <p class="text-xs text-slate-500 dark:text-slate-400">Update factory production costs, jar packaging, selling rates, and margins</p>
           </div>
         </div>
@@ -3714,7 +3714,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Pickle Variety / Product Name *</label>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Product Name *</label>
             <input id="sku-edit-name" name="name" type="text" required class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold text-slate-900 dark:text-white">
           </div>
           <div>
@@ -3841,15 +3841,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
               <span>Quick Product Presets:</span>
             </span>
             <div class="flex items-center gap-1.5 flex-wrap">
-              <button onclick="app.loadSimplePreset('coldcream')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
-                🧴 Cold Cream (15ML)
-              </button>
-              <button onclick="app.loadSimplePreset('pickle500g')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
-                🫙 Pickle Jar (500g - 24/cs)
-              </button>
-              <button onclick="app.loadSimplePreset('pickle1kg')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
-                🫙 Pickle Jar (1KG - 8/cs)
-              </button>
+              <span id="calc-simple-presets" class="contents"></span>
               <button onclick="app.loadSimplePreset('blank')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 border border-slate-200 dark:border-slate-700">
                 ✨ Custom Blank
               </button>
@@ -3870,10 +3862,6 @@ Carrot 2case, Red chilli 1case..."></textarea>
               <div class="w-20 shrink-0">
                 <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Pack Size</label>
                 <select id="calc-simple-pack-size" class="w-full p-2 font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs" onchange="app.handleSimplePackSizeChange(this.value)">
-                  <option value="15ml">15ML</option>
-                  <option value="500g">500g</option>
-                  <option value="1kg">1KG</option>
-                  <option value="5kg">5KG</option>
                   <option value="custom">Custom</option>
                 </select>
               </div>
@@ -3923,7 +3911,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <input id="calc-simple-label-cost" type="number" step="0.05" min="0" value="0.00" class="w-full p-2 font-mono-num font-bold text-indigo-700 dark:text-indigo-300 bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs text-center" placeholder="0.00" oninput="app.handleSimpleInput('labelCost', this.value)">
               </div>
 
-              <!-- 9. Magic Roots Margin % (on Landed Cost) -->
+              <!-- 9. Our Margin % (on Landed Cost) -->
               <div class="w-16 shrink-0">
                 <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1 text-center" title="Trader profit margin on Landed Cost">Our%</label>
                 <input id="calc-simple-profit-pct" type="number" step="0.5" min="0" class="w-full p-2 font-mono-num font-bold text-emerald-700 dark:text-emerald-300 bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 rounded-lg text-xs text-center" oninput="app.handleSimpleInput('profitPct', this.value)">
@@ -3966,15 +3954,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
 
             <!-- Quick Add SKU Buttons -->
             <div class="flex items-center gap-1.5 flex-wrap">
-              <button onclick="app.addAdvancedProduct('pickle500g')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700">
-                + Pickle 500g (24/cs)
-              </button>
-              <button onclick="app.addAdvancedProduct('pickle1kg')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700">
-                + Pickle 1KG (8/cs)
-              </button>
-              <button onclick="app.addAdvancedProduct('coldcream')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700">
-                + Cold Cream (15ML)
-              </button>
+              <span id="calc-adv-presets" class="contents"></span>
               <button onclick="app.addAdvancedProduct('custom')" class="btn-tactile px-3 py-1 text-[11px] font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs flex items-center gap-1">
                 <i data-lucide="plus" class="w-3 h-3"></i>
                 <span>Add Row</span>
@@ -4422,7 +4402,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
               <div>
                 <div class="flex items-center gap-2">
                   <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    <span>🌿 Magic Roots</span>
+                    <span>🌿 <span data-tf-brand>Our Brand</span></span>
                     <span class="text-slate-500 dark:text-slate-400 font-normal">| Commercial Analysis &amp; P&amp;L</span>
                   </h3>
                   <span id="drilldown-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">Live Data</span>
@@ -4485,7 +4465,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
               <h3 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 tracking-tight">
                 <span>WhatsApp Quick Messenger</span>
               </h3>
-              <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">Magic Roots</span>
+              <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30" data-tf-brand>Our Brand</span>
             </div>
             <p class="text-xs text-slate-500 dark:text-slate-400">Live contact phone directory, instant custom greetings, 1-click reusables, and WhatsApp dispatch</p>
           </div>
@@ -6452,6 +6432,38 @@ Carrot 2case, Red chilli 1case..."></textarea>
                     <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">UPI ID (VPA)</label>
                     <input id="settings-prof-upi" type="text" class="w-full text-xs p-2.5 font-mono bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
                   </div>
+                  <div>
+                    <label for="settings-prof-udyam" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">MSME / Udyam Number</label>
+                    <input id="settings-prof-udyam" type="text" placeholder="UDYAM-XX-00-0000000" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-prof-iec" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Import Export Code (IEC)</label>
+                    <input id="settings-prof-iec" type="text" placeholder="10 characters" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-prof-cin" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">CIN / LLPIN</label>
+                    <input id="settings-prof-cin" type="text" placeholder="21 characters" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-prof-trademarks" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Registered Trademarks</label>
+                    <input id="settings-prof-trademarks" type="text" placeholder="e.g. Class 29 – Brand name" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-prof-bank2-name" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Secondary Bank Name</label>
+                    <input id="settings-prof-bank2-name" type="text"  class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-prof-bank2-acc" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Secondary Account Number</label>
+                    <input id="settings-prof-bank2-acc" type="text" inputmode="numeric" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-prof-bank2-ifsc" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Secondary IFSC</label>
+                    <input id="settings-prof-bank2-ifsc" type="text"  class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-prof-bank2-branch" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Secondary Bank Branch</label>
+                    <input id="settings-prof-bank2-branch" type="text"  class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
                 </div>
               </div>
 
@@ -6459,6 +6471,62 @@ Carrot 2case, Red chilli 1case..."></textarea>
               <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-2">
                 <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">4. Default Invoice Notes &amp; Terms</span>
                 <textarea id="settings-prof-inv-notes" rows="3" class="w-full text-xs p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg font-mono text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"></textarea>
+              </div>
+
+              <!-- Section 5: Business Defaults (used wherever an order, product or partner has no value of its own) -->
+              <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
+                <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">5. Business Defaults</span>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Used when an order, product or partner has no value of its own. Leave blank to use the value shown as a hint.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div>
+                    <label for="settings-def-gst-rate" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Default GST Rate (%)</label>
+                    <input id="settings-def-gst-rate" type="number" min="0" max="100" step="0.01" placeholder="12" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-hsn" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Default HSN Code</label>
+                    <input id="settings-def-hsn" type="text" placeholder="e.g. 20019000" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-payment-terms" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Default Payment Terms</label>
+                    <input id="settings-def-payment-terms" type="text" placeholder="Net 15 Days" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-commission" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Default Marketeer Commission (%)</label>
+                    <input id="settings-def-commission" type="number" min="0" max="100" step="0.01" placeholder="3" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-mfg-advance" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Manufacturer Advance Required (%)</label>
+                    <input id="settings-def-mfg-advance" type="number" min="0" max="100" step="1" placeholder="30" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-booking-advance" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Customer Booking Advance (%)</label>
+                    <input id="settings-def-booking-advance" type="number" min="0" max="100" step="1" placeholder="30" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-jurisdiction" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Legal Jurisdiction (city)</label>
+                    <input id="settings-def-jurisdiction" type="text" placeholder="City for &quot;Subject to … Jurisdiction&quot;" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-freight-terms" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Default Freight Terms</label>
+                    <input id="settings-def-freight-terms" type="text" placeholder="e.g. Ex-Factory / Freight paid by buyer" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-calc-transport" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Calculator: Freight (%)</label>
+                    <input id="settings-def-calc-transport" type="number" min="0" max="100" step="0.1" placeholder="5" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-calc-profit" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Calculator: Our Margin (%)</label>
+                    <input id="settings-def-calc-profit" type="number" min="0" max="100" step="0.1" placeholder="20" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-calc-marketeer" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Calculator: Marketeer Cut (%)</label>
+                    <input id="settings-def-calc-marketeer" type="number" min="0" max="100" step="0.1" placeholder="30" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                </div>
+                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <input id="settings-def-show-demo" type="checkbox" class="rounded border-slate-300 text-indigo-600">
+                  <span>Show the "Fill demo data" button (for testing; Alt+Shift+D)</span>
+                </label>
               </div>
 
               <div class="flex items-center justify-end gap-2 pt-2">
@@ -6779,7 +6847,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                   <thead class="bg-slate-100 dark:bg-slate-800/80 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
                     <tr>
                       <th class="py-2.5 px-3">System Workspace Area</th>
-                      <th class="py-2.5 px-3 text-center">👑 Owner Mode (Sethji)</th>
+                      <th class="py-2.5 px-3 text-center">👑 Owner Mode</th>
                       <th class="py-2.5 px-3 text-center">👤 Operator Mode</th>
                     </tr>
                   </thead>
@@ -6843,7 +6911,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
           <div class="min-w-0">
             <div class="flex items-center gap-2">
               <h3 id="hub-brand-header-title" class="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight truncate">
-                Magic Roots Enterprises
+                <span data-tf-brand>Your Company</span>
               </h3>
               <span class="px-2 py-0.5 rounded-full text-[9.5px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
                 Executive Hub
@@ -6924,7 +6992,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-gstin').innerText, 'GSTIN')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
               <div id="hub-view-gstin" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wide">—</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">State Code: 27 (Maharashtra)</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">State Code: <span data-tf-state>—</span></div>
             </div>
 
             <!-- PAN -->
@@ -7230,12 +7298,12 @@ Carrot 2case, Red chilli 1case..."></textarea>
             
             <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 shadow-2xs">
               <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">Legal Jurisdiction</span>
-              <p id="hub-jurisdiction-text" class="text-xs text-slate-700 dark:text-slate-300 font-medium">Subject to Mumbai Jurisdiction. Goods once sold will not be taken back or exchanged without prior authorization.</p>
+              <p id="hub-jurisdiction-text" class="text-xs text-slate-700 dark:text-slate-300 font-medium">—</p>
             </div>
 
             <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 shadow-2xs">
               <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">Commercial Directives</span>
-              <p id="hub-notes-text" class="text-xs text-slate-700 dark:text-slate-300 font-medium">Authentic slow-cured traditional pickles crafted with cold-pressed mustard oil. Verified batches with batch coding.</p>
+              <p id="hub-notes-text" class="text-xs text-slate-700 dark:text-slate-300 font-medium">—</p>
             </div>
           </div>
 
@@ -7262,7 +7330,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
 
       <!-- Modal Footer -->
       <div class="p-3 px-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 flex items-center justify-between shrink-0">
-        <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Magic Roots Executive Hub • Version 3.0</span>
+        <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium"><span data-tf-brand>Company</span> Executive Hub • Version 3.0</span>
         <button type="button" onclick="app.closeCompanyExecutiveHubModal()" class="btn-tactile px-4 py-1.5 rounded-lg text-xs font-bold text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer">
           Close Hub
         </button>
@@ -7330,7 +7398,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
             
             <div class="bg-white/80 dark:bg-slate-900/80 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
               <span class="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">Google Cloud Sheets Sync</span>
-              <span class="font-bold text-emerald-700 dark:text-emerald-400 truncate block">Magic Roots Cloud Master</span>
+              <span class="font-bold text-emerald-700 dark:text-emerald-400 truncate block"><span data-tf-brand>Company</span> Cloud Master</span>
               <span class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 block">Automated Polling Active</span>
             </div>
           </div>
@@ -7491,6 +7559,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
   <script src="js/components.js"></script>
   <script src="js/app.js"></script>
   <script src="js/smart-fill.js"></script>
+  <script src="js/form-guard.js"></script>
 </body>
 </html>
 

@@ -90,6 +90,25 @@ function browserPath() {
     assert.deepEqual(finance.missing, []);
     assert.equal(finance.noUpi, '', 'no UPI QR without a UPI ID in the profile');
     passed.push('Per-line GST, per-product costs, amount in words, button handlers and UPI guard');
+    const demo = await page.evaluate(async () => {
+      document.querySelectorAll('[id$="-modal"]:not(.hidden)').forEach(m => m.classList.add('hidden'));
+      app.openEditContactModal();
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const modal = document.getElementById('contact-edit-modal');
+      const before = app.data.contacts.length;
+      const gstin = document.getElementById('edit-contact-gstin');
+      gstin.value = '27AAPFU0939F1ZW';
+      gstin.dispatchEvent(new Event('input', { bubbles: true }));
+      const liveMessage = gstin.__tfMsg ? gstin.__tfMsg.textContent : '';
+      const fill = await TFFormGuard.fillDemo(modal);
+      const nativeInvalid = [...modal.querySelectorAll('input, select, textarea')].filter(el => el.offsetParent && el.willValidate && !el.checkValidity()).length;
+      [...modal.querySelectorAll('button')].find(b => b.offsetParent && /save profile/i.test(b.textContent)).click();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return { liveMessage, ...fill, nativeInvalid, added: app.data.contacts.length - before, button: !!document.getElementById('tf-demo-fill-btn') };
+    });
+    assert.match(demo.liveMessage, /check digit/i, 'live GSTIN message');
+    assert.equal(demo.failures, 0); assert.equal(demo.nativeInvalid, 0); assert.equal(demo.added, 1); assert(demo.button);
+    passed.push('Live field validation and demo fill: a demo-filled partner form saves');
     await page.evaluate(() => app.openInvoiceStudioModal('ORD-TEST'));
     passed.push('Invoice studio opens for the test order');
     await assertCleanTemplates();

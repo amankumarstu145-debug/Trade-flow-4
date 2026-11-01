@@ -2269,3 +2269,22 @@ body.operator-mode .owner-mask {
 #orders-master-table tbody tr:hover {
   border-left-color: #f59e0b;
 }
+
+/* ---- Live field validation (js/form-guard.js) ---- */
+input.tf-invalid, textarea.tf-invalid, select.tf-invalid { border-color: #e11d48 !important; box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.18) !important; }
+input.tf-warn, textarea.tf-warn, select.tf-warn { border-color: #d97706 !important; box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.16) !important; }
+input.tf-valid, textarea.tf-valid { border-color: #059669 !important; }
+.tf-field-msg { font-size: 11px; line-height: 1.35; margin-top: 3px; min-height: 0; }
+.tf-field-msg:empty { display: none; }
+.tf-msg-error { color: #be123c; }
+.tf-msg-warn { color: #b45309; }
+.tf-msg-ok { color: #047857; }
+.dark .tf-msg-error { color: #fb7185; }
+.dark .tf-msg-warn { color: #fbbf24; }
+.dark .tf-msg-ok { color: #34d399; }
+.tf-demo-fill-btn { position: fixed; left: 16px; bottom: 16px; z-index: 2147483000; padding: 8px 12px; border-radius: 999px; font: 700 12px/1 system-ui, sans-serif;
+  background: #4f46e5; color: #fff; border: 1px solid rgba(255, 255, 255, 0.25); box-shadow: 0 6px 18px rgba(15, 23, 42, 0.25); cursor: pointer; }
+.tf-demo-fill-btn:hover { background: #4338ca; }
+.tf-demo-fill-btn:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }
+.tf-demo-fill-btn[hidden] { display: none; }
+@media print { .tf-demo-fill-btn, .tf-field-msg { display: none !important; } }

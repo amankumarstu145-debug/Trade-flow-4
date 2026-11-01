@@ -106,6 +106,12 @@ Stop both servers, back up your existing TradeFlow folder, then copy its **entir
 
 All runtime data stays under ignored `data/`. The committed seed is in `examples/demo-data.js`; application saves update the runtime mirror, leaving the committed example unchanged.
 
+## Business defaults, validation and demo data
+
+- **Nothing business-specific is built in.** Company identity, bank details, GST rate, HSN, payment terms, commission, advance percentages, jurisdiction, freight terms and calculator percentages come from **Settings → Business Profile** (section 5, *Business Defaults*). Empty values show "Not set" instead of placeholder data, and a tax invoice cannot be issued until the seller GSTIN is set.
+- **Every input is checked as you type** (`js/form-guard.js`): GSTIN (including its check digit and state), PAN, IFSC, CIN, FSSAI, Udyam, UPI ID, phone, email, PIN code, bank account (and its confirmation), UTR, HSN, vehicle and e-way bill numbers, amounts, percentages, quantities and dates. Messages appear under the field; Save/Create buttons stay blocked while a form has errors.
+- **Fill demo data:** the *🧪 Fill demo data* button (or Alt+Shift+D) fills the open form with valid, consistent test data, such as a GSTIN that matches its PAN and state. Turn the button off in Business Defaults.
+
 ## Storage and project layout
 
 ```text
