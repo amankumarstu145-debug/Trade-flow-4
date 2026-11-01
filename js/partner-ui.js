@@ -209,7 +209,7 @@
   const statusOf = o => STATUS[o.status] || [String(o.status || 'Open').replace(/_/g, ' '), 'info', 1];
 
   /* ------------------------------------------------------------------ UI state */
-  const state = { tab: {}, editing: null, overlay: null, query: {}, filter: {}, prevQuery: '', draftPerson: null };
+  const state = { tab: {}, editing: null, overlay: null, query: {}, filter: {}, prevQuery: '', draftPerson: null, undo: null };
 
   /* ------------------------------------------------------------------ directory */
   function renderDirectory(app, role) {
@@ -472,6 +472,9 @@
     }).join('');
   }
   function docsFor(app, o) { return (app.data.documents || []).filter(d => d.orderId === o.id && !d.isDeleted); }
+  // The saved invoice file for an order, as seen from this partner (buyer invoice, factory bill or packaging bill).
+  const INVOICE_CATEGORY = { retailer: ['retailer_invoice', 'tax_invoice'], manufacturer: ['mfg_invoice'], packaging: ['pkg_invoice'] };
+  function invoiceDocsFor(app, c, o) { const cats = INVOICE_CATEGORY[c.role] || []; return docsFor(app, o).filter(d => cats.includes(d.category)); }
   function paymentsFor(app, c, o) { return (app.data.payments || []).filter(p => !p.isDeleted && (p.orderRef === o.id || p.orderId === o.id)); }
   function productsOf(o) { return (o.items || []).map(i => `${i.name || i.shortName || 'Item'}${i.variant ? ' ' + String(i.variant).replace(/ PET Jar$/, '') : ''} × ${num(i.cases)}`).join(' · '); }
   const casesOf = o => (o.items || []).reduce((t, i) => t + num(i.cases), 0);
@@ -491,7 +494,9 @@
       ['Terms', c.paymentTerms || (c.commissionRate ? c.commissionRate + '%' : '—'), c.role === 'marketeer' ? 'commission terms' : 'payment terms', '']
     ];
     const current = s.open;
+    const undo = state.undo && state.undo.contactId === c.id ? state.undo : null;
     return `
+      ${undo ? `<div class="pu-attn pu-undo" role="status"><b>${esc(undo.text)}</b><span>A copy of the file stays on disk.</span><button type="button" class="pu-btn pu-btn-sm" onclick="TFPartnerUI.undoDelete()">Undo</button><button type="button" class="pu-icon-btn" aria-label="Dismiss" onclick="TFPartnerUI.dismissUndo()">✕</button></div>` : ''}
       <div class="pu-kpis pu-kpis-5">${kpis.map(t => `<div class="pu-kpi"><span class="pu-label">${esc(t[0])}</span><span class="pu-kpi-val ${t[3]}">${esc(t[1])}</span><span class="pu-hint">${esc(t[2])}</span></div>`).join('')}</div>
       <div class="pu-dir-head"><h2 class="pu-h2">Current orders <span class="pu-hint">· ${current.length} open</span></h2>
         <div class="pu-row-wrap">
@@ -509,7 +514,7 @@
             <div class="pu-steps">${steps(o)}</div>
             <span class="pu-small">${esc(productsOf(o))}</span>
             <div class="pu-tiles"><div class="pu-tile"><span class="pu-label">${esc(m.totalLabel)}</span><b>${esc(inr(m.total))}</b></div><div class="pu-tile"><span class="pu-label">${esc(second[0])}</span><b class="${m.paid != null ? 'pu-green' : ''}">${esc(second[1])}</b></div><div class="pu-tile ${overdue ? 'is-bad' : ''}"><span class="pu-label">${esc(third[0])}</span><b>${esc(third[1])}</b></div></div>
-            <div class="pu-row-wrap"><button type="button" class="pu-btn pu-primary pu-btn-sm" onclick="app.openOrderDetailPage(${jsArg(o.id)})">Open order</button><button type="button" class="pu-btn pu-btn-sm" onclick="TFPartnerUI.folder(${id}, ${jsArg(o.id)})">Folder · ${docs.length} ${docs.length === 1 ? 'file' : 'files'}</button>${c.role === 'retailer' ? `<button type="button" class="pu-btn pu-btn-sm" onclick="app.openInvoiceModal(${jsArg(o.id)})">View invoice</button>` : ''}</div>
+            <div class="pu-row-wrap"><button type="button" class="pu-btn pu-primary pu-btn-sm" onclick="app.openOrderDetailPage(${jsArg(o.id)})">Open order</button><button type="button" class="pu-btn pu-btn-sm" onclick="TFPartnerUI.folder(${id}, ${jsArg(o.id)})">Folder · ${docs.length} ${docs.length === 1 ? 'file' : 'files'}</button>${c.role === 'retailer' ? `<button type="button" class="pu-btn pu-btn-sm" onclick="app.openInvoiceModal(${jsArg(o.id)})">View invoice</button>` : ''}${invoiceDocsFor(app, c, o).length ? `<button type="button" class="pu-btn pu-btn-sm pu-danger" onclick="TFPartnerUI.deleteInvoice(${id}, ${jsArg(o.id)})">Delete invoice</button>` : ''}</div>
           </div></article>`;
       }).join('')}</div>` : '<div class="pu-empty">No open orders right now.</div>'}
       <section class="pu-box">
@@ -521,7 +526,7 @@
               <td class="pu-small">${esc(productsOf(o))}</td><td class="pu-num">${casesOf(o)}</td><td class="pu-num"><b>${esc(inr(m.total))}</b></td>
               <td><span class="pu-status is-ok">✓ Paid in full</span><div class="pu-hint">${pays.length ? pays.length + (pays.length === 1 ? ' payment' : ' payments') + (last ? ' · last ' + esc(shortDate(last)) : '') : 'payments recorded on the order'}</div></td>
               <td>${esc(longDate(o.deliveredDate || o.settledDate || o.dueDate))}</td>
-              <td class="pu-num"><div class="pu-row-end">${c.role === 'retailer' ? `<button type="button" class="pu-btn pu-btn-sm" onclick="app.openInvoiceModal(${jsArg(o.id)})">View invoice</button>` : ''}<button type="button" class="pu-btn pu-btn-sm" onclick="TFPartnerUI.folder(${id}, ${jsArg(o.id)})">Folder · ${docs.length}</button></div></td></tr>`; }).join('')}
+              <td class="pu-num"><div class="pu-row-end">${c.role === 'retailer' ? `<button type="button" class="pu-btn pu-btn-sm" onclick="app.openInvoiceModal(${jsArg(o.id)})">View invoice</button>` : ''}<button type="button" class="pu-btn pu-btn-sm" onclick="TFPartnerUI.folder(${id}, ${jsArg(o.id)})">Folder · ${docs.length}</button>${invoiceDocsFor(app, c, o).length ? `<button type="button" class="pu-btn pu-btn-sm pu-danger" title="Delete the saved invoice file" onclick="TFPartnerUI.deleteInvoice(${id}, ${jsArg(o.id)})">Delete invoice</button>` : ''}</div></td></tr>`; }).join('')}
         </tbody></table></div>` : `<div class="pu-empty">${prevQ ? 'No previous orders match this search.' : 'No completed orders yet. Orders move here once they are delivered and fully paid.'}</div>`}
       </section>`;
   }
@@ -541,7 +546,7 @@
     return `<div class="pu-overlay" onclick="if (event.target === this) ${close}"><div class="pu-dialog" role="dialog" aria-modal="true" aria-label="Order folder">
       <div class="pu-box-head"><div class="pu-grow"><span class="pu-hint">Order folder · ${docs.length} ${docs.length === 1 ? 'file' : 'files'}</span><h2>${esc(o.invoiceNumber || o.id)}</h2></div><button type="button" class="pu-icon-btn" aria-label="Close" onclick="${close}">✕</button></div>
       <div class="pu-pad pu-stack">
-        ${docs.length ? docs.map(d => `<div class="pu-file"><span class="pu-file-ext">${esc((String(d.fileName || '').split('.').pop() || 'FILE').slice(0, 4).toUpperCase())}</span><div class="pu-grow"><b>${esc(label(d))}</b><span class="pu-hint">${esc(String(d.category || '').replace(/_/g, ' '))}${d.created_at || d.createdAt ? ' · ' + esc(shortDate(d.created_at || d.createdAt)) : ''}</span></div><button type="button" class="pu-btn pu-btn-sm" onclick="TFPartnerUI.closeOverlay(); app.previewDocument(${jsArg(d.id)})">View</button></div>`).join('')
+        ${docs.length ? docs.map(d => `<div class="pu-file"><span class="pu-file-ext">${esc((String(d.fileName || '').split('.').pop() || 'FILE').slice(0, 4).toUpperCase())}</span><div class="pu-grow"><b>${esc(label(d))}</b><span class="pu-hint">${esc(String(d.category || '').replace(/_/g, ' '))}${d.created_at || d.createdAt ? ' · ' + esc(shortDate(d.created_at || d.createdAt)) : ''}</span></div><button type="button" class="pu-btn pu-btn-sm" onclick="TFPartnerUI.closeOverlay(); app.previewDocument(${jsArg(d.id)})">View</button><button type="button" class="pu-btn pu-btn-sm pu-danger" aria-label="Delete ${esc(label(d))}" onclick="TFPartnerUI.deleteFile(${jsArg(c.id)}, ${jsArg(d.id)})">Delete</button></div>`).join('')
           : '<div class="pu-empty">No files saved for this order yet.</div>'}
         <div class="pu-form-foot"><span class="pu-grow"></span>${c.role === 'retailer' ? `<button type="button" class="pu-btn" onclick="TFPartnerUI.closeOverlay(); app.openInvoiceModal(${jsArg(o.id)})">View invoice</button>` : ''}<button type="button" class="pu-btn" onclick="TFPartnerUI.closeOverlay(); app.openDocumentReviewModalForOrder(${jsArg(o.id)})">+ Add file</button><button type="button" class="pu-btn pu-dark" onclick="app.openOrderFolder(${jsArg(o.id)})">Open in File Explorer</button></div>
       </div></div></div>`;
@@ -587,9 +592,22 @@
     });
   }
   const toast = m => { const a = appRef(); if (a && a.showToast) a.showToast(m); };
+  function ask(title, message, confirmText) {
+    const a = appRef();
+    if (a && typeof a.showModalConfirm === 'function') return a.showModalConfirm({ title, subtitle: 'Please confirm', message, confirmText, confirmClass: 'bg-rose-600 hover:bg-rose-500', icon: 'trash-2' });
+    return Promise.resolve(window.confirm(String(message).replace(/<[^>]+>/g, '')));
+  }
+  function removeDocs(c, docs, text) {
+    const a = appRef();
+    const ids = new Set(docs.map(d => d.id));
+    a.data.documents = (a.data.documents || []).filter(d => !ids.has(d.id));
+    state.undo = { contactId: c.id, docs, text };
+    a.saveData('Operator', text + ' · ' + (c.name || c.id));
+    rerender();
+  }
 
   window.TFPartnerUI = {
-    ROLES, peopleOf, primaryOf, summary, sections,
+    ROLES, peopleOf, primaryOf, summary, sections, invoiceDocsFor,
     renderDirectory, renderPage,
     open(contactId, tab = 'company', editSection = null) {
       state.tab[contactId] = tab;
@@ -663,12 +681,13 @@
       const c = contactById(contactId); if (!c) return;
       const list = peopleOf(c).filter(p => p.id !== personId);
       if (!list.length) return;
-      if (!confirm('Remove this person from ' + (c.name || 'this partner') + '?')) return;
+      ask('Remove this person?', 'Remove <b>' + esc(peopleOf(c).find(p => p.id === personId)?.name || 'this person') + '</b> from ' + esc(c.name || 'this partner') + '?', 'Remove person').then(ok => { if (!ok) return;
       c.people = list;
       if (c.primaryPersonId === personId) c.primaryPersonId = list[0].id;
       syncPrimary(c);
-      state.editing = null;
+      state.editing = null; state.draftPerson = null;
       stamp(c, `Removed a contact person from ${c.name}`);
+      });
     },
     makePrimary(contactId, personId) {
       const c = contactById(contactId); if (!c) return;
@@ -691,13 +710,41 @@
     },
     removeCard(contactId, side) {
       const c = contactById(contactId); if (!c || !c.businessCard) return;
-      if (!confirm('Remove the ' + side + ' of the business card?')) return;
+      ask('Remove business card image?', 'Remove the <b>' + esc(side) + '</b> of the business card?', 'Remove').then(ok => { if (!ok) return;
       const card = { ...c.businessCard }; delete card[side]; c.businessCard = card;
-      stamp(c, `Removed business card image of ${c.name}`);
+      stamp(c, `Removed business card image of ${c.name}`); });
     },
     viewImage(contactId, side) { state.overlay = { kind: 'image', contactId, side }; rerender(); },
     folder(contactId, orderId) { state.overlay = { kind: 'folder', contactId, orderId }; rerender(); },
     closeOverlay() { state.overlay = null; rerender(); },
+    async deleteInvoice(contactId, orderId) {
+      const a = appRef(); const c = contactById(contactId); const o = (a.data.orders || []).find(x => x.id === orderId);
+      if (!c || !o) return;
+      const docs = invoiceDocsFor(a, c, o);
+      if (!docs.length) { toast('This order has no saved invoice file.'); return; }
+      const names = docs.map(d => esc((d.metadata && d.metadata.customFileName) || d.fileName || 'Invoice')).join('<br>');
+      const ok = await ask('Delete invoice?', `Delete the saved invoice for <b>${esc(o.invoiceNumber || o.id)}</b>?<br><br>${names}<br><br><span class="text-xs">The order, its amounts and payments do not change. You can undo this right after.</span>`, 'Delete invoice');
+      if (!ok) return;
+      removeDocs(c, docs, 'Invoice deleted for ' + (o.invoiceNumber || o.id));
+      toast('Invoice deleted');
+    },
+    async deleteFile(contactId, docId) {
+      const a = appRef(); const c = contactById(contactId); const d = (a.data.documents || []).find(x => x.id === docId);
+      if (!c || !d) return;
+      const name = (d.metadata && d.metadata.customFileName) || d.fileName || 'this file';
+      const ok = await ask('Delete file?', `Delete <b>${esc(name)}</b> from this order's folder?`, 'Delete file');
+      if (!ok) return;
+      removeDocs(c, [d], 'File deleted: ' + name);
+    },
+    undoDelete() {
+      const a = appRef(); const u = state.undo; if (!u) return;
+      const have = new Set((a.data.documents || []).map(d => d.id));
+      a.data.documents = [...(a.data.documents || []), ...u.docs.filter(d => !have.has(d.id))];
+      state.undo = null;
+      a.saveData('Operator', 'Undo delete');
+      rerender(); toast('Restored');
+    },
+    dismissUndo() { state.undo = null; rerender(); },
     copy(text, label) { const a = appRef(); if (a && a.copyToClipboard) a.copyToClipboard(text, label); },
     _state: state
   };

@@ -390,3 +390,13 @@ test('partners: balances follow each partner type and only open orders count as 
   assert.equal(factory.done, 500);
   assert.equal(ui.sections({ role: 'transporter' }).find(s => s.id === 'terms').fields.some(f => f.key === 'vehicles'), true);
 });
+test('partners: "Delete invoice" only targets the saved invoice file of that order', () => {
+  const ui = loadPartnerUI();
+  const app = { data: { documents: [
+    { id: 'D1', orderId: 'A', category: 'retailer_invoice' }, { id: 'D2', orderId: 'A', category: 'bank_receipt' },
+    { id: 'D3', orderId: 'B', category: 'retailer_invoice' }, { id: 'D4', orderId: 'A', category: 'mfg_invoice' }
+  ] } };
+  assert.deepEqual(ui.invoiceDocsFor(app, { role: 'retailer' }, { id: 'A' }).map(d => d.id), ['D1']);
+  assert.deepEqual(ui.invoiceDocsFor(app, { role: 'manufacturer' }, { id: 'A' }).map(d => d.id), ['D4']);
+  assert.deepEqual(ui.invoiceDocsFor(app, { role: 'marketeer' }, { id: 'A' }).map(d => d.id), []);
+});
