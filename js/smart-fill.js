@@ -567,6 +567,11 @@
       node('smart-fill-duplicate-banner')?.remove();
     }
 
+    // Called by the "Compare Slips Side-by-Side" button in the Smart Fill duplicate banner.
+    openComparisonFromSmartFill() {
+      return this.openDualSlipFromWarning();
+    }
+
     openDualSlipFromWarning() {
       if (!this.duplicateConflict || !window.app?.openDualSlipComparison) return;
       const dupRecord = this.duplicateConflict.duplicate || this.duplicateConflict.existing;
@@ -1381,7 +1386,7 @@
           this.addLogLine('💳', `Detected Bank: ${ext.bankName}`, 'amber');
         }
         if (/out|paid/i.test(ext.direction)) {
-          this.addLogLine('🏢', `Payer: ${ext.payFromAccount || 'MAGIC ROOTS ENTERPRISES'} (Company Account -> Money Out / Paid)`, 'emerald');
+          this.addLogLine('🏢', `Payer: ${ext.payFromAccount || window.app?.config?.().brand || 'our account'} (Company Account -> Money Out / Paid)`, 'emerald');
         } else {
           this.addLogLine('📥', 'Direction: Money In (Received from Customer)', 'emerald');
         }
@@ -2189,6 +2194,7 @@
     prevPdfPage: () => controller.prevPdfPage(),
     nextPdfPage: () => controller.nextPdfPage(),
     downloadOriginalFile: () => controller.downloadOriginalFile(),
+    openComparisonFromSmartFill: () => controller.openComparisonFromSmartFill(),
     openPreviewNewTab: () => controller.openPreviewNewTab(),
     openDualSlipFromWarning: () => controller.openDualSlipFromWarning(),
     hideDuplicateWarning: () => controller.hideDuplicateWarning(),

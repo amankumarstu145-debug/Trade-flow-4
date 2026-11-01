@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { exec, execFile } = require('child_process');
-const { createGuard, assertWithin, isWithin, allowedDocument } = require('./security');
+const { createGuard, assertWithin, isWithin, allowedDocument, contentMatchesExtension, detectDocumentExtension, verifiedExtension } = require('./security');
 const SyncManager = require('./sync_manager');
 
 const PORT = Number(process.env.PORT || 3000);
@@ -329,17 +329,22 @@ const requestHandler = (req, res) => {
           return res.end(JSON.stringify({ success: false, error: 'Data payload is required' }));
         }
 
-        const userName = payload.userName || 'Operator';
-        const reason = payload.reason || 'App State Update';
-        syncManager.saveData(payload.data, userName, reason);
+        const userName = String(payload.userName || 'Operator');
+        const reason = String(payload.reason || 'App State Update');
+        const saveResult = syncManager.saveData(payload.data, userName, reason, {
+          baseTimestamp: payload.baseTimestamp,
+          originTabId: typeof payload.tabId === 'string' ? payload.tabId.slice(0, 64) : null
+        });
 
-        // Attempt export to Excel
-        const excelRes = syncManager.exportToExcel(payload.data);
+        // Attempt export to Excel (from the database when newer records were kept)
+        const excelRes = syncManager.exportToExcel(saveResult.conflicts.length ? undefined : payload.data);
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({
           success: true,
           savedToDb: true,
+          conflicts: saveResult.conflicts,
+          timestamp: new Date().toISOString(),
           excelSync: excelRes,
           status: syncManager.getSyncStatus()
         }));
@@ -540,7 +545,7 @@ const requestHandler = (req, res) => {
         }
 
         const mimeExt = { 'application/pdf': '.pdf', 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
-        const ext = mimeExt[mimeType] || path.extname(String(fileName || '')).toLowerCase();
+        let ext = mimeExt[mimeType] || path.extname(String(fileName || '')).toLowerCase();
         if (!['.pdf', '.jpg', '.jpeg', '.png', '.webp'].includes(ext)) {
           res.writeHead(415, { 'Content-Type': 'application/json' });
           return res.end(JSON.stringify({ success: false, error: 'Only PDF, JPG, PNG, and WebP source files can be archived.' }));
@@ -551,6 +556,12 @@ const requestHandler = (req, res) => {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           return res.end(JSON.stringify({ success: false, error: 'The uploaded document is empty or invalid.' }));
         }
+        const actualExt = verifiedExtension(buffer, ext);
+        if (!actualExt) {
+          res.writeHead(415, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: false, error: 'The file contents do not match a PDF, JPG, PNG or WebP document.' }));
+        }
+        ext = actualExt;
 
         const safePartnerId = String(partnerId).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60) || 'partner';
         const safePartnerName = String(partnerName || 'Partner').normalize('NFKD').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').slice(0, 45) || 'Partner';
@@ -602,7 +613,11 @@ const requestHandler = (req, res) => {
     req.on('end', () => {
       try {
         const payload = JSON.parse(body);
-        const { orderId = 'general', category = 'other', fileName = 'document.pdf', fileData, metadata = {} } = payload;
+        const orderId = String(payload.orderId || 'general');
+        const category = String(payload.category || 'other');
+        const fileName = String(payload.fileName || 'document.pdf');
+        const fileData = payload.fileData;
+        const metadata = payload.metadata && typeof payload.metadata === 'object' ? payload.metadata : {};
 
         if (!fileData) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -625,7 +640,7 @@ const requestHandler = (req, res) => {
         let detectedExt = path.extname(fileName).toLowerCase();
         if (detectedExt && !allowedDocument('upload' + detectedExt)) throw new Error('Unsupported upload type');
         if (!detectedExt || detectedExt === '.') {
-          detectedExt = resolved.mime === 'application/pdf' ? '.pdf' : (resolved.mime === 'image/png' ? '.png' : (resolved.mime === 'image/webp' ? '.webp' : '.jpg'));
+          detectedExt = detectDocumentExtension(buffer) || '';
         }
 
         const timestamp = Date.now();
@@ -635,20 +650,30 @@ const requestHandler = (req, res) => {
         // Standardized naming: [ORDER_NO]_[PARTY_NAME]_[TYPE]_[DATE]_[TIME].[ext]
         let storedFileName;
         if (metadata.customFileName) {
-          storedFileName = metadata.customFileName.replace(/[^a-zA-Z0-9_\.-]/g, '_');
+          storedFileName = path.basename(String(metadata.customFileName).replace(/[^a-zA-Z0-9_\.-]/g, '_'));
         } else {
           const now = new Date();
-          const datePart = metadata.date || now.toISOString().split('T')[0];
+          const datePart = String(metadata.date || '').replace(/[^0-9-]/g, '').slice(0, 10) || now.toISOString().split('T')[0];
           const timePart = `${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}`;
-          const rawParty = metadata.partyName || metadata.counterpartyName || 'Counterparty';
+          const rawParty = String(metadata.partyName || metadata.counterpartyName || 'Counterparty');
           const cleanParty = rawParty.replace(/[^a-zA-Z0-9]/g, '').slice(0, 30) || 'Party';
           const docType = metadata.direction === 'paid' ? 'PaymentPaid' : (metadata.direction === 'received' ? 'PaymentReceipt' : (safeCategory || 'Doc'));
           storedFileName = `${safeOrderId}_${cleanParty}_${docType}_${datePart}_${timePart}${detectedExt}`;
         }
 
-        const filePath = path.join(targetDir, storedFileName);
+        let filePath = path.join(targetDir, storedFileName);
         assertWithin(DATA_DIR, filePath);
         if (!allowedDocument(filePath)) throw new Error('Unsupported upload type');
+        const actualExt = verifiedExtension(buffer, path.extname(filePath));
+        if (!actualExt) {
+          res.writeHead(415, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ error: 'The file contents do not match its file type.' }));
+        }
+        if (actualExt !== path.extname(filePath).toLowerCase()) {
+          storedFileName = storedFileName.slice(0, storedFileName.length - path.extname(storedFileName).length) + actualExt;
+          filePath = path.join(targetDir, storedFileName);
+          detectedExt = actualExt;
+        }
         fs.writeFileSync(filePath, buffer);
 
         const docId = `DOC-${timestamp}-${Math.floor(Math.random() * 1000)}`;
@@ -816,11 +841,7 @@ const requestHandler = (req, res) => {
 
       if (!resolvedPath || !fs.existsSync(resolvedPath)) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ 
-          error: `File not found: ${justFileName || cleanPath}`,
-          searchedPath: cleanPath,
-          candidates 
-        }));
+        return res.end(JSON.stringify({ error: `File not found: ${justFileName || 'document'}` }));
       }
 
       assertWithin(DATA_DIR, resolvedPath);
@@ -862,387 +883,9 @@ const requestHandler = (req, res) => {
     }
   }
 
-  // --- API: GET /api/orders (List all active orders for payment attachment) ---
-  if (pathname === '/api/orders' && req.method === 'GET') {
-    try {
-      const data = syncManager.loadData();
-      const orders = (data.orders || []).map(o => ({
-        id: o.id,
-        invoiceNumber: o.invoiceNumber,
-        buyerName: o.retailerName || o.buyerName || '',
-        mfgName: o.manufacturerName || '',
-        amount: o.totalInvoiceAmount || o.orderValue || 0,
-        status: o.status,
-        date: o.date,
-        itemsSummary: (o.items || []).map(i => i.name || i.shortName).filter(Boolean).join(', ')
-      }));
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: true, orders }));
-    } catch (e) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: false, error: e.message }));
-    }
-  }
+  // Removed: unused /api/orders, /api/partners and /api/payments endpoints.
+  // The app saves through /api/data; these duplicated writes without upload validation.
 
-  // --- API: POST /api/orders (Create or Update Order) ---
-  if (pathname === '/api/orders' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', () => {
-      try {
-        const payload = JSON.parse(body || '{}');
-        const order = payload.order || payload;
-        if (!order || (!order.id && !order.invoiceNumber)) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          return res.end(JSON.stringify({ success: false, error: 'Order details with id or invoiceNumber are required.' }));
-        }
-
-        const userName = payload.userName || 'Operator';
-        const savedOrder = syncManager.dbManager.saveOrder(order, userName, payload.actionType || 'UPDATE');
-
-        // Update mock-data.js
-        const fullData = syncManager.loadData();
-        const existingIdx = (fullData.orders || []).findIndex(o => o.id === savedOrder.id);
-        if (existingIdx !== -1) {
-          fullData.orders[existingIdx] = savedOrder;
-        } else {
-          fullData.orders.unshift(savedOrder);
-        }
-        syncManager.saveData(fullData, userName, `Save Order ${savedOrder.id}`);
-
-        // Sync to Excel
-        const excelRes = syncManager.exportToExcel();
-        syncManager.notifyChange('order_saved', { orderId: savedOrder.id });
-
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({
-          success: true,
-          order: savedOrder,
-          excelSync: excelRes
-        }));
-      } catch (err) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ success: false, error: err.message }));
-      }
-    });
-    return;
-  }
-
-  // --- API: GET /api/partners (Fetch all registered trade partners) ---
-  if (pathname === '/api/partners' && req.method === 'GET') {
-    try {
-      const data = syncManager.loadData();
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: true, partners: data.contacts || [] }));
-    } catch (e) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: false, error: e.message }));
-    }
-  }
-
-  // --- API: POST /api/partners (Save/Update Trade Partner & Auto-Sync to Excel) ---
-  if (pathname === '/api/partners' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', () => {
-      try {
-        const payload = JSON.parse(body || '{}');
-        const name = (payload.name || '').trim();
-        if (!name) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          return res.end(JSON.stringify({ success: false, error: 'Company or Trade Partner name is required.' }));
-        }
-
-        const data = syncManager.loadData();
-        data.contacts = data.contacts || [];
-
-        let existing = data.contacts.find(c => (c.name || '').toLowerCase().trim() === name.toLowerCase());
-        let isNew = false;
-        let targetPartner = null;
-
-        if (existing) {
-          if (payload.contactPerson) existing.contactPerson = payload.contactPerson;
-          if (payload.phone) existing.phone = payload.phone;
-          if (payload.email) existing.email = payload.email;
-          if (payload.website) existing.website = payload.website;
-          if (payload.gstin) existing.gstin = payload.gstin;
-          if (payload.pan) existing.pan = payload.pan;
-          if (payload.fssai) existing.fssai = payload.fssai;
-          if (payload.cin) existing.cin = payload.cin;
-          if (payload.address) {
-            existing.billingAddress = payload.address;
-            existing.shippingAddress = payload.address;
-          }
-          if (payload.businessNature) existing.businessNature = payload.businessNature;
-          if (payload.paymentTerms) existing.paymentTerms = payload.paymentTerms;
-          if (payload.bankName) existing.bankName = payload.bankName;
-          if (payload.accountNumber) existing.accountNumber = payload.accountNumber;
-          if (payload.ifsc) existing.ifsc = payload.ifsc;
-          if (payload.alternateContacts) existing.alternateContacts = payload.alternateContacts;
-          if (payload.alternateEmails) existing.alternateEmails = payload.alternateEmails;
-          if (payload.alternatePhones) existing.alternatePhones = payload.alternatePhones;
-          existing.updatedAt = new Date().toISOString();
-          targetPartner = existing;
-        } else {
-          isNew = true;
-          const maxNum = data.contacts.reduce((max, c) => {
-            const n = parseInt((c.id || '').replace(/\D/g, ''), 10) || 0;
-            return n > max ? n : max;
-          }, 0);
-          const newId = `CNT-${String(maxNum + 1).padStart(2, '0')}`;
-
-          let role = 'manufacturer';
-          const nature = (payload.businessNature || '').toLowerCase();
-          if (/retail|supermarket|mart|buyer|store|client/i.test(nature) || /retail|buyer/i.test(payload.role || '')) {
-            role = 'retailer';
-          } else if (/transport|logistics|fleet/i.test(nature) || /transporter/i.test(payload.role || '')) {
-            role = 'transporter';
-          } else if (/packag|polymer|box|jar|bottle/i.test(nature) || /packaging/i.test(payload.role || '')) {
-            role = 'packaging';
-          } else if (/distributor|broker|agent/i.test(nature)) {
-            role = 'marketeer';
-          }
-
-          targetPartner = {
-            id: newId,
-            name: name,
-            contactPerson: payload.contactPerson || '',
-            role: role,
-            phone: payload.phone || '',
-            email: payload.email || '',
-            website: payload.website || '',
-            gstin: payload.gstin || '',
-            pan: payload.pan || '',
-            fssai: payload.fssai || '',
-            cin: payload.cin || '',
-            businessNature: payload.businessNature || '',
-            billingAddress: payload.address || '',
-            shippingAddress: payload.address || '',
-            state: payload.state || '',
-            stateCode: payload.stateCode || '',
-            paymentTerms: payload.paymentTerms || 'Net 15 Days',
-            bankName: payload.bankName || '',
-            accountNumber: payload.accountNumber || '',
-            ifsc: payload.ifsc || '',
-            alternateContacts: payload.alternateContacts || [],
-            alternateEmails: payload.alternateEmails || [],
-            alternatePhones: payload.alternatePhones || [],
-            totalOrders: 0,
-            currentBalanceDue: 0,
-            createdAt: new Date().toISOString()
-          };
-          data.contacts.push(targetPartner);
-        }
-
-        syncManager.saveData(data);
-        try { syncManager.exportToExcel(); } catch (exErr) { console.error('Excel sync error:', exErr); }
-        syncManager.notifyChange('partner_save', { partnerId: targetPartner.id, name: targetPartner.name });
-
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ 
-          success: true, 
-          partner: targetPartner, 
-          id: targetPartner.id, 
-          isNew,
-          message: `Partner "${targetPartner.name}" saved to TradeFlow Database & Excel (${targetPartner.id})`
-        }));
-      } catch (err) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ success: false, error: err.message }));
-      }
-    });
-    return;
-  }
-
-  // --- API: GET /api/payments (Fetch all recorded payment settlements) ---
-  if (pathname === '/api/payments' && req.method === 'GET') {
-    try {
-      const data = syncManager.loadData();
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: true, payments: data.payments || [] }));
-    } catch (e) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ success: false, error: e.message }));
-    }
-  }
-
-  // --- API: POST /api/payments (Save/Record Payment Settlement & Auto-Sync to Excel) ---
-  if (pathname === '/api/payments' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', () => {
-      try {
-        const payload = JSON.parse(body || '{}');
-        const amount = Number(String(payload.amount || '0').replace(/[^0-9.]/g, ''));
-        const party = (payload.party || payload.partyName || '').trim();
-
-        if (!amount || isNaN(amount) || amount <= 0) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          return res.end(JSON.stringify({ success: false, error: 'Valid payment amount is required.' }));
-        }
-        if (!party) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          return res.end(JSON.stringify({ success: false, error: 'Party or counterparty name is required.' }));
-        }
-
-        const data = syncManager.loadData();
-        data.payments = data.payments || [];
-
-        const maxNum = data.payments.reduce((max, p) => {
-          const n = parseInt((p.id || '').replace(/\D/g, ''), 10) || 0;
-          return n > max ? n : max;
-        }, 0);
-        const newId = `PAY-${String(maxNum + 1).padStart(3, '0')}`;
-
-        const direction = String(payload.direction || '').toUpperCase().includes('OUT') ? 'paid' : 'received';
-        const orderRef = (payload.orderRef || '').trim();
-        const inputUtr = (payload.utr || '').trim();
-
-        // Check Duplicate UTR across payments
-        let isDuplicateUtr = false;
-        let conflictPaymentId = null;
-        if (inputUtr && inputUtr.length >= 4) {
-          const existing = data.payments.find(p => !p.isDeleted && p.utr && p.utr.trim().toLowerCase() === inputUtr.toLowerCase() && p.id !== newId);
-          if (existing) {
-            isDuplicateUtr = true;
-            conflictPaymentId = existing.id;
-          }
-        }
-
-        // Save proof document file to the order folder and immutable SHA-256 Vault
-        let proofFilename = '';
-        let proofDocPath = '';
-        let proofHash = '';
-        let standardVaultName = '';
-        let vaultDocPath = '';
-
-        const rawProofData = payload.proofData || payload.proofFileData;
-        const rawProofFilename = payload.proofFilename || payload.proofFileName;
-
-        if (rawProofData && rawProofFilename) {
-          try {
-            const folderInfo = syncManager.resolveOrderFolder(orderRef || 'general');
-            const cleanFileName = `Payment_Proof_${newId}_${rawProofFilename.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-            const fullProofPath = path.join(folderInfo.fullPath, cleanFileName);
-            const b64 = rawProofData.includes(',') ? rawProofData.split(',')[1] : rawProofData;
-            const fileBuf = Buffer.from(b64, 'base64');
-            
-            // Compute SHA-256 hash
-            proofHash = crypto.createHash('sha256').update(fileBuf).digest('hex');
-
-            // 1. Save to order directory (legacy compatibility)
-            fs.writeFileSync(fullProofPath, fileBuf);
-            proofFilename = cleanFileName;
-            proofDocPath = `/data/orders/${folderInfo.folderName}/${cleanFileName}`;
-
-            // 2. Save to Immutable Vault hierarchy
-            const now = new Date();
-            const yyyy = String(now.getFullYear());
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const vaultDateDir = path.join(VAULT_DIR, 'originals', yyyy, mm);
-            if (!fs.existsSync(vaultDateDir)) fs.mkdirSync(vaultDateDir, { recursive: true });
-
-            const ext = path.extname(rawProofFilename) || '.pdf';
-            const cleanParty = party.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 25);
-            const cleanUtr = (inputUtr || 'NO_UTR').replace(/[^a-zA-Z0-9]/g, '_');
-            const dateStr = payload.date || now.toISOString().split('T')[0];
-            standardVaultName = `PAYMENT_${cleanParty}_${Math.round(amount)}_${cleanUtr}_${dateStr}${ext}`;
-
-            const vaultFileFullPath = path.join(vaultDateDir, `${proofHash.substring(0, 12)}_${standardVaultName}`);
-            fs.writeFileSync(vaultFileFullPath, fileBuf);
-            vaultDocPath = `/data/vault/originals/${yyyy}/${mm}/${proofHash.substring(0, 12)}_${standardVaultName}`;
-          } catch (fErr) {
-            console.error('Error saving payment proof file to vault:', fErr);
-          }
-        }
-
-        // Determine Reconciliation Status
-        let reconciliationStatus = 'unmatched';
-        if (isDuplicateUtr) {
-          reconciliationStatus = 'duplicate_suspected';
-        } else if (orderRef) {
-          reconciliationStatus = 'partial'; // will refine once order balance is checked
-        }
-
-        const newPayment = {
-          id: newId,
-          date: payload.date || new Date().toISOString().split('T')[0],
-          direction: direction,
-          amount: amount,
-          partyName: party,
-          partyType: (payload.category || payload.partyType || (direction === 'paid' ? 'supplier' : 'retailer')).toLowerCase(),
-          mode: payload.paymentMode || payload.mode || 'NEFT',
-          orderRef: orderRef,
-          utr: inputUtr,
-          bankName: payload.bankName || '',
-          bankTxnId: payload.bankTxnId || '',
-          notes: payload.notes || '',
-          hasProof: !!proofFilename,
-          pn: proofFilename,
-          pd: proofDocPath,
-          proofHash: proofHash,
-          standardVaultName: standardVaultName,
-          vaultPath: vaultDocPath,
-          vaultOriginalPath: vaultDocPath,
-          isDuplicateUtr: isDuplicateUtr,
-          conflictPaymentId: conflictPaymentId,
-          reconciliationStatus: reconciliationStatus,
-          orderFolder: orderRef || 'general',
-          createdAt: new Date().toISOString()
-        };
-
-        data.payments.push(newPayment);
-
-        // Link & Update Order status in master database
-        let matchedOrder = null;
-        if (orderRef) {
-          matchedOrder = (data.orders || []).find(o => 
-            (o.id && o.id.toUpperCase() === orderRef.toUpperCase()) || 
-            (o.invoiceNumber && o.invoiceNumber.toUpperCase() === orderRef.toUpperCase())
-          );
-          if (matchedOrder) {
-            if (direction === 'received') {
-              matchedOrder.customerAdvanceReceived = (matchedOrder.customerAdvanceReceived || 0) + amount;
-              const tot = matchedOrder.totalInvoiceAmount || matchedOrder.totalAmount || 0;
-              matchedOrder.customerBalanceDue = Math.max(0, tot - matchedOrder.customerAdvanceReceived);
-              if (matchedOrder.customerBalanceDue === 0) {
-                matchedOrder.status = 'PAID';
-                if (!isDuplicateUtr) newPayment.reconciliationStatus = 'matched';
-              } else {
-                matchedOrder.status = 'PARTIAL';
-                if (!isDuplicateUtr) newPayment.reconciliationStatus = 'partial';
-              }
-            } else {
-              if (/mfg|manufacturer|supplier/i.test(newPayment.partyType)) {
-                matchedOrder.manufacturerAdvancePaid = (matchedOrder.manufacturerAdvancePaid || 0) + amount;
-              } else if (/transporter|freight/i.test(newPayment.partyType)) {
-                matchedOrder.transporterPaid = true;
-              } else if (/packag/i.test(newPayment.partyType)) {
-                matchedOrder.packagingAdvancePaid = (matchedOrder.packagingAdvancePaid || 0) + amount;
-              }
-            }
-          }
-        }
-
-        syncManager.saveData(data);
-        try { syncManager.exportToExcel(); } catch (exErr) { console.error('Excel sync error:', exErr); }
-        syncManager.notifyChange('payment_save', { paymentId: newId, orderRef, amount });
-
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ 
-          success: true, 
-          payment: newPayment, 
-          id: newId, 
-          orderUpdated: !!matchedOrder,
-          message: `Payment of ₹${amount.toLocaleString('en-IN')} attached to ${orderRef || 'Direct'} saved to Ledger & Excel (${newId})`
-        }));
-      } catch (err) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ success: false, error: err.message }));
-      }
-    });
-    return;
-  }
 function resolveSafeProjectTarget(inputPath) {
   if (!inputPath) return path.resolve(PUBLIC_DIR, 'data');
   let raw = decodeURIComponent(inputPath).trim().replace(/\\/g, '/');
@@ -1824,6 +1467,14 @@ function openFolderInNativeExplorer(targetPath) {
     return;
   }
 
+  // --- API: POST /api/mobile-snap/revoke (Unpair all saved phones) ---
+  if (pathname === '/api/mobile-snap/revoke' && req.method === 'POST') {
+    for (const [id, session] of mobileSnapSessions.entries()) if (session.isPermanent) mobileSnapSessions.delete(id);
+    try { fs.rmSync(mobilePairingPath, { force: true }); } catch (_) {}
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ success: true }));
+  }
+
   // --- API: POST /api/mobile-snap/upload (Phone Transmits Photo) ---
   if (pathname === '/api/mobile-snap/upload' && req.method === 'POST') {
     let body = '';
@@ -1831,7 +1482,8 @@ function openFolderInNativeExplorer(targetPath) {
     req.on('end', () => {
       try {
         const payload = JSON.parse(body || '{}');
-        const { sessionId, fileData, fileName = 'phone_snap.jpg', fileType = 'image/jpeg', tag = 'bank_slip', note = '' } = payload;
+        const { sessionId, fileData, tag = 'bank_slip', note = '' } = payload;
+        const fileName = String(payload.fileName || 'phone_snap.jpg');
         const effectiveSessionId = sessionId;
         const pairedSession = mobileSnapSessions.get(effectiveSessionId);
         if (!pairedSession || (pairedSession.expiresAt && pairedSession.expiresAt < Date.now())) {
@@ -1839,7 +1491,7 @@ function openFolderInNativeExplorer(targetPath) {
           return res.end(JSON.stringify({ success: false, error: 'Scan a current pairing QR code on the desktop first.' }));
         }
 
-        if (!fileData) {
+        if (!fileData || typeof fileData !== 'string') {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           return res.end(JSON.stringify({ success: false, error: 'fileData is required' }));
         }
@@ -1863,20 +1515,27 @@ function openFolderInNativeExplorer(targetPath) {
           base64Data = parts[1];
         }
 
-        if (!['.pdf', '.jpg', '.jpeg', '.png', '.webp'].includes(ext.toLowerCase())) throw new Error('Unsupported upload type');
+        const snapBuffer = Buffer.from(base64Data || '', 'base64');
+        const verifiedSnapExt = verifiedExtension(snapBuffer, ext);
+        if (!['.pdf', '.jpg', '.jpeg', '.png', '.webp'].includes(verifiedSnapExt)) {
+          res.writeHead(415, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: false, error: 'Only photos (JPG, PNG, WebP) and PDFs can be sent.' }));
+        }
+        const safeBaseName = path.basename(fileName, path.extname(fileName)).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 30);
+        ext = verifiedSnapExt;
+        const fileType = { '.pdf': 'application/pdf', '.png': 'image/png', '.webp': 'image/webp' }[ext] || 'image/jpeg';
         const safeTimestamp = Date.now() + '-' + crypto.randomBytes(6).toString('hex');
-        const safeBaseName = path.basename(fileName, ext).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 30);
         const finalFileName = `${safeTimestamp}_${safeBaseName}${ext}`;
         const targetFilePath = path.join(uploadDir, finalFileName);
 
-        fs.writeFileSync(targetFilePath, Buffer.from(base64Data, 'base64'));
+        fs.writeFileSync(targetFilePath, snapBuffer);
         const fileUrl = `/data/uploads/mobile_snaps/${finalFileName}`;
         const snapId = `SNAP-INTAKE-${safeTimestamp}`;
 
         // Update session
         const session = mobileSnapSessions.get(effectiveSessionId) || {
           sessionId: effectiveSessionId,
-          isPermanent: effectiveSessionId === 'PERMANENT' || effectiveSessionId === 'DIRECT' || effectiveSessionId.startsWith('DEV-')
+          isPermanent: false
         };
         session.status = 'uploaded';
         session.file = {
@@ -2025,12 +1684,19 @@ function openFolderInNativeExplorer(targetPath) {
         const payload = JSON.parse(body || '{}');
         const { entityType, id } = payload;
         const sysData = syncManager.loadData();
-
-        if (entityType === 'order') {
-          sysData.orders = (sysData.orders || []).filter(o => o.id !== id);
-        } else if (entityType === 'payment') {
-          sysData.payments = (sysData.payments || []).filter(p => p.id !== id);
+        if (!['order', 'payment'].includes(entityType) || typeof id !== 'string' || !id) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: false, error: 'entityType must be "order" or "payment" and id is required.' }));
         }
+        // Only items already in the recycle bin may be permanently deleted.
+        const collection = entityType === 'order' ? 'orders' : 'payments';
+        const record = (sysData[collection] || []).find(item => item && item.id === id);
+        const inBin = (sysData.recycleBin || []).some(item => item && item.id === id);
+        if (!(record && record.isDeleted) && !inBin) {
+          res.writeHead(409, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: false, error: `${id} is not in the recycle bin. Delete it first, then purge.` }));
+        }
+        sysData[collection] = (sysData[collection] || []).filter(item => item.id !== id);
 
         if (sysData.recycleBin && Array.isArray(sysData.recycleBin)) {
           sysData.recycleBin = sysData.recycleBin.filter(b => b.id !== id);
@@ -2095,21 +1761,23 @@ function openFolderInNativeExplorer(targetPath) {
         }
 
         const buffer = resolved.buffer;
-        let detectedExt = path.extname(originalName).toLowerCase();
-        if (!detectedExt || detectedExt === '.') {
-          detectedExt = resolved.mime === 'application/pdf' ? '.pdf' : (resolved.mime === 'image/png' ? '.png' : (resolved.mime === 'image/webp' ? '.webp' : '.jpg'));
+        // Payment proofs are PDFs or images; the bytes decide the extension, never the supplied name.
+        const detectedExt = verifiedExtension(buffer, path.extname(String(originalName)));
+        if (!['.pdf', '.png', '.jpg', '.jpeg', '.webp'].includes(detectedExt)) {
+          res.writeHead(415, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: false, error: 'Payment proofs must be PDF, JPG, PNG or WebP files.' }));
         }
 
         const crypto = require('crypto');
         const fileHash = crypto.createHash('sha256').update(resolved.base64 || buffer).digest('hex');
 
         // Standardized naming format: [ORDER_NO]_[PARTY_NAME]_[PAYMENT_TYPE]_[DATE]_[TIME].[ext]
-        const safeOrder = (orderRef || 'general').replace(/[^a-zA-Z0-9_-]/g, '_');
-        const cleanParty = (partyName || 'Counterparty').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30);
-        const cleanType = (paymentType || 'Payment').replace(/[^a-zA-Z0-9]/g, '_');
+        const safeOrder = String(orderRef || 'general').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const cleanParty = String(partyName || 'Counterparty').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30);
+        const cleanType = String(paymentType || 'Payment').replace(/[^a-zA-Z0-9]/g, '_');
         const now = new Date();
-        const cleanDate = date ? date.replace(/[^0-9-]/g, '') : now.toISOString().split('T')[0];
-        const cleanTime = time ? time.replace(/[^0-9]/g, '') : `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+        const cleanDate = date ? String(date).replace(/[^0-9-]/g, '').slice(0, 10) : now.toISOString().split('T')[0];
+        const cleanTime = time ? String(time).replace(/[^0-9]/g, '').slice(0, 6) : `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
         
         const storedFileName = `${safeOrder}_${cleanParty}_${cleanType}_${cleanDate}_${cleanTime}${detectedExt}`;
         const filePath = path.join(targetDir, storedFileName);
@@ -2548,8 +2216,8 @@ function openFolderInNativeExplorer(targetPath) {
             pingResult = { success: false, provider: 'OpenRouter', latencyMs, status: r.status, error: errText };
           }
         } else if (targetProvider === 'gemini') {
-          const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
-          const r = await fetch(url, { signal });
+          const url = 'https://generativelanguage.googleapis.com/v1beta/models';
+          const r = await fetch(url, { signal, headers: { 'x-goog-api-key': key } });
           const latencyMs = Date.now() - startTime;
           if (r.ok) {
             pingResult = { success: true, provider: 'Google Gemini', latencyMs, status: r.status, message: 'Google Gemini API key verified!' };
@@ -3249,6 +2917,31 @@ Format:
         let rawResponse = '';
         const signal = AbortSignal.timeout(90000); // 90s timeout for multimodal vision models
 
+        // File, PDF flag and OCR text are shared by every provider below.
+        const resolvedFile = resolveFileBufferAndBase64(fileData, mimeType);
+        const isPdfRaw = (mimeType === 'application/pdf') || 
+                         (resolvedFile && resolvedFile.mime === 'application/pdf') ||
+                         (typeof fileData === 'string' && (fileData.startsWith('data:application/pdf') || fileData.startsWith('JVBERi0')));
+
+        let effectiveRawText = (rawText || '').trim();
+        if (effectiveRawText.startsWith('[Document:') && !effectiveRawText.includes('\n')) {
+          effectiveRawText = '';
+        } else if (effectiveRawText.startsWith('[Document:')) {
+          effectiveRawText = effectiveRawText.replace(/^\[Document:[^\n]+\]\s*/i, '').trim();
+        }
+
+        if (resolvedFile && (!effectiveRawText || effectiveRawText.length < 20)) {
+          try {
+            const ocrExt = isPdfRaw ? '.pdf' : (resolvedFile.mime === 'image/png' ? '.png' : '.jpg');
+            const ocrRes = await runRapidOcrBuffer(resolvedFile.buffer, ocrExt);
+            if (ocrRes && ocrRes.success && ocrRes.text) {
+              effectiveRawText = (effectiveRawText ? effectiveRawText + '\n\n' : '') + ocrRes.text;
+            }
+          } catch (e) {
+            // RapidOCR fallback
+          }
+        }
+
         if (targetProvider === 'nvidia' || targetProvider === 'openai' || targetProvider === 'openrouter' || targetProvider === 'groq' || targetProvider === 'custom') {
           const endpoint = targetProvider === 'nvidia'
             ? (baseUrl ? (baseUrl.endsWith('/chat/completions') ? baseUrl : `${baseUrl.replace(/\/+$/, '')}/chat/completions`) : 'https://integrate.api.nvidia.com/v1/chat/completions')
@@ -3264,31 +2957,7 @@ Format:
                 ? 'llama-3.2-11b-vision-preview'
                 : (targetProvider === 'openrouter' ? 'openai/gpt-4o-mini' : 'gpt-4o-mini'));
 
-          const resolvedFile = resolveFileBufferAndBase64(fileData, mimeType);
           const userContent = [];
-          const isPdfRaw = (mimeType === 'application/pdf') || 
-                           (resolvedFile && resolvedFile.mime === 'application/pdf') ||
-                           (typeof fileData === 'string' && (fileData.startsWith('data:application/pdf') || fileData.startsWith('JVBERi0')));
-
-          let effectiveRawText = (rawText || '').trim();
-          if (effectiveRawText.startsWith('[Document:') && !effectiveRawText.includes('\n')) {
-            effectiveRawText = '';
-          } else if (effectiveRawText.startsWith('[Document:')) {
-            effectiveRawText = effectiveRawText.replace(/^\[Document:[^\n]+\]\s*/i, '').trim();
-          }
-
-          if (resolvedFile && (!effectiveRawText || effectiveRawText.length < 20)) {
-            try {
-              const ocrExt = isPdfRaw ? '.pdf' : (resolvedFile.mime === 'image/png' ? '.png' : '.jpg');
-              const ocrRes = await runRapidOcrBuffer(resolvedFile.buffer, ocrExt);
-              if (ocrRes && ocrRes.success && ocrRes.text) {
-                effectiveRawText = (effectiveRawText ? effectiveRawText + '\n\n' : '') + ocrRes.text;
-              }
-            } catch (e) {
-              // RapidOCR fallback
-            }
-          }
-
           if (resolvedFile && !isPdfRaw) {
             userContent.push({
               type: 'image_url',
@@ -3368,7 +3037,7 @@ Format:
           const resData = await r.json();
           rawResponse = resData.content?.[0]?.text || '';
         } else if (targetProvider === 'gemini') {
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-1.5-flash'}:generateContent?key=${key}`;
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model || 'gemini-1.5-flash')}:generateContent`;
           const parts = [{ text: prompt + (effectiveRawText ? `\n\nDocument text:\n${effectiveRawText}` : '') }];
           if (resolvedFile && !isPdfRaw) {
             parts.push({
@@ -3381,7 +3050,7 @@ Format:
 
           const r = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
             body: JSON.stringify({ contents: [{ parts }] }),
             signal
           });
@@ -4030,7 +3699,6 @@ Format:
   let reqPath = decodeURIComponent(pathname);
   if (reqPath === '/') reqPath = '/index.html';
   if (reqPath === '/mobile-snap' || reqPath === '/mobile-snap/') reqPath = '/mobile_snap.html';
-  if (reqPath === '/api_test_lab' || reqPath === '/api_test_lab.html') reqPath = '/tools/api_test_lab.html';
 
   // Backwards compatibility: remap /storage/documents/orders/... or /documents/orders/... to /data/orders/...
   if (reqPath.startsWith('/storage/documents/orders/') || reqPath.startsWith('/documents/orders/')) {
@@ -4048,7 +3716,7 @@ Format:
     }
   }
 
-  const publicAsset = /^\/(?:index\.html|mobile_snap\.html|js\/(?:app|components|smart-fill|security-ui)\.js|css\/styles\.css|vendor\/(?:tailwind|lucide|html2pdf|qrcode|dompurify)\.js|lib\/(?:pdf\.min|pdf\.worker|pdf\.worker\.min)\.js|data\/mock-data\.js)$/.test(reqPath);
+  const publicAsset = /^\/(?:index\.html|mobile_snap\.html|js\/(?:app|components|smart-fill|security-ui|form-guard|partner-ui)\.js|css\/styles\.css|vendor\/(?:tailwind|lucide|html2pdf|qrcode|dompurify)\.js|lib\/(?:pdf\.min|pdf\.worker|pdf\.worker\.min)\.js|data\/mock-data\.js)$/.test(reqPath);
   const dataDocument = /^\/data\/(?:orders|partners|uploads|vault)\//.test(reqPath) && allowedDocument(reqPath);
   const safePath = path.resolve(PUBLIC_DIR, '.' + reqPath);
   if ((!publicAsset && !dataDocument) || !isWithin(PUBLIC_DIR, safePath)) {

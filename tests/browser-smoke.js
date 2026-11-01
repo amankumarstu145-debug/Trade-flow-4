@@ -57,10 +57,82 @@ function browserPath() {
       app.updateProfitCalculator();
     });
     const calculator = await page.evaluate(() => Object.fromEntries(['big-tile-our-profit', 'big-tile-landed-outflow', 'big-tile-ss-invoice'].map(id => [id, document.getElementById(id).innerText])));
-    assert(calculator['big-tile-our-profit'].includes('8,035'));
-    assert(calculator['big-tile-landed-outflow'].includes('40,176'));
-    assert(calculator['big-tile-ss-invoice'].includes('60,264'));
+    // 7,200 units: factory 32,400 + 18% GST 5,832 + 5% freight 1,911.60 = 40,143.60 outflow (no per-unit rounding).
+    assert(calculator['big-tile-our-profit'].includes('8,028.72'), JSON.stringify(calculator));
+    assert(calculator['big-tile-landed-outflow'].includes('40,143.60'), JSON.stringify(calculator));
+    assert(calculator['big-tile-ss-invoice'].includes('60,215.40'), JSON.stringify(calculator));
     passed.push('Real calculator computes expected profit, cost and invoice totals');
+    const advancedProfit = await page.evaluate(() => {
+      app.calcMode = 'advanced';
+      app.advancedCalcProducts = [{ id: 'same', ...app.simpleCalcData }];
+      app.updateProfitCalculator();
+      return document.getElementById('big-tile-our-profit').innerText;
+    });
+    assert.equal(advancedProfit, calculator['big-tile-our-profit'], 'simple and advanced modes must agree');
+    passed.push('Simple and advanced calculator modes agree');
+    const finance = await page.evaluate(() => {
+      app.studioDraftData = { items: [{ name: 'A', gstRate: 18, totalAmount: 1000 }, { name: 'B', gstRate: 5, totalAmount: 1000 }], gstType: 'intra' };
+      app.recalculateStudioFinancials();
+      const gstTotal = app.studioDraftData.totalInvoiceAmount;
+      app.invoiceDraftData = { items: [{ quantity: 100, totalAmount: 10000, baseCostPerUnit: 10 }, { quantity: 100, totalAmount: 30000, baseCostPerUnit: 200 }], gstType: 'intra' };
+      app.recalculateDraftOrderFinancials();
+      return {
+        gstTotal, mfgCost: app.invoiceDraftData.manufacturerTotalCost,
+        words: app.numberToIndianWords(1500000000), negative: app.numberToIndianWords(-2500),
+        missing: ['openFolderByTarget', 'copyToClipboard', 'revealDataFolder', 'copyStudioValue', 'openStudioMetricsDrilldownModal'].filter(name => typeof app[name] !== 'function'),
+        noUpi: app.generateUpiQrUrl('', 'X', 1, 'INV-1')
+      };
+    });
+    assert.equal(finance.gstTotal, 2230, 'GST uses each line\'s own rate');
+    assert.equal(finance.mfgCost, 21000, 'each product line uses its own cost');
+    assert.equal(finance.words, 'Rupees One Hundred Fifty Crore Only');
+    assert.match(finance.negative, /^Minus /);
+    assert.deepEqual(finance.missing, []);
+    assert.equal(finance.noUpi, '', 'no UPI QR without a UPI ID in the profile');
+    passed.push('Per-line GST, per-product costs, amount in words, button handlers and UPI guard');
+    const demo = await page.evaluate(async () => {
+      document.querySelectorAll('[id$="-modal"]:not(.hidden)').forEach(m => m.classList.add('hidden'));
+      app.openEditContactModal();
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const modal = document.getElementById('contact-edit-modal');
+      const before = app.data.contacts.length;
+      const gstin = document.getElementById('edit-contact-gstin');
+      gstin.value = '27AAPFU0939F1ZW';
+      gstin.dispatchEvent(new Event('input', { bubbles: true }));
+      const liveMessage = gstin.__tfMsg ? gstin.__tfMsg.textContent : '';
+      const fill = await TFFormGuard.fillDemo(modal);
+      const nativeInvalid = [...modal.querySelectorAll('input, select, textarea')].filter(el => el.offsetParent && el.willValidate && !el.checkValidity()).length;
+      [...modal.querySelectorAll('button')].find(b => b.offsetParent && /save profile/i.test(b.textContent)).click();
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return { liveMessage, ...fill, nativeInvalid, added: app.data.contacts.length - before, button: !!document.getElementById('tf-demo-fill-btn') };
+    });
+    assert.match(demo.liveMessage, /check digit/i, 'live GSTIN message');
+    assert.equal(demo.failures, 0); assert.equal(demo.nativeInvalid, 0); assert.equal(demo.added, 1); assert(demo.button);
+    passed.push('Live field validation and demo fill: a demo-filled partner form saves');
+    const ledger = await page.evaluate(async () => {
+      app.showModalConfirm = async () => true; // accept confirmation dialogs in this check
+      const amounts = [app.parseAmount('1,25,000'), app.parseAmount('₹ 2,500.50'), app.parseAmount('1000+250'), app.parseAmount('abc')];
+      const order = app.data.orders.find(o => o.id === 'ORD-TEST');
+      order.totalInvoiceAmount = 118; order.customerAdvanceReceived = 0; order.customerBalanceDue = 118;
+      const payment = { id: 'PAY-SMOKE', orderRef: 'ORD-TEST', direction: 'received', amount: 50, partyName: 'Test Buyer', date: '2026-10-30', utr: 'SMOKEUTR123456' };
+      app.data.payments.push(payment); app.applyPaymentToOrder(payment, 1);
+      const afterRecord = order.customerBalanceDue;
+      await app.deletePayment('PAY-SMOKE');
+      const afterDelete = order.customerBalanceDue;
+      app.restoreDeletedPayment('PAY-SMOKE');
+      const afterRestore = order.customerBalanceDue;
+      const inter = app.newOrderFinancials([{ totalAmount: 1000, gstRate: 18, quantity: 1 }], { gstin: '29AAACR5055K1Z3' }, 0, null);
+      await app.deleteOrder('ORD-TEST');
+      const deleted = { inOrders: app.data.orders.some(o => o.id === 'ORD-TEST'), inBin: app.deletedOrdersList().some(o => o.id === 'ORD-TEST') };
+      app.restoreDeletedOrder('ORD-TEST');
+      return { amounts, afterRecord, afterDelete, afterRestore, igst: inter.gst.igst, deleted, restored: app.data.orders.some(o => o.id === 'ORD-TEST'), longQr: app.createQrDataUrl('x'.repeat(5000)) };
+    });
+    assert.deepEqual(ledger.amounts, [125000, 2500.5, 1250, 0]);
+    assert.deepEqual([ledger.afterRecord, ledger.afterDelete, ledger.afterRestore], [68, 118, 68], 'deleting a payment reverses it, restoring re-applies it');
+    assert.equal(ledger.igst, 180, 'buyer in another state (from GSTIN) pays IGST');
+    assert.deepEqual(ledger.deleted, { inOrders: false, inBin: true }); assert(ledger.restored);
+    assert.equal(ledger.longQr, '');
+    passed.push('Amount parsing, payment delete/restore balances, order recycle bin, interstate GST and QR guard');
     await page.evaluate(() => app.openInvoiceStudioModal('ORD-TEST'));
     passed.push('Invoice studio opens for the test order');
     await assertCleanTemplates();

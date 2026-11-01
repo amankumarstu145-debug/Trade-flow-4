@@ -1,0 +1,706 @@
+/* TradeFlow partner directory and partner page.
+ * One design for every partner type (buyers, manufacturers, transporters, packaging, marketeers):
+ * menu-style cards on the directory, and a partner page split into "Company & contact" and a
+ * money/work tab. Everything renders from app.data and saves through app.saveData(). */
+(function () {
+  'use strict';
+
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  const jsArg = v => esc(JSON.stringify(String(v ?? '')));
+  const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
+  const today = () => new Date().toISOString().slice(0, 10);
+  const inr = n => '₹' + Math.round(num(n)).toLocaleString('en-IN');
+  const shortDate = d => { if (!d) return '—'; const t = new Date(d); return isNaN(t) ? String(d) : t.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }); };
+  const longDate = d => { if (!d) return '—'; const t = new Date(d); return isNaN(t) ? String(d) : t.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }); };
+  const initials = name => String(name || '?').split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+  const splitList = v => String(v || '').split(',').map(s => s.trim()).filter(Boolean);
+
+  const ICON = {
+    place: 'M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z M12 7a3 3 0 1 0 0 6a3 3 0 1 0 0-6z',
+    phone: 'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z',
+    gst: 'M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M7 9h10 M7 13h6',
+    email: 'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M22 6l-10 7L2 6',
+    user: 'M12 4a4 4 0 1 0 0 8a4 4 0 1 0 0-8z M4 21a8 8 0 0 1 16 0',
+    building: 'M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16 M16 9h2a2 2 0 0 1 2 2v10 M8 7h4 M8 11h4 M8 15h4 M3 21h18',
+    bank: 'M3 10h18 M5 10v8 M9.5 10v8 M14.5 10v8 M19 10v8 M3 21h18 M12 3l9 5H3z',
+    shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z M9 12l2 2 4-4',
+    card: 'M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z M6 10h5 M6 14h8',
+    terms: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5',
+    tag: 'M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z M7.5 6a1.5 1.5 0 1 0 0 3a1.5 1.5 0 1 0 0-3z',
+    camera: 'M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z M12 10a3 3 0 1 0 0 6a3 3 0 1 0 0-6z',
+    edit: 'M12 20h9 M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z',
+    copy: 'M11 9h10v12H9V11a2 2 0 0 1 2-2z M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1',
+    upload: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M17 8l-5-5-5 5 M12 3v12',
+    download: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3',
+    truck: 'M1 3h15v13H1z M16 8h4l3 3v5h-7z M5.5 16a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5z M18.5 16a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5z',
+    box: 'M21 8 12 3 3 8v8l9 5 9-5z M3 8l9 5 9-5 M12 13v8'
+  };
+  const svg = (path, size = 16, extra = '') => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}><path d="${path}"></path></svg>`;
+
+  /* ------------------------------------------------------------------ partner types */
+  const ROLES = {
+    retailer: {
+      plural: 'Buyers & Retailers', single: 'Buyer / Retailer', prefix: 'RET', badge: 'Deals in', badgeHint: 'e.g. Achar, Hair oil, Medicine',
+      orderKey: 'retailerId', workTab: 'Orders & Money', addLabel: '+ Add buyer'
+    },
+    manufacturer: {
+      plural: 'Manufacturers', single: 'Manufacturer', prefix: 'MFG', badge: 'Makes', badgeHint: 'e.g. Achar, Masala',
+      orderKey: 'manufacturerId', workTab: 'Production & Payments', addLabel: '+ Add manufacturer'
+    },
+    packaging: {
+      plural: 'Packaging & Labels', single: 'Packaging supplier', prefix: 'PKG', badge: 'Supplies', badgeHint: 'e.g. PET jars, Labels, Cartons',
+      orderKey: 'packagingVendorId', workTab: 'Supplies & Payments', addLabel: '+ Add supplier'
+    },
+    transporter: {
+      plural: 'Transport & Logistics', single: 'Transporter', prefix: 'TRN', badge: 'Routes / vehicles', badgeHint: 'e.g. Pune–Nagpur, 10-ton truck',
+      orderKey: 'transporterId', workTab: 'Trips & Freight', addLabel: '+ Add transporter'
+    },
+    marketeer: {
+      plural: 'Sales Marketeers', single: 'Sales marketeer', prefix: 'MKT', badge: 'Areas / channels', badgeHint: 'e.g. Nagpur, Modern trade',
+      orderKey: 'marketeerId', workTab: 'Commission', addLabel: '+ Add marketeer'
+    }
+  };
+  const roleOf = c => ROLES[c && c.role] || ROLES.retailer;
+
+  /* ------------------------------------------------------------------ people (contact persons) */
+  // Older records keep one contact person in flat fields; read them as the first person.
+  function peopleOf(c) {
+    if (Array.isArray(c.people) && c.people.length) return c.people;
+    return [{ id: 'p1', name: c.contactPerson || '', role: c.designation || '', phone: c.phone || '', whatsapp: c.whatsappPhone || '', email: c.email || '', language: '', bestTime: '', upi: '', bankAccount: '', note: '' }];
+  }
+  function primaryOf(c) {
+    const list = peopleOf(c);
+    return list.find(p => p.id === c.primaryPersonId) || list[0];
+  }
+  // Keep the flat fields (used by invoices, WhatsApp, Excel sync) in step with the primary person.
+  function syncPrimary(c) {
+    const p = primaryOf(c);
+    if (!p) return;
+    c.contactPerson = p.name || c.contactPerson || '';
+    if (p.phone) c.phone = p.phone;
+    if (p.whatsapp) c.whatsappPhone = p.whatsapp;
+    if (p.email) c.email = p.email;
+    if (p.role) c.designation = p.role;
+  }
+
+  /* ------------------------------------------------------------------ fields per box */
+  const F = (key, label, opts = {}) => ({ key, label, full: false, wrap: false, type: 'text', ...opts });
+  const get = (c, key) => {
+    if (key === 'rate500') return c.agreedRates && c.agreedRates['500g'] ? '₹' + c.agreedRates['500g'] + ' per jar' : '';
+    if (key === 'rate1kg') return c.agreedRates && c.agreedRates['1kg'] ? '₹' + c.agreedRates['1kg'] + ' per jar' : '';
+    if (key === 'commissionRate') return c.commissionRate ? c.commissionRate + '%' : '';
+    if (key === 'creditLimit' || key === 'openingBalance') return c[key] ? inr(c[key]) : '';
+    if (key === 'creditPeriod') return c.creditPeriod ? c.creditPeriod + ' days' : '';
+    if (key === 'tradeDiscount') return c.tradeDiscount ? c.tradeDiscount + '%' : '';
+    if (key === 'upiId') return c.upiId || (c.bankDetails && c.bankDetails.upiId) || '';
+    if (['bankName', 'beneficiaryName', 'accountNumber', 'ifsc', 'branch'].includes(key)) return c[key] || (c.bankDetails && c.bankDetails[key]) || (key === 'ifsc' ? c.ifscCode : '') || '';
+    if (key === 'fssai') return c.fssai || c.fssaiNumber || '';
+    return c[key] == null ? '' : String(c[key]);
+  };
+  const raw = (c, key) => {
+    if (key === 'rate500') return c.agreedRates && c.agreedRates['500g'] ? String(c.agreedRates['500g']) : '';
+    if (key === 'rate1kg') return c.agreedRates && c.agreedRates['1kg'] ? String(c.agreedRates['1kg']) : '';
+    if (['commissionRate', 'creditLimit', 'openingBalance', 'creditPeriod', 'tradeDiscount'].includes(key)) return c[key] ? String(c[key]) : '';
+    return get(c, key);
+  };
+  function put(c, key, value) {
+    const v = String(value ?? '').trim();
+    if (key === 'rate500' || key === 'rate1kg') {
+      c.agreedRates = c.agreedRates || {};
+      const n = parseFloat(v.replace(/[^0-9.]/g, ''));
+      if (Number.isFinite(n)) c.agreedRates[key === 'rate500' ? '500g' : '1kg'] = n; else delete c.agreedRates[key === 'rate500' ? '500g' : '1kg'];
+      return;
+    }
+    if (['commissionRate', 'creditLimit', 'openingBalance', 'creditPeriod', 'tradeDiscount'].includes(key)) {
+      const n = parseFloat(v.replace(/[^0-9.]/g, ''));
+      c[key] = Number.isFinite(n) ? n : 0;
+      if (key === 'commissionRate') c.brokerageRate = c[key];
+      return;
+    }
+    if (['bankName', 'beneficiaryName', 'accountNumber', 'ifsc', 'branch', 'upiId'].includes(key)) {
+      c.bankDetails = c.bankDetails || {};
+      c.bankDetails[key] = v;
+      c[key] = v;
+      if (key === 'accountNumber') c.bankAccountNumber = v;
+      if (key === 'ifsc') c.ifscCode = v;
+      return;
+    }
+    if (key === 'fssai') { c.fssai = v; c.fssaiNumber = v; return; }
+    if (key === 'gstin') { c.gstin = v.toUpperCase(); if (/^[0-9]{2}/.test(c.gstin)) c.stateCode = c.gstin.slice(0, 2); return; }
+    if (key === 'pan') { c.pan = v.toUpperCase(); return; }
+    if (key === 'billingAddress') { c.billingAddress = v; c.address = v || c.shippingAddress || ''; return; }
+    c[key] = v;
+  }
+
+  function sections(c) {
+    const r = roleOf(c);
+    const extras = {
+      retailer: [F('paymentTerms', 'Payment terms'), F('creditPeriod', 'Credit period (days)', { type: 'number' }), F('creditLimit', 'Credit limit (₹)', { type: 'number' }), F('tradeDiscount', 'Trade discount (%)', { type: 'number' }), F('rate500', 'Agreed rate · 500g (₹)', { type: 'number' }), F('rate1kg', 'Agreed rate · 1kg (₹)', { type: 'number' }), F('openingBalance', 'Opening balance (₹)', { type: 'number' }), F('outlets', 'Outlets / branches'), F('preferredTransporter', 'Preferred transporter', { full: true })],
+      manufacturer: [F('paymentTerms', 'Payment terms'), F('capacity', 'Capacity per month'), F('specialties', 'Specialties', { full: true }), F('minimumBatch', 'Minimum batch'), F('leadTime', 'Production time'), F('openingBalance', 'Opening balance (₹)', { type: 'number' })],
+      packaging: [F('paymentTerms', 'Payment terms'), F('supplyItems', 'Items and rates', { full: true, wrap: true }), F('minimumOrder', 'Minimum order'), F('leadTime', 'Delivery time'), F('openingBalance', 'Opening balance (₹)', { type: 'number' })],
+      transporter: [F('paymentTerms', 'Payment terms'), F('vehicles', 'Vehicles (number · type · capacity)', { full: true, wrap: true }), F('routes', 'Routes served', { full: true, wrap: true }), F('ratePerTrip', 'Rate per trip / km'), F('drivers', 'Drivers (name · phone · licence)', { full: true, wrap: true }), F('openingBalance', 'Opening balance (₹)', { type: 'number' })],
+      marketeer: [F('commissionRate', 'Commission (%)', { type: 'number' }), F('territory', 'Territory'), F('channels', 'Channels'), F('paymentTerms', 'Payment terms'), F('openingBalance', 'Opening balance (₹)', { type: 'number' })]
+    }[c.role] || [];
+    return [
+      { id: 'company', col: 0, title: 'Company', icon: ICON.building, fields: [F('name', 'Company / trade name', { full: true }), F('brandName', 'Brand name'), F('businessNature', 'Business type'), F('dealsIn', r.badge + ' (separate with commas)', { full: true }), F('officePhone', 'Office phone'), F('billingEmail', 'Office / billing email'), F('website', 'Website', { full: true })] },
+      { id: 'address', col: 0, title: 'Address & location', icon: ICON.place, isAddress: true, fields: [F('billingAddress', 'Billing address', { full: true, wrap: true }), F('shippingAddress', c.role === 'manufacturer' ? 'Factory address' : 'Shipping / godown address', { full: true, wrap: true }), F('city', 'City'), F('state', 'State'), F('pincode', 'PIN code'), F('landmark', 'Landmark'), F('mapsLink', 'Google Maps link', { full: true })] },
+      { id: 'card', col: 0, title: 'Business card', icon: ICON.card, isCard: true, fields: [] },
+      { id: 'kyc', col: 1, title: 'Licences & KYC', icon: ICON.shield, fields: [F('gstin', 'GSTIN'), F('pan', 'PAN'), F('fssai', 'FSSAI licence'), F('fssaiExpiry', 'FSSAI valid till', { type: 'date' }), F('msme', 'MSME / Udyam'), F('shopLicence', 'Shop / trade licence'), ...(c.role === 'manufacturer' ? [F('factoryLicense', 'Factory licence')] : []), F('cin', 'CIN')] },
+      { id: 'terms', col: 1, title: c.role === 'marketeer' ? 'Commission & terms' : 'Trade terms', icon: ICON.terms, fields: [...extras, F('bio', 'Notes', { full: true, wrap: true })] },
+      { id: 'bank', col: 1, title: 'Company bank account', icon: ICON.bank, fields: [F('bankName', 'Bank'), F('beneficiaryName', 'Beneficiary'), F('accountNumber', 'Account number'), F('ifsc', 'IFSC'), F('upiId', 'UPI ID'), F('branch', 'Branch')] }
+    ];
+  }
+  const PERSON_FIELDS = [F('name', 'Full name'), F('role', 'Role / what they handle'), F('phone', 'Mobile', { type: 'tel' }), F('whatsapp', 'WhatsApp', { type: 'tel' }), F('email', 'Email', { full: true, type: 'email' }), F('language', 'Preferred language'), F('bestTime', 'Best time to call'), F('upi', 'Personal UPI'), F('bankAccount', 'Personal bank account'), F('note', 'Personal note', { full: true, wrap: true })];
+
+  /* ------------------------------------------------------------------ money and orders per type */
+  const isOpen = o => o && o.status !== 'settled' && o.status !== 'cancelled' && !o.isDeleted;
+  function linkedOrders(app, c) {
+    const key = roleOf(c).orderKey;
+    return (app.data.orders || []).filter(o => o[key] === c.id).sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+  }
+  function orderMoney(app, c, o) {
+    switch (c.role) {
+      case 'manufacturer': { const t = num(o.manufacturerTotalCost), p = num(o.manufacturerAdvancePaid); return { total: t, paid: p, bal: Math.max(0, t - p), totalLabel: 'Factory cost', paidLabel: 'Paid', balLabel: 'Payable' }; }
+      case 'packaging': { const t = num(o.packagingCost), p = num(o.packagingAdvancePaid); return { total: t, paid: p, bal: Math.max(0, t - p), totalLabel: 'Packaging cost', paidLabel: 'Paid', balLabel: 'Payable' }; }
+      case 'transporter': { const t = num(o.totalTransportCost); return { total: t, paid: null, bal: null, totalLabel: 'Freight', paidLabel: 'LR', balLabel: 'Vehicle' }; }
+      case 'marketeer': { const t = num(o.marketeerCommissionAmount); return { total: t, paid: null, bal: null, totalLabel: 'Commission', paidLabel: 'Order value', balLabel: 'Buyer' }; }
+      default: { const t = num(o.totalInvoiceAmount), b = Math.max(0, num(o.customerBalanceDue)); return { total: t, paid: Math.max(0, t - b), bal: b, totalLabel: 'Invoice', paidLabel: 'Received', balLabel: 'Balance' }; }
+    }
+  }
+  function summary(app, c) {
+    const orders = linkedOrders(app, c);
+    const open = orders.filter(isOpen);
+    const sum = (list, f) => list.reduce((t, o) => t + f(o), 0);
+    const last = orders[0];
+    const base = { orders, open, last, openCount: open.length, lastDate: last ? shortDate(last.date) : '—' };
+    if (c.role === 'retailer') {
+      const billed = sum(orders, o => num(o.totalInvoiceAmount));
+      const due = sum(orders, o => Math.max(0, num(o.customerBalanceDue)));
+      const overdueOrders = orders.filter(o => num(o.customerBalanceDue) > 0 && o.dueDate && o.dueDate < today() && o.status !== 'settled');
+      const overdue = sum(overdueOrders, o => num(o.customerBalanceDue));
+      const nextDue = open.filter(o => num(o.customerBalanceDue) > 0 && o.dueDate).map(o => o.dueDate).sort()[0];
+      return { ...base, big: due, bigLabel: 'Balance due', of: billed, ofLabel: 'billed', done: billed - due, doneLabel: 'received', overdue, overdueSince: overdueOrders.map(o => o.dueDate).sort()[0],
+        tiles: [['Open', open.length + ' of ' + orders.length], ['Last order', base.lastDate], ['Due on', nextDue ? shortDate(nextDue) : '—', overdue > 0]] };
+    }
+    if (c.role === 'manufacturer' || c.role === 'packaging') {
+      const m = c.role === 'manufacturer';
+      const cost = sum(orders, o => num(m ? o.manufacturerTotalCost : o.packagingCost));
+      const paid = sum(orders, o => num(m ? o.manufacturerAdvancePaid : o.packagingAdvancePaid));
+      return { ...base, big: Math.max(0, cost - paid), bigLabel: 'Payable', of: cost, ofLabel: 'total cost', done: paid, doneLabel: 'paid', overdue: 0,
+        tiles: [[m ? 'In production' : 'Open', String(m ? open.filter(o => o.status === 'in_production' || o.status === 'action_needed').length : open.length)], ['Last order', base.lastDate], ['Total orders', String(orders.length)]] };
+    }
+    if (c.role === 'transporter') {
+      const freight = sum(orders.filter(o => o.transportPaidByUs !== false), o => num(o.totalTransportCost));
+      const paid = typeof app.paymentsPaidToContact === 'function' ? app.paymentsPaidToContact(c) : 0;
+      return { ...base, big: Math.max(0, freight - paid), bigLabel: 'Freight payable', of: freight, ofLabel: 'freight', done: paid, doneLabel: 'paid', overdue: 0,
+        tiles: [['Trips', String(orders.length)], ['In transit', String(orders.filter(o => o.status === 'in_transit').length)], ['Last trip', base.lastDate]] };
+    }
+    const earned = sum(orders, o => num(o.marketeerCommissionAmount));
+    const paid = typeof app.paymentsPaidToContact === 'function' ? app.paymentsPaidToContact(c) : 0;
+    const buyers = new Set(orders.map(o => o.retailerId || o.retailerName)).size;
+    return { ...base, big: Math.max(0, earned - paid), bigLabel: 'Commission due', of: earned, ofLabel: 'earned', done: paid, doneLabel: 'paid', overdue: 0,
+      tiles: [['Buyers brought', String(buyers)], ['Orders', String(orders.length)], ['Last order', base.lastDate]] };
+  }
+
+  const STATUS = {
+    action_needed: ['Needs action', 'warn', 0], in_production: ['In production', 'info', 1], in_transit: ['In transit', 'info', 2],
+    delivered: ['Delivered', 'info', 3], delivered_overdue: ['Delivered · overdue', 'bad', 3], settled: ['Completed', 'ok', 5]
+  };
+  const statusOf = o => STATUS[o.status] || [String(o.status || 'Open').replace(/_/g, ' '), 'info', 1];
+
+  /* ------------------------------------------------------------------ UI state */
+  const state = { tab: {}, editing: null, overlay: null, query: {}, filter: {}, prevQuery: '', draftPerson: null };
+
+  /* ------------------------------------------------------------------ directory */
+  function renderDirectory(app, role) {
+    const r = ROLES[role];
+    const contacts = (app.data.contacts || []).filter(c => c.role === role && !c.isDeleted);
+    const rows = contacts.map(c => ({ c, s: summary(app, c) })).sort((a, b) => b.s.big - a.s.big);
+    const q = (state.query[role] || '').toLowerCase();
+    const f = state.filter[role] || 'all';
+    const totalBig = rows.reduce((t, x) => t + x.s.big, 0);
+    const totalDone = rows.reduce((t, x) => t + x.s.done, 0);
+    const totalOf = rows.reduce((t, x) => t + x.s.of, 0);
+    const totalOverdue = rows.reduce((t, x) => t + x.s.overdue, 0);
+    const openOrders = rows.reduce((t, x) => t + x.s.openCount, 0);
+    const counts = { all: rows.length, balance: rows.filter(x => x.s.big > 0).length, open: rows.filter(x => x.s.openCount > 0).length, overdue: rows.filter(x => x.s.overdue > 0).length, clear: rows.filter(x => x.s.big <= 0).length };
+    const shown = rows.filter(x => {
+      if (f === 'balance' && !(x.s.big > 0)) return false;
+      if (f === 'open' && !(x.s.openCount > 0)) return false;
+      if (f === 'overdue' && !(x.s.overdue > 0)) return false;
+      if (f === 'clear' && x.s.big > 0) return false;
+      if (!q) return true;
+      const p = peopleOf(x.c);
+      const hay = [x.c.name, x.c.brandName, x.c.city, x.c.state, x.c.gstin, x.c.dealsIn, x.c.id, ...p.map(pp => [pp.name, pp.phone, pp.email].join(' '))].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+    const tiles = [
+      [rows[0] ? rows[0].s.bigLabel : 'Balance', inr(totalBig), `across ${rows.length} ${rows.length === 1 ? 'partner' : 'partners'}`, totalBig > 0 && role === 'retailer' ? 'pu-red' : ''],
+      role === 'retailer' ? ['Overdue', inr(totalOverdue), counts.overdue ? counts.overdue + (counts.overdue === 1 ? ' buyer' : ' buyers') : 'nothing overdue', totalOverdue > 0 ? 'pu-red' : ''] : ['Open orders', String(openOrders), counts.open + ' partners with open work', ''],
+      ['Open orders', String(openOrders), 'linked to these partners', ''],
+      [rows[0] ? rows[0].s.doneLabel.replace(/^./, ch => ch.toUpperCase()) + ' so far' : 'Paid so far', inr(totalDone), totalOf ? Math.round(totalDone * 100 / totalOf) + '% of ' + (rows[0] ? rows[0].s.ofLabel : 'total') : '—', 'pu-green']
+    ];
+    if (role !== 'retailer') tiles.splice(2, 1, ['Partners', String(rows.length), counts.balance + ' with a balance', '']);
+    const chip = (id, label, n, tone = '') => `<button type="button" class="pu-chip ${f === id ? 'is-on' : ''} ${tone}" onclick="TFPartnerUI.setFilter('${role}','${id}')">${esc(label)} <b>${n}</b></button>`;
+    return `
+    <div class="pu-root pu-dir">
+      <div class="pu-dir-head">
+        <div><h1 class="pu-h1">${esc(r.plural)}</h1><p class="pu-sub">${rows.length} ${rows.length === 1 ? 'partner' : 'partners'} · double-click any detail to copy it</p></div>
+        <div class="pu-row-wrap">
+          <label class="pu-sr" for="pu-search-${role}">Search ${esc(r.plural)}</label>
+          <input id="pu-search-${role}" type="search" class="pu-input pu-search" placeholder="Search name, city, GSTIN, person or product" value="${esc(state.query[role] || '')}" oninput="TFPartnerUI.setQuery('${role}', this.value)">
+          <button type="button" class="pu-btn pu-primary" onclick="app.openEditContactModal(null, '${role}')">${esc(r.addLabel)}</button>
+        </div>
+      </div>
+      <div class="pu-kpis">${tiles.map(t => `<div class="pu-kpi"><span class="pu-label">${esc(t[0])}</span><span class="pu-kpi-val ${t[3]}">${esc(t[1])}</span><span class="pu-hint">${esc(t[2])}</span></div>`).join('')}</div>
+      <div class="pu-row-wrap">
+        ${chip('all', 'All', counts.all)}${chip('balance', role === 'retailer' ? 'Balance due' : 'With balance', counts.balance)}${role === 'retailer' ? chip('overdue', 'Overdue', counts.overdue, 'pu-chip-red') : ''}${chip('open', 'Open orders', counts.open, 'pu-chip-amber')}${chip('clear', 'All clear', counts.clear)}
+      </div>
+      ${shown.length ? `<div class="pu-grid">${shown.map(x => card(app, x.c, x.s)).join('')}</div>` : `<div class="pu-empty">${rows.length ? 'No partners match this search or filter.' : 'No ' + esc(r.plural.toLowerCase()) + ' yet. Use “' + esc(r.addLabel) + '” to add one.'}</div>`}
+    </div>`;
+  }
+
+  function card(app, c, s) {
+    const r = roleOf(c);
+    const p = primaryOf(c);
+    const id = jsArg(c.id);
+    const deals = splitList(c.dealsIn).slice(0, 3);
+    const rows = [
+      ['place', 'Place', [c.city, c.state].filter(Boolean).join(', ') || c.billingAddress || ''],
+      ['phone', 'Phone', (p && p.phone) || c.phone || ''],
+      ['gst', 'GSTIN', c.gstin ? 'GST ' + c.gstin : ''],
+      ['email', 'Email', (p && p.email) || c.email || '']
+    ];
+    const pct = s.of > 0 ? Math.min(100, Math.round(s.done * 100 / s.of)) : 0;
+    const logo = c.logo || c.logoUrl;
+    return `
+    <article class="pu-card" data-partner-type="${esc(c.role)}" data-name="${esc(String(c.name || '').toLowerCase())}">
+      <div class="pu-card-top">
+        <button type="button" class="pu-icon-btn pu-card-edit" title="Edit" aria-label="Edit ${esc(c.name)}" onclick="TFPartnerUI.open(${id}, 'company', 'company')">${svg(ICON.edit, 15)}</button>
+        <div class="pu-avatar-wrap">
+          <div class="pu-avatar">${logo ? `<img src="${esc(logo)}" alt="">` : esc(initials(c.name))}</div>
+          <label class="pu-cam" title="Upload photo" aria-label="Upload photo of ${esc(c.name)}">${svg(ICON.camera, 13)}<input type="file" accept="image/*" class="pu-sr" onchange="TFPartnerUI.uploadLogo(${id}, this)"></label>
+        </div>
+        <h2 class="pu-card-name"><button type="button" onclick="TFPartnerUI.open(${id}, 'company')" title="${esc(c.name)}">${esc(c.name || 'Unnamed partner')}</button></h2>
+        <div class="pu-badges">${deals.length ? deals.map(d => `<span class="pu-badge">${svg(ICON.tag, 12)}${esc(d)}</span>`).join('') : `<button type="button" class="pu-badge pu-badge-add" onclick="TFPartnerUI.open(${id}, 'company', 'company')">+ ${esc(r.badge)}</button>`}</div>
+        <div class="pu-lines">
+          ${rows.map(([k, label, v]) => `
+          <div class="pu-line ${v ? '' : 'is-empty'}" ${v ? `ondblclick="TFPartnerUI.copy(${jsArg(v.replace(/^GST /, ''))}, '${label}')" title="Double-click to copy"` : ''}>
+            ${svg(ICON[k], 15, 'class="pu-line-icon"')}<span class="pu-line-text">${esc(v || 'Add ' + label.toLowerCase())}</span>
+            ${v ? `<button type="button" class="pu-copy" aria-label="Copy ${esc(label)}" title="Copy" onclick="TFPartnerUI.copy(${jsArg(v.replace(/^GST /, ''))}, '${label}')">${svg(ICON.copy, 14)}</button>` : ''}
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="pu-card-body">
+        <div class="pu-money">
+          <div class="pu-between"><span class="pu-label">${esc(s.bigLabel)}</span><span class="pu-hint">of ${esc(inr(s.of))} ${esc(s.ofLabel)}</span></div>
+          <span class="pu-big ${s.overdue > 0 ? 'pu-red' : ''}">${esc(inr(s.big))}</span>
+          <div class="pu-bar"><div style="width:${pct}%"></div></div>
+          <span class="pu-hint">${esc(inr(s.done))} ${esc(s.doneLabel)} · ${pct}%</span>
+        </div>
+        <div class="pu-tiles">${s.tiles.map(t => `<div class="pu-tile ${t[2] ? 'is-bad' : ''}"><span class="pu-label">${esc(t[0])}</span><b>${esc(t[1])}</b></div>`).join('')}</div>
+        <div class="pu-two">
+          <button type="button" class="pu-btn" onclick="TFPartnerUI.open(${id}, 'company')">Company &amp; contact</button>
+          <button type="button" class="pu-btn pu-primary" onclick="TFPartnerUI.open(${id}, 'work')">${esc(r.workTab)}</button>
+        </div>
+      </div>
+    </article>`;
+  }
+
+  /* ------------------------------------------------------------------ partner page */
+  function renderPage(app, c) {
+    const r = roleOf(c);
+    const tab = state.tab[c.id] || 'company';
+    const s = summary(app, c);
+    const p = primaryOf(c);
+    const id = jsArg(c.id);
+    const deals = splitList(c.dealsIn);
+    const chips = [
+      ['place', 'Place', [c.city, c.state].filter(Boolean).join(', ') || c.billingAddress || ''],
+      ['phone', 'Phone', (p && p.phone) || c.phone || ''],
+      ['gst', 'GSTIN', c.gstin || ''],
+      ['email', 'Email', (p && p.email) || c.email || '']
+    ];
+    const phone = String((p && p.phone) || c.phone || '').replace(/[^0-9+]/g, '');
+    const wa = String((p && (p.whatsapp || p.phone)) || c.whatsappPhone || c.phone || '').replace(/[^0-9]/g, '');
+    const logo = c.logo || c.logoUrl;
+    return `
+    <div class="pu-root pu-page">
+      <button type="button" class="pu-back" onclick="app.navigateBack()">← Back</button>
+      <section class="pu-hero">
+        <div class="pu-avatar-wrap pu-avatar-lg">
+          <div class="pu-avatar">${logo ? `<img src="${esc(logo)}" alt="">` : esc(initials(c.name))}</div>
+          <label class="pu-cam" title="Upload logo or photo" aria-label="Upload logo or photo">${svg(ICON.camera, 15)}<input type="file" accept="image/*" class="pu-sr" onchange="TFPartnerUI.uploadLogo(${id}, this)"></label>
+        </div>
+        <div class="pu-hero-main">
+          <div class="pu-row-wrap"><h1 class="pu-h1 pu-hero-name">${esc(c.name || 'Unnamed partner')}</h1><span class="pu-idtag">${esc(c.id)} · ${esc(r.single)}</span></div>
+          <div class="pu-row-wrap pu-gap6">
+            <span class="pu-label">${esc(r.badge)}</span>
+            ${deals.map(d => `<span class="pu-badge">${svg(ICON.tag, 12)}${esc(d)}</span>`).join('')}
+            <button type="button" class="pu-badge pu-badge-add" onclick="TFPartnerUI.edit(${id}, 'company')">${deals.length ? 'Edit' : '+ Add'}</button>
+            ${p && p.name ? `<span class="pu-hint">· Contact: <b>${esc(p.name)}</b></span>` : ''}
+          </div>
+          <div class="pu-chip-grid">${chips.map(([k, label, v]) => `<button type="button" class="pu-copychip ${v ? '' : 'is-empty'}" ${v ? `onclick="TFPartnerUI.copy(${jsArg(v)}, '${label}')" title="Click to copy"` : `onclick="TFPartnerUI.edit(${id}, '${k === 'phone' || k === 'email' ? 'person:' + esc(p ? p.id : 'p1') : k === 'gst' ? 'kyc' : 'address'}')"`}>${svg(ICON[k], 14)}<span>${esc(v ? (k === 'gst' ? 'GST ' + v : v) : 'Add ' + label.toLowerCase())}</span></button>`).join('')}</div>
+        </div>
+        <div class="pu-row-wrap pu-hero-actions">
+          ${phone ? `<a class="pu-btn" href="tel:${esc(phone)}">Call</a>` : ''}
+          ${wa ? `<a class="pu-btn" href="https://wa.me/${esc(wa.length === 10 ? '91' + wa : wa)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+          <button type="button" class="pu-btn pu-dark" onclick="TFPartnerUI.edit(${id}, 'company')">${svg(ICON.edit, 15)} Edit profile</button>
+        </div>
+      </section>
+      <div class="pu-tabs" role="tablist" aria-label="Partner sections">
+        ${[['company', 'Company & contact', 'Details, people, licences, bank'], ['work', r.workTab, s.openCount + ' open · ' + inr(s.big) + ' ' + s.bigLabel.toLowerCase()]].map(([t, label, hint]) => `
+        <button type="button" role="tab" aria-selected="${tab === t}" class="pu-tab ${tab === t ? 'is-on' : ''}" onclick="TFPartnerUI.setTab(${id}, '${t}')"><span>${esc(label)}</span><small>${esc(hint)}</small></button>`).join('')}
+      </div>
+      ${tab === 'work' ? workTab(app, c, s) : companyTab(app, c)}
+      ${overlay(app, c)}
+    </div>`;
+  }
+
+  function companyTab(app, c) {
+    const secs = sections(c);
+    const people = peopleOf(c);
+    const need = [];
+    if (!c.gstin) need.push('GSTIN');
+    if (c.fssai && !c.fssaiExpiry) need.push('FSSAI expiry date');
+    if (!c.billingAddress) need.push('billing address');
+    if (!get(c, 'accountNumber') && !get(c, 'upiId')) need.push('bank account or UPI');
+    const find = idv => secs.find(x => x.id === idv);
+    const left = ['company', 'address', 'card'].map(find);
+    const right = ['kyc', 'terms', 'bank'].map(find);
+    return `
+      ${need.length ? `<div class="pu-attn"><b>${need.length} ${need.length === 1 ? 'thing' : 'things'} to complete</b><span>Missing: ${esc(need.join(', '))}.</span><button type="button" class="pu-btn pu-btn-sm" onclick="TFPartnerUI.edit(${jsArg(c.id)}, '${!c.gstin || (c.fssai && !c.fssaiExpiry) ? 'kyc' : !c.billingAddress ? 'address' : 'bank'}')">Complete now</button></div>` : ''}
+      <div class="pu-cols">
+        <div class="pu-col">${left.map(sx => box(app, c, sx)).join('')}</div>
+        <div class="pu-col">
+          ${people.map((pp, i) => personBox(app, c, pp, i, people.length)).join('')}
+          <button type="button" class="pu-add-person" onclick="TFPartnerUI.addPerson(${jsArg(c.id)})">+ Add another person <small>(only if someone else also handles this company)</small></button>
+          ${right.map(sx => box(app, c, sx)).join('')}
+        </div>
+      </div>`;
+  }
+
+  function boxHead(icon, title, subtitle, editing, editCall) {
+    return `<div class="pu-box-head"><span class="pu-box-icon">${svg(icon, 16)}</span><div class="pu-grow"><h2>${esc(title)}</h2><span class="pu-hint">${esc(subtitle)}</span></div>
+      ${editing ? '<span class="pu-editing">Editing</span>' : `<button type="button" class="pu-btn pu-btn-sm" onclick="${editCall}">${svg(ICON.edit, 14)} Edit</button>`}</div>`;
+  }
+  function tiles(list) {
+    return `<div class="pu-fields">${list.map(x => `
+      <button type="button" class="pu-field ${x.full ? 'is-full' : ''} ${x.wrap ? 'is-wrap' : ''}" onclick="TFPartnerUI.copy(${jsArg(x.value)}, ${jsArg(x.label)})" title="Click to copy">
+        <span class="pu-field-label"><span>${esc(x.label)}</span>${x.tag ? `<em class="pu-tag ${x.tagTone || ''}">${esc(x.tag)}</em>` : ''}<i>Copy</i></span>
+        <span class="pu-field-value">${esc(x.value)}</span>
+      </button>`).join('')}</div>`;
+  }
+  function editForm(fields, values, saveCall, cancelCall, extraLeft = '') {
+    return `<form class="pu-form" onsubmit="event.preventDefault(); ${saveCall}">
+      <div class="pu-fields">${fields.map(f => `
+        <div class="pu-input-wrap ${f.full ? 'is-full' : ''}">
+          <label for="pu-in-${esc(f.key)}">${esc(f.label)}</label>
+          ${f.wrap ? `<textarea id="pu-in-${esc(f.key)}" data-pu-field="${esc(f.key)}" class="pu-input" rows="2" name="${esc(f.key)}">${esc(values[f.key] || '')}</textarea>`
+                   : `<input id="pu-in-${esc(f.key)}" data-pu-field="${esc(f.key)}" class="pu-input" type="${f.type === 'number' ? 'text' : esc(f.type)}" ${f.type === 'number' ? 'inputmode="decimal"' : ''} name="${esc(f.key)}" value="${esc(values[f.key] || '')}" placeholder="Add ${esc(f.label.toLowerCase())}">`}
+        </div>`).join('')}</div>
+      <div class="pu-form-foot">${extraLeft}<span class="pu-grow"></span><button type="button" class="pu-btn" onclick="${cancelCall}">Cancel</button><button type="submit" class="pu-btn pu-primary">Save changes</button></div>
+    </form>`;
+  }
+
+  function box(app, c, sx) {
+    const id = jsArg(c.id);
+    const editing = state.editing === c.id + '|' + sx.id;
+    const filled = sx.fields.filter(f => get(c, f.key));
+    const missing = sx.fields.filter(f => !get(c, f.key));
+    const subtitle = sx.isCard ? 'Front and back photo' : filled.length + ' of ' + sx.fields.length + ' filled';
+    let body = '';
+    if (editing && !sx.isCard) {
+      const values = {}; sx.fields.forEach(f => { values[f.key] = raw(c, f.key); });
+      body = editForm(sx.fields, values, `TFPartnerUI.saveBox(${id}, '${sx.id}', this)`, 'TFPartnerUI.cancel()');
+    } else {
+      const docs = c.kycDocs || {};
+      body = (filled.length ? tiles(filled.map(f => ({ label: f.label.replace(/ \((separate with commas|₹|%|days)\)$/, ''), value: get(c, f.key), full: f.full, wrap: f.wrap,
+        tag: sx.id === 'kyc' && ['gstin', 'pan', 'fssai'].includes(f.key) ? (docs[f.key] ? 'Scan saved' : 'Scan missing') : '', tagTone: sx.id === 'kyc' && ['gstin', 'pan', 'fssai'].includes(f.key) && !docs[f.key] ? 'is-amber' : 'is-green' }))) : '');
+      if (sx.isAddress) {
+        const q = encodeURIComponent([c.billingAddress || c.shippingAddress, c.city, c.state, c.pincode].filter(Boolean).join(', '));
+        const link = c.mapsLink || (q ? 'https://www.google.com/maps/search/?api=1&query=' + q : '');
+        body += `<div class="pu-pad"><div class="pu-map"><span class="pu-map-pin">${svg(ICON.place, 18)}</span><span class="pu-map-label">${esc(c.city || 'Location')}</span></div>
+          <div class="pu-two">${link ? `<a class="pu-btn pu-primary" href="${esc(link)}" target="_blank" rel="noopener">Open in Google Maps</a><a class="pu-btn" href="https://wa.me/?text=${encodeURIComponent((c.name || '') + ' – ' + decodeURIComponent(link))}" target="_blank" rel="noopener">Send location on WhatsApp</a>` : '<span class="pu-hint">Add an address or a Google Maps link to see it on the map.</span>'}</div></div>`;
+      }
+      if (sx.isCard) {
+        const card = c.businessCard || {};
+        body += `<div class="pu-fields pu-pad">${[['front', 'Front of card'], ['back', 'Back (optional)']].map(([side, label]) => card[side]
+          ? `<div class="pu-cardimg"><img src="${esc(card[side])}" alt="${esc(label)}"><div class="pu-row-wrap"><button type="button" class="pu-btn pu-btn-sm" onclick="TFPartnerUI.viewImage(${id}, '${side}')">View</button><label class="pu-btn pu-btn-sm">Replace<input type="file" accept="image/*" class="pu-sr" onchange="TFPartnerUI.uploadCard(${id}, '${side}', this)"></label><button type="button" class="pu-btn pu-btn-sm pu-danger" onclick="TFPartnerUI.removeCard(${id}, '${side}')">Remove</button></div></div>`
+          : `<label class="pu-drop">${svg(ICON.upload, 20)}<b>${esc(label)}</b><span class="pu-hint">Tap to upload or take a photo</span><input type="file" accept="image/*" capture="environment" class="pu-sr" onchange="TFPartnerUI.uploadCard(${id}, '${side}', this)"></label>`).join('')}</div>`;
+      }
+      if (missing.length) body += `<button type="button" class="pu-add-missing" onclick="TFPartnerUI.edit(${id}, '${sx.id}')"><b>+ Add</b><span>${esc(missing.map(f => f.label.replace(/ \((separate with commas|₹|%|days)\)$/, '')).join(' · '))}</span></button>`;
+    }
+    return `<section class="pu-box ${editing ? 'is-editing' : ''}">${boxHead(sx.icon, sx.title, subtitle, editing, `TFPartnerUI.edit(${id}, '${sx.id}')`)}${body}</section>`;
+  }
+
+  function personBox(app, c, p, i, total) {
+    const id = jsArg(c.id);
+    const key = 'person:' + p.id;
+    const editing = state.editing === c.id + '|' + key;
+    const isPrimary = (primaryOf(c) || {}).id === p.id;
+    const title = total > 1 ? (isPrimary ? 'Primary contact' : 'Person ' + (i + 1)) : 'Contact person';
+    const shown = PERSON_FIELDS.filter(f => f.key !== 'name' && f.key !== 'role');
+    const filled = shown.filter(f => p[f.key]);
+    const missing = shown.filter(f => !p[f.key]);
+    let body;
+    if (editing) {
+      body = editForm(PERSON_FIELDS, p, `TFPartnerUI.savePerson(${id}, ${jsArg(p.id)}, this)`, 'TFPartnerUI.cancel()',
+        total > 1 ? `<button type="button" class="pu-btn pu-danger" onclick="TFPartnerUI.removePerson(${id}, ${jsArg(p.id)})">Remove person</button>` : '');
+    } else {
+      body = `<div class="pu-person">
+          <div class="pu-avatar-wrap pu-avatar-md"><div class="pu-avatar">${p.photo ? `<img src="${esc(p.photo)}" alt="">` : esc(initials(p.name))}</div>
+            <label class="pu-cam" title="Upload photo" aria-label="Upload photo of ${esc(p.name || 'this person')}">${svg(ICON.camera, 12)}<input type="file" accept="image/*" class="pu-sr" onchange="TFPartnerUI.uploadPersonPhoto(${id}, ${jsArg(p.id)}, this)"></label></div>
+          <div class="pu-grow"><b class="pu-person-name">${esc(p.name || 'Name not added')}</b><span class="pu-hint">${esc(p.role || 'Add their role')}</span></div>
+          ${total > 1 ? (isPrimary ? '<span class="pu-tag is-green">★ Primary contact</span>' : `<button type="button" class="pu-btn pu-btn-sm" onclick="TFPartnerUI.makePrimary(${id}, ${jsArg(p.id)})">Make primary</button>`) : ''}
+        </div>`
+        + (filled.length ? tiles(filled.map(f => ({ label: f.label, value: p[f.key], full: f.full, wrap: f.wrap }))) : '')
+        + (missing.length ? `<button type="button" class="pu-add-missing" onclick="TFPartnerUI.edit(${id}, '${esc(key)}')"><b>+ Add</b><span>${esc(missing.map(f => f.label).join(' · '))}</span></button>` : '');
+    }
+    const n = PERSON_FIELDS.filter(f => p[f.key]).length;
+    return `<section class="pu-box ${editing ? 'is-editing' : ''}">${boxHead(ICON.user, title, n + ' of ' + PERSON_FIELDS.length + ' filled', editing, `TFPartnerUI.edit(${id}, '${esc(key)}')`)}${body}</section>`;
+  }
+
+  /* ------------------------------------------------------------------ work & money tab */
+  function steps(o) {
+    const st = statusOf(o);
+    const reached = st[2];
+    const bad = st[1] === 'bad';
+    return ['Booked', 'Production', 'Dispatched', 'Delivered', 'Paid'].map((label, i) => {
+      const done = i < reached, now = i === reached;
+      return `<div class="pu-step ${done ? 'is-done' : ''} ${now ? (bad ? 'is-bad' : 'is-now') : ''} ${i === 0 ? 'is-first' : ''} ${i <= reached ? 'is-lit' : ''}"><span>${done ? '✓' : i + 1}</span><small>${label}</small></div>`;
+    }).join('');
+  }
+  function docsFor(app, o) { return (app.data.documents || []).filter(d => d.orderId === o.id && !d.isDeleted); }
+  function paymentsFor(app, c, o) { return (app.data.payments || []).filter(p => !p.isDeleted && (p.orderRef === o.id || p.orderId === o.id)); }
+  function productsOf(o) { return (o.items || []).map(i => `${i.name || i.shortName || 'Item'}${i.variant ? ' ' + String(i.variant).replace(/ PET Jar$/, '') : ''} × ${num(i.cases)}`).join(' · '); }
+  const casesOf = o => (o.items || []).reduce((t, i) => t + num(i.cases), 0);
+
+  function workTab(app, c, s) {
+    const r = roleOf(c);
+    const id = jsArg(c.id);
+    const money = o => orderMoney(app, c, o);
+    const prevQ = state.prevQuery.toLowerCase();
+    const previous = s.orders.filter(o => !isOpen(o)).filter(o => !prevQ || [o.id, o.invoiceNumber, productsOf(o)].join(' ').toLowerCase().includes(prevQ));
+    const direction = c.role === 'retailer' ? 'received' : 'paid';
+    const kpis = [
+      [s.bigLabel, inr(s.big), 'across ' + s.openCount + ' open', s.overdue > 0 || (c.role === 'retailer' && s.big > 0) ? 'pu-red' : ''],
+      c.role === 'retailer' ? ['Overdue', inr(s.overdue), s.overdueSince ? 'since ' + shortDate(s.overdueSince) : 'nothing overdue', s.overdue > 0 ? 'pu-red' : ''] : ['Open', String(s.openCount), 'orders in progress', ''],
+      ['Total ' + s.ofLabel, inr(s.of), s.orders.length + ' orders', ''],
+      [s.doneLabel.replace(/^./, ch => ch.toUpperCase()), inr(s.done), s.of ? Math.round(s.done * 100 / s.of) + '% of total' : '—', 'pu-green'],
+      ['Terms', c.paymentTerms || (c.commissionRate ? c.commissionRate + '%' : '—'), c.role === 'marketeer' ? 'commission terms' : 'payment terms', '']
+    ];
+    const current = s.open;
+    return `
+      <div class="pu-kpis pu-kpis-5">${kpis.map(t => `<div class="pu-kpi"><span class="pu-label">${esc(t[0])}</span><span class="pu-kpi-val ${t[3]}">${esc(t[1])}</span><span class="pu-hint">${esc(t[2])}</span></div>`).join('')}</div>
+      <div class="pu-dir-head"><h2 class="pu-h2">Current orders <span class="pu-hint">· ${current.length} open</span></h2>
+        <div class="pu-row-wrap">
+          <button type="button" class="pu-btn" onclick="app.openPaymentModal(null, ${jsArg(c.name)}, '${direction}')">Record payment</button>
+          ${c.role === 'retailer' ? '<button type="button" class="pu-btn pu-primary" onclick="app.openNewOrderModal()">+ New order</button>' : ''}
+        </div></div>
+      ${current.length ? `<div class="pu-orders">${current.map(o => {
+        const m = money(o); const st = statusOf(o); const docs = docsFor(app, o);
+        const overdue = c.role === 'retailer' && num(o.customerBalanceDue) > 0 && o.dueDate && o.dueDate < today();
+        const third = m.bal != null ? [m.balLabel + (o.dueDate && c.role === 'retailer' ? ' · due ' + shortDate(o.dueDate) : ''), inr(m.bal)] : c.role === 'transporter' ? ['Vehicle', o.vehicleNumber || '—'] : ['Buyer', o.retailerName || '—'];
+        const second = m.paid != null ? [m.paidLabel, inr(m.paid)] : c.role === 'transporter' ? ['LR', o.lrNumber || 'Pending'] : ['Order value', inr(o.totalInvoiceAmount)];
+        return `<article class="pu-box">
+          <div class="pu-box-head"><div class="pu-grow"><button type="button" class="pu-link" onclick="app.openOrderDetailPage(${jsArg(o.id)})">${esc(o.invoiceNumber || o.id)}</button><span class="pu-hint">Booked ${esc(longDate(o.date))} · ${casesOf(o)} cases</span></div><span class="pu-status is-${overdue ? 'bad' : st[1]}">${esc(overdue ? 'Overdue' : st[0])}</span></div>
+          <div class="pu-pad pu-stack">
+            <div class="pu-steps">${steps(o)}</div>
+            <span class="pu-small">${esc(productsOf(o))}</span>
+            <div class="pu-tiles"><div class="pu-tile"><span class="pu-label">${esc(m.totalLabel)}</span><b>${esc(inr(m.total))}</b></div><div class="pu-tile"><span class="pu-label">${esc(second[0])}</span><b class="${m.paid != null ? 'pu-green' : ''}">${esc(second[1])}</b></div><div class="pu-tile ${overdue ? 'is-bad' : ''}"><span class="pu-label">${esc(third[0])}</span><b>${esc(third[1])}</b></div></div>
+            <div class="pu-row-wrap"><button type="button" class="pu-btn pu-primary pu-btn-sm" onclick="app.openOrderDetailPage(${jsArg(o.id)})">Open order</button><button type="button" class="pu-btn pu-btn-sm" onclick="TFPartnerUI.folder(${id}, ${jsArg(o.id)})">Folder · ${docs.length} ${docs.length === 1 ? 'file' : 'files'}</button>${c.role === 'retailer' ? `<button type="button" class="pu-btn pu-btn-sm" onclick="app.openInvoiceModal(${jsArg(o.id)})">View invoice</button>` : ''}</div>
+          </div></article>`;
+      }).join('')}</div>` : '<div class="pu-empty">No open orders right now.</div>'}
+      <section class="pu-box">
+        <div class="pu-box-head"><h2 class="pu-grow">Previous orders <span class="pu-hint">· completed &amp; paid</span></h2>
+          <label class="pu-sr" for="pu-prev-q">Search previous orders</label><input id="pu-prev-q" type="search" class="pu-input pu-input-sm" placeholder="Search order no. or product" value="${esc(state.prevQuery)}" oninput="TFPartnerUI.setPrevQuery(this.value)"></div>
+        ${previous.length ? `<div class="pu-table-wrap"><table class="pu-table"><thead><tr><th>Order</th><th>Products</th><th class="pu-num">Cases</th><th class="pu-num">${esc(money(previous[0]).totalLabel)}</th><th>Payment</th><th>Completed</th><th class="pu-num">Invoice &amp; files</th></tr></thead><tbody>
+          ${previous.map(o => { const m = money(o); const pays = paymentsFor(app, c, o); const docs = docsFor(app, o); const last = pays.map(p => p.date).sort().pop();
+            return `<tr><td><button type="button" class="pu-link" onclick="app.openOrderDetailPage(${jsArg(o.id)})">${esc(o.invoiceNumber || o.id)}</button><div class="pu-hint">${esc(longDate(o.date))}</div></td>
+              <td class="pu-small">${esc(productsOf(o))}</td><td class="pu-num">${casesOf(o)}</td><td class="pu-num"><b>${esc(inr(m.total))}</b></td>
+              <td><span class="pu-status is-ok">✓ Paid in full</span><div class="pu-hint">${pays.length ? pays.length + (pays.length === 1 ? ' payment' : ' payments') + (last ? ' · last ' + esc(shortDate(last)) : '') : 'payments recorded on the order'}</div></td>
+              <td>${esc(longDate(o.deliveredDate || o.settledDate || o.dueDate))}</td>
+              <td class="pu-num"><div class="pu-row-end">${c.role === 'retailer' ? `<button type="button" class="pu-btn pu-btn-sm" onclick="app.openInvoiceModal(${jsArg(o.id)})">View invoice</button>` : ''}<button type="button" class="pu-btn pu-btn-sm" onclick="TFPartnerUI.folder(${id}, ${jsArg(o.id)})">Folder · ${docs.length}</button></div></td></tr>`; }).join('')}
+        </tbody></table></div>` : `<div class="pu-empty">${prevQ ? 'No previous orders match this search.' : 'No completed orders yet. Orders move here once they are delivered and fully paid.'}</div>`}
+      </section>`;
+  }
+
+  function overlay(app, c) {
+    const ov = state.overlay;
+    if (!ov || ov.contactId !== c.id) return '';
+    const close = 'TFPartnerUI.closeOverlay()';
+    if (ov.kind === 'image') {
+      const src = (c.businessCard || {})[ov.side];
+      return `<div class="pu-overlay" onclick="if (event.target === this) ${close}"><div class="pu-dialog" role="dialog" aria-modal="true" aria-label="Business card"><div class="pu-box-head"><h2 class="pu-grow">Business card · ${esc(ov.side)}</h2><button type="button" class="pu-icon-btn" aria-label="Close" onclick="${close}">✕</button></div><div class="pu-pad"><img src="${esc(src)}" alt="Business card" style="width:100%;border-radius:10px"></div></div></div>`;
+    }
+    const o = (app.data.orders || []).find(x => x.id === ov.orderId);
+    if (!o) return '';
+    const docs = docsFor(app, o);
+    const label = d => (d.metadata && (d.metadata.customFileName || d.metadata.invoiceNumber)) || d.fileName || 'Document';
+    return `<div class="pu-overlay" onclick="if (event.target === this) ${close}"><div class="pu-dialog" role="dialog" aria-modal="true" aria-label="Order folder">
+      <div class="pu-box-head"><div class="pu-grow"><span class="pu-hint">Order folder · ${docs.length} ${docs.length === 1 ? 'file' : 'files'}</span><h2>${esc(o.invoiceNumber || o.id)}</h2></div><button type="button" class="pu-icon-btn" aria-label="Close" onclick="${close}">✕</button></div>
+      <div class="pu-pad pu-stack">
+        ${docs.length ? docs.map(d => `<div class="pu-file"><span class="pu-file-ext">${esc((String(d.fileName || '').split('.').pop() || 'FILE').slice(0, 4).toUpperCase())}</span><div class="pu-grow"><b>${esc(label(d))}</b><span class="pu-hint">${esc(String(d.category || '').replace(/_/g, ' '))}${d.created_at || d.createdAt ? ' · ' + esc(shortDate(d.created_at || d.createdAt)) : ''}</span></div><button type="button" class="pu-btn pu-btn-sm" onclick="TFPartnerUI.closeOverlay(); app.previewDocument(${jsArg(d.id)})">View</button></div>`).join('')
+          : '<div class="pu-empty">No files saved for this order yet.</div>'}
+        <div class="pu-form-foot"><span class="pu-grow"></span>${c.role === 'retailer' ? `<button type="button" class="pu-btn" onclick="TFPartnerUI.closeOverlay(); app.openInvoiceModal(${jsArg(o.id)})">View invoice</button>` : ''}<button type="button" class="pu-btn" onclick="TFPartnerUI.closeOverlay(); app.openDocumentReviewModalForOrder(${jsArg(o.id)})">+ Add file</button><button type="button" class="pu-btn pu-dark" onclick="app.openOrderFolder(${jsArg(o.id)})">Open in File Explorer</button></div>
+      </div></div></div>`;
+  }
+
+  /* ------------------------------------------------------------------ actions */
+  const appRef = () => window.app;
+  const contactById = idv => (appRef().data.contacts || []).find(c => c.id === idv);
+  function rerender() {
+    const a = appRef();
+    if (a.activeTab === 'contact-detail' && typeof a.renderContactDetailView === 'function') a.renderContactDetailView(a.activeContactId);
+    else if (typeof a.renderActiveView === 'function') a.renderActiveView();
+  }
+  function stamp(c, why) {
+    c.updated_at = new Date().toISOString();
+    const a = appRef();
+    a.saveData('Operator', why);
+    rerender();
+  }
+  function readForm(form) {
+    const out = {};
+    form.querySelectorAll('[data-pu-field]').forEach(el => { out[el.getAttribute('data-pu-field')] = el.value; });
+    return out;
+  }
+  function shrinkImage(file, maxSide, quality = 0.82) {
+    return new Promise((resolve, reject) => {
+      if (!file || !/^image\//.test(file.type)) { reject(new Error('Please choose an image (JPG or PNG).')); return; }
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Could not read the file.'));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('This image could not be opened.'));
+        img.onload = () => {
+          const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  const toast = m => { const a = appRef(); if (a && a.showToast) a.showToast(m); };
+
+  window.TFPartnerUI = {
+    ROLES, peopleOf, primaryOf, summary, sections,
+    renderDirectory, renderPage,
+    open(contactId, tab = 'company', editSection = null) {
+      state.tab[contactId] = tab;
+      state.editing = editSection ? contactId + '|' + editSection : null;
+      state.overlay = null;
+      appRef().navigateToContact(contactId, tab);
+    },
+    setTab(contactId, tab) { state.tab[contactId] = tab; state.editing = null; rerender(); },
+    setFilter(role, f) { state.filter[role] = f; rerender(); },
+    setQuery(role, q) {
+      state.query[role] = q;
+      const a = appRef();
+      const container = document.activeElement;
+      rerender();
+      const el = document.getElementById('pu-search-' + role);
+      if (el && container && container.id === el.id) { el.focus(); el.setSelectionRange(q.length, q.length); }
+    },
+    setPrevQuery(q) {
+      state.prevQuery = q; rerender();
+      const el = document.getElementById('pu-prev-q'); if (el) { el.focus(); el.setSelectionRange(q.length, q.length); }
+    },
+    edit(contactId, sectionId) { state.tab[contactId] = 'company'; state.editing = contactId + '|' + sectionId; rerender();
+      setTimeout(() => { const f = document.querySelector('.pu-box.is-editing .pu-input'); if (f) { f.focus(); f.closest('.pu-box').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }, 30); },
+    cancel() {
+      // A person added with "+ Add another person" and never saved is dropped again.
+      const d = state.draftPerson;
+      if (d) {
+        const c = contactById(d.contactId);
+        if (c && Array.isArray(c.people)) c.people = c.people.filter(p => p.id !== d.personId);
+        state.draftPerson = null;
+      }
+      state.editing = null; rerender();
+    },
+    saveBox(contactId, sectionId, form) {
+      const c = contactById(contactId); if (!c) return;
+      if (window.TFFormGuard && TFFormGuard.validateScope && TFFormGuard.validateScope(form).length) { toast('Please fix the highlighted fields first.'); return; }
+      const values = readForm(form);
+      if (sectionId === 'company' && !String(values.name || '').trim()) { toast('Company name cannot be empty.'); return; }
+      Object.keys(values).forEach(k => put(c, k, values[k]));
+      state.editing = null;
+      stamp(c, `Updated ${c.name} · ${sectionId}`);
+      toast('✓ Saved');
+    },
+    savePerson(contactId, personId, form) {
+      const c = contactById(contactId); if (!c) return;
+      if (window.TFFormGuard && TFFormGuard.validateScope && TFFormGuard.validateScope(form).length) { toast('Please fix the highlighted fields first.'); return; }
+      const values = readForm(form);
+      const list = peopleOf(c).map(p => ({ ...p }));
+      const p = list.find(x => x.id === personId); if (!p) return;
+      Object.keys(values).forEach(k => { p[k] = String(values[k] || '').trim(); });
+      c.people = list;
+      if (!c.primaryPersonId) c.primaryPersonId = list[0].id;
+      syncPrimary(c);
+      state.editing = null;
+      state.draftPerson = null;
+      stamp(c, `Updated contact person of ${c.name}`);
+      toast('✓ Saved');
+    },
+    addPerson(contactId) {
+      const c = contactById(contactId); if (!c) return;
+      const list = peopleOf(c).map(p => ({ ...p }));
+      if (!c.primaryPersonId) c.primaryPersonId = list[0].id;
+      const ids = new Set(list.map(p => p.id));
+      let n = list.length + 1; while (ids.has('p' + n)) n++;
+      list.push({ id: 'p' + n, name: '', role: '', phone: '', whatsapp: '', email: '', language: '', bestTime: '', upi: '', bankAccount: '', note: '' });
+      c.people = list;
+      state.draftPerson = { contactId, personId: 'p' + n };
+      this.edit(contactId, 'person:p' + n);
+    },
+    removePerson(contactId, personId) {
+      const c = contactById(contactId); if (!c) return;
+      const list = peopleOf(c).filter(p => p.id !== personId);
+      if (!list.length) return;
+      if (!confirm('Remove this person from ' + (c.name || 'this partner') + '?')) return;
+      c.people = list;
+      if (c.primaryPersonId === personId) c.primaryPersonId = list[0].id;
+      syncPrimary(c);
+      state.editing = null;
+      stamp(c, `Removed a contact person from ${c.name}`);
+    },
+    makePrimary(contactId, personId) {
+      const c = contactById(contactId); if (!c) return;
+      c.people = peopleOf(c).map(p => ({ ...p }));
+      c.primaryPersonId = personId;
+      syncPrimary(c);
+      stamp(c, `Changed primary contact of ${c.name}`);
+    },
+    async uploadLogo(contactId, input) {
+      const c = contactById(contactId); const file = input.files && input.files[0]; if (!c || !file) return;
+      try { c.logo = await shrinkImage(file, 320); c.logoUrl = ''; stamp(c, `Updated photo of ${c.name}`); toast('✓ Photo updated'); } catch (e) { toast(e.message); }
+    },
+    async uploadPersonPhoto(contactId, personId, input) {
+      const c = contactById(contactId); const file = input.files && input.files[0]; if (!c || !file) return;
+      try { const list = peopleOf(c).map(p => ({ ...p })); const p = list.find(x => x.id === personId); if (!p) return; p.photo = await shrinkImage(file, 240); c.people = list; if (!c.primaryPersonId) c.primaryPersonId = list[0].id; stamp(c, `Updated person photo for ${c.name}`); } catch (e) { toast(e.message); }
+    },
+    async uploadCard(contactId, side, input) {
+      const c = contactById(contactId); const file = input.files && input.files[0]; if (!c || !file) return;
+      try { c.businessCard = { ...(c.businessCard || {}), [side]: await shrinkImage(file, 1400) }; stamp(c, `Saved business card of ${c.name}`); toast('✓ Business card saved'); } catch (e) { toast(e.message); }
+    },
+    removeCard(contactId, side) {
+      const c = contactById(contactId); if (!c || !c.businessCard) return;
+      if (!confirm('Remove the ' + side + ' of the business card?')) return;
+      const card = { ...c.businessCard }; delete card[side]; c.businessCard = card;
+      stamp(c, `Removed business card image of ${c.name}`);
+    },
+    viewImage(contactId, side) { state.overlay = { kind: 'image', contactId, side }; rerender(); },
+    folder(contactId, orderId) { state.overlay = { kind: 'folder', contactId, orderId }; rerender(); },
+    closeOverlay() { state.overlay = null; rerender(); },
+    copy(text, label) { const a = appRef(); if (a && a.copyToClipboard) a.copyToClipboard(text, label); },
+    _state: state
+  };
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.overlay) { state.overlay = null; rerender(); } });
+})();

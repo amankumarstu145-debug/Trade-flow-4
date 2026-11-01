@@ -51,7 +51,7 @@
 <body class="h-full bg-slate-50 text-slate-900 dark:bg-[#090a0f] dark:text-slate-100 flex overflow-hidden selection:bg-amber-500/20 selection:text-amber-500">
 
   <!-- ================= 2026 MODERN LEFT SIDEBAR ================= -->
-  <aside class="w-64 bg-white dark:bg-[#0e1117] border-r border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between shrink-0 no-print transition-colors z-20">
+  <aside id="app-sidebar" aria-label="Main navigation" class="tf-app-sidebar w-64 bg-white dark:bg-[#0e1117] border-r border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between shrink-0 no-print transition-colors z-20">
     
     <div class="flex flex-col h-full overflow-hidden">
       <!-- Sidebar Header -->
@@ -61,12 +61,12 @@
             🌿
           </div>
           <div class="min-w-0">
-            <span id="sidebar-brand-name" class="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white block truncate max-w-[110px] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Magic Roots</span>
+            <span id="sidebar-brand-name" class="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white block truncate max-w-[110px] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" data-tf-brand>Company</span>
             <span class="text-[10px] font-mono-num font-semibold text-emerald-600 dark:text-emerald-400 block truncate">Trading Hub • v3.0</span>
           </div>
         </button>
         <div class="flex items-center gap-1.5 shrink-0">
-          <button id="sidebar-company-hub-btn" type="button" onclick="app.openCompanyExecutiveHub()" class="btn-tactile w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-200/80 dark:border-slate-800 transition-all cursor-pointer group" title="Magic Roots Executive Hub • Company Profile & Financials">
+          <button id="sidebar-company-hub-btn" type="button" onclick="app.openCompanyExecutiveHub()" class="btn-tactile w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-200/80 dark:border-slate-800 transition-all cursor-pointer group" title="Company Executive Hub • Company Profile & Financials">
             <i data-lucide="settings" class="w-4 h-4 transition-transform group-hover:rotate-45 duration-300"></i>
           </button>
           <span class="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" title="System Active & Ready"></span>
@@ -157,7 +157,7 @@
                 <span>Buyers & Retailers</span>
               </span>
             </button>
-            <button data-sidebar-tab="manufacturers" class="flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/60 transition-all duration-150 hover:-translate-y-0.5 group" title="Pickle Processing Units & Factories">
+            <button data-sidebar-tab="manufacturers" class="flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/60 transition-all duration-150 hover:-translate-y-0.5 group" title="Manufacturers & Processing Units">
               <span class="flex items-center gap-2.5">
                 <i data-lucide="factory" class="w-4 h-4 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform"></i>
                 <span>Manufacturers (Mfg)</span>
@@ -188,10 +188,10 @@
         <div>
           <span class="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1.5">Masters & Catalog</span>
           <div class="space-y-1">
-            <button data-sidebar-tab="products" class="flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/60 transition-all duration-150 hover:-translate-y-0.5 group" title="Pickle Master SKU Catalog & Pricing">
+            <button data-sidebar-tab="products" class="flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800/60 transition-all duration-150 hover:-translate-y-0.5 group" title="Product SKU Catalog & Pricing">
               <span class="flex items-center gap-2.5">
                 <i data-lucide="tag" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform"></i>
-                <span>Pickle Products Master</span>
+                <span>Products Master</span>
               </span>
             </button>
           </div>
@@ -247,6 +247,10 @@
       
       <!-- Header Left Controls (AI Mode, Mobile Scan, Backups) -->
       <div class="flex items-center gap-1.5 shrink-0">
+        <!-- Menu button: opens the sidebar on phones and tablets -->
+        <button id="tf-menu-btn" type="button" onclick="app.toggleMobileSidebar()" aria-label="Open menu" aria-controls="app-sidebar" aria-expanded="false" class="tf-menu-btn btn-tactile w-9 h-9 rounded-lg items-center justify-center text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
         <!-- Topbar AI Intelligence Control Gate (OFF = 100% Deterministic Local, ON = AI Vision Assist) -->
         <button id="topbar-ai-toggle-btn" type="button" onclick="app.toggleAIMode()" class="tf-topbar-pill btn-tactile text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-2xs flex items-center gap-1.5 transition-all" title="Toggle AI Assistance: OFF = 100% Offline Local Engine, ON = Vision & Semantic Assist">
           <span id="ai-toggle-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
@@ -273,10 +277,10 @@
         <input 
           id="global-search" 
           type="text" 
-          placeholder="Search ₹ amounts, UTR, orders, partners..." 
+          placeholder="Search orders, partners, UTR, ₹…" 
           autocomplete="off"
           onclick="app.openOmniboxModal(this.value)"
-          class="w-full pl-9 pr-14 py-2 text-xs bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 transition-all font-medium cursor-pointer shadow-2xs"
+          class="w-full pl-9 pr-[4.5rem] py-2 text-xs text-ellipsis bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 transition-all font-medium cursor-pointer shadow-2xs"
         >
         <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono-num font-semibold text-slate-400 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded shadow-2xs pointer-events-none">
           Ctrl+K
@@ -305,7 +309,7 @@
         </button>
 
         <!-- Operator Mode vs Owner Mode (Sethji Mode) Toggle -->
-        <button id="topbar-role-mode-btn" onclick="app.toggleUserRoleMode()" class="tf-topbar-pill btn-tactile bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30 shadow-2xs" title="Toggle Operator Mode (Floor Staff) vs Owner Mode (Sethji - Full Margin Visibility)">
+        <button id="topbar-role-mode-btn" onclick="app.toggleUserRoleMode()" class="tf-topbar-pill btn-tactile bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30 shadow-2xs" title="Toggle Operator Mode (Floor Staff) vs Owner Mode (Full Margin Visibility)">
           <i id="topbar-role-icon" data-lucide="shield" class="w-3.5 h-3.5 text-amber-500"></i>
           <span id="topbar-role-label">Operator Mode</span>
         </button>
@@ -393,7 +397,6 @@
                 <span>Working Orders</span>
               </span>
               <div class="flex items-center gap-1.5">
-                <span class="text-[10px] font-bold text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">Filter →</span>
                 <span class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
                   <i data-lucide="truck" class="w-4 h-4"></i>
                 </span>
@@ -401,9 +404,9 @@
             </div>
             <div class="mt-3">
               <div id="kpi-working-count" class="text-2xl font-black font-mono-num text-slate-900 dark:text-white">0 Batches</div>
-              <div class="flex items-center justify-between mt-0.5">
-                <span id="kpi-working-sub" class="text-xs font-medium text-slate-500 dark:text-slate-400">0 Bottling · 0 In Transit</span>
-                <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 group-hover:underline">View Pipeline</span>
+              <div class="flex items-center justify-between gap-2 mt-0.5">
+                <span id="kpi-working-sub" class="min-w-0 line-clamp-2 text-xs font-medium text-slate-500 dark:text-slate-400">0 Bottling · 0 In Transit</span>
+                <span class="shrink-0 text-[10px] font-bold text-blue-600 dark:text-blue-400 group-hover:underline">View Pipeline</span>
               </div>
             </div>
           </div>
@@ -421,7 +424,6 @@
                 <span>Upcoming Orders</span>
               </span>
               <div class="flex items-center gap-1.5">
-                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">Action →</span>
                 <span class="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300">
                   <i data-lucide="clock" class="w-4 h-4"></i>
                 </span>
@@ -429,9 +431,9 @@
             </div>
             <div class="mt-3">
               <div id="kpi-upcoming-count" class="text-2xl font-black font-mono-num text-amber-600 dark:text-amber-400">0 Batches</div>
-              <div class="flex items-center justify-between mt-0.5">
-                <span id="kpi-upcoming-sub" class="text-xs font-bold text-amber-700 dark:text-amber-300">Advance in Hand · PO Pending</span>
-                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 group-hover:underline">Forward POs</span>
+              <div class="flex items-center justify-between gap-2 mt-0.5">
+                <span id="kpi-upcoming-sub" class="min-w-0 line-clamp-2 text-xs font-bold text-amber-700 dark:text-amber-300">Advance in Hand · PO Pending</span>
+                <span class="shrink-0 text-[10px] font-bold text-amber-600 dark:text-amber-400 group-hover:underline">Forward POs</span>
               </div>
             </div>
           </div>
@@ -449,7 +451,6 @@
                 <span>Completed Orders</span>
               </span>
               <div class="flex items-center gap-1.5">
-                <span class="text-[10px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">History →</span>
                 <span class="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
                   <i data-lucide="check-circle-2" class="w-4 h-4"></i>
                 </span>
@@ -457,9 +458,9 @@
             </div>
             <div class="mt-3">
               <div id="kpi-completed-count" class="text-2xl font-black font-mono-num text-slate-900 dark:text-white">0 Batches</div>
-              <div class="flex items-center justify-between mt-0.5">
-                <span id="kpi-completed-sub" class="text-xs font-medium text-slate-500 dark:text-slate-400">Delivered & Closed</span>
-                <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:underline">Inspect</span>
+              <div class="flex items-center justify-between gap-2 mt-0.5">
+                <span id="kpi-completed-sub" class="min-w-0 line-clamp-2 text-xs font-medium text-slate-500 dark:text-slate-400">Delivered & Closed</span>
+                <span class="shrink-0 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:underline">Inspect</span>
               </div>
             </div>
           </div>
@@ -474,10 +475,9 @@
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                 <i data-lucide="badge-indian-rupee" class="w-3.5 h-3.5 text-amber-500"></i>
-                <span>Finance Cockpit ↗</span>
+                <span>Finance Cockpit</span>
               </span>
               <div class="flex items-center gap-1.5">
-                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">Open Hub →</span>
                 <span class="p-1.5 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-300">
                   <i data-lucide="wallet" class="w-4 h-4"></i>
                 </span>
@@ -494,9 +494,9 @@
                   <span id="kpi-finance-pay">₹0</span>
                 </span>
               </div>
-              <div class="flex items-center justify-between mt-1">
-                <span class="text-xs font-semibold text-amber-700 dark:text-amber-300">Receivables & Payables Hub</span>
-                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 group-hover:underline">Open Tab ↗</span>
+              <div class="flex items-center justify-between gap-2 mt-1">
+                <span class="min-w-0 line-clamp-2 text-xs font-semibold text-amber-700 dark:text-amber-300">Receivables & Payables Hub</span>
+                <span class="shrink-0 text-[10px] font-bold text-amber-600 dark:text-amber-400 group-hover:underline">Open Tab ↗</span>
               </div>
             </div>
           </div>
@@ -509,7 +509,7 @@
           <!-- Left Panel: Status Filter Pills & Orders Table -->
           <div id="dashboard-orders-panel" class="w-full min-w-[320px] flex-1 space-y-4 xl:pr-3 transition-all duration-75">
             <!-- Commercial Quick-Filter Chips Bar -->
-            <div class="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 text-xs no-print">
+            <div class="flex flex-wrap items-center gap-2 py-1 text-xs no-print">
               <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
                 <i data-lucide="filter" class="w-3.5 h-3.5 text-amber-500"></i>
                 <span>Quick Filters:</span>
@@ -578,20 +578,20 @@
             </div>
 
             <!-- Orders Table -->
-            <div class="bg-white dark:bg-[#11141d] rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs overflow-hidden">
+            <div class="bg-white dark:bg-[#11141d] rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs overflow-hidden tf-orders-table-shell">
               <div class="overflow-x-auto">
-                <table id="orders-master-table" class="w-full min-w-[900px] text-left border-collapse table-fixed select-text">
+                <table id="orders-master-table" class="w-full min-w-[640px] text-left border-collapse table-fixed select-text">
                   <colgroup>
-                    <col style="width: 14%;">
-                    <col style="width: 33%;">
+                    <col style="width: 17%;">
+                    <col style="width: 25%;">
+                    <col style="width: 13%;">
                     <col style="width: 15%;">
-                    <col style="width: 15%;">
-                    <col style="width: 15%;">
-                    <col style="width: 8%;">
+                    <col style="width: 19%;">
+                    <col style="width: 11%;">
                   </colgroup>
                   <thead>
                     <tr class="border-b border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      <th class="w-[14%] px-4 py-3.5 whitespace-nowrap select-none">
+                      <th class="px-4 py-3.5 whitespace-nowrap select-none">
                         <button type="button" onclick="app.sortOrders('invoice')" class="inline-flex items-center gap-0.5 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer" title="Sort by Order Number">
                           <span>Order</span><span id="sort-icon-invoice" class="text-[11px] text-slate-400 ml-0.5">⇅</span>
                         </button>
@@ -600,27 +600,27 @@
                           <span>Date</span><span id="sort-icon-date" class="text-[11px] text-slate-400 ml-0.5">⇅</span>
                         </button>
                       </th>
-                      <th class="w-[33%] px-4 py-3.5 select-none">
+                      <th class="px-4 py-3.5 select-none">
                         <button type="button" onclick="app.sortOrders('retailer')" class="inline-flex items-center gap-1 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer" title="Sort by Buyer Name">
                           <span>Buyer / Retailer</span><span id="sort-icon-retailer" class="text-[11px] text-slate-400">⇅</span>
                         </button>
                       </th>
-                      <th class="w-[15%] px-4 py-3.5 whitespace-nowrap select-none">
+                      <th class="px-4 py-3.5 whitespace-nowrap select-none">
                         <button type="button" onclick="app.sortOrders('quantity')" class="inline-flex items-center gap-1 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer" title="Sort by Quantity">
                           <span>Quantity</span><span id="sort-icon-quantity" class="text-[11px] text-slate-400">⇅</span>
                         </button>
                       </th>
-                      <th class="w-[15%] px-4 py-3.5 text-right whitespace-nowrap select-none">
+                      <th class="px-4 py-3.5 text-right whitespace-nowrap select-none">
                         <button type="button" onclick="app.sortOrders('amount')" class="inline-flex items-center gap-1 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer ml-auto" title="Sort by Total Amount">
                           <span>Total Amount</span><span id="sort-icon-amount" class="text-[11px] text-slate-400">⇅</span>
                         </button>
                       </th>
-                      <th class="w-[15%] px-4 py-3.5 text-center whitespace-nowrap select-none">
+                      <th class="px-4 py-3.5 text-center whitespace-nowrap select-none">
                         <button type="button" onclick="app.sortOrders('status')" class="inline-flex items-center gap-1 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer mx-auto" title="Sort by Status Lifecycle">
                           <span>Status</span><span id="sort-icon-status" class="text-[11px] text-slate-400">⇅</span>
                         </button>
                       </th>
-                      <th class="w-[8%] px-4 py-3.5 text-right whitespace-nowrap"></th>
+                      <th class="px-4 py-3.5 text-right whitespace-nowrap"></th>
                     </tr>
                   </thead>
                   <tbody id="orders-table-body" class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
@@ -655,7 +655,7 @@
                 <div class="flex items-center gap-2 min-w-0">
                   <div class="relative flex items-center justify-center px-2 py-1 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-black text-xs font-mono-num shadow-2xs shrink-0">
                     <i data-lucide="alert-triangle" class="w-3.5 h-3.5 mr-1 text-rose-500"></i>
-                    <span id="audit-total-badge" class="animate-pulse">0</span>
+                    <span id="audit-total-badge">0</span>
                   </div>
                   <div class="min-w-0">
                     <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 whitespace-nowrap">Attention &amp; Missing Files</h3>
@@ -842,7 +842,7 @@
               <div id="fc-receivables-val" class="text-xl font-black font-mono-num text-rose-600 dark:text-rose-400">₹0</div>
               <div class="flex items-center justify-between mt-1 text-[11px]">
                 <span id="fc-receivables-sub" class="text-slate-400 font-medium">0 Overdue</span>
-                <span class="text-rose-600 dark:text-rose-400 font-bold group-hover:underline">Drill-down →</span>
+                <span class="text-rose-600 dark:text-rose-400 font-bold group-hover:underline whitespace-nowrap shrink-0">Drill-down →</span>
               </div>
             </div>
           </div>
@@ -857,7 +857,7 @@
               <div id="fc-payables-val" class="text-xl font-black font-mono-num text-amber-600 dark:text-amber-400">₹0</div>
               <div class="flex items-center justify-between mt-1 text-[11px]">
                 <span id="fc-payables-sub" class="text-slate-400 font-medium">Factory &amp; Pkg</span>
-                <span class="text-amber-600 dark:text-amber-400 font-bold group-hover:underline">Drill-down →</span>
+                <span class="text-amber-600 dark:text-amber-400 font-bold group-hover:underline whitespace-nowrap shrink-0">Drill-down →</span>
               </div>
             </div>
           </div>
@@ -872,7 +872,7 @@
               <div id="fc-adv-hand-val" class="text-xl font-black font-mono-num text-emerald-600 dark:text-emerald-400">₹0</div>
               <div class="flex items-center justify-between mt-1 text-[11px]">
                 <span id="fc-adv-hand-sub" class="text-slate-400 font-medium">Cash Collected</span>
-                <span class="text-emerald-600 dark:text-emerald-400 font-bold group-hover:underline">Drill-down →</span>
+                <span class="text-emerald-600 dark:text-emerald-400 font-bold group-hover:underline whitespace-nowrap shrink-0">Drill-down →</span>
               </div>
             </div>
           </div>
@@ -887,7 +887,7 @@
               <div id="fc-adv-paid-val" class="text-xl font-black font-mono-num text-blue-600 dark:text-blue-400">₹0</div>
               <div class="flex items-center justify-between mt-1 text-[11px]">
                 <span id="fc-adv-paid-sub" class="text-slate-400 font-medium">Disbursed with UTR</span>
-                <span class="text-blue-600 dark:text-blue-400 font-bold group-hover:underline">Drill-down →</span>
+                <span class="text-blue-600 dark:text-blue-400 font-bold group-hover:underline whitespace-nowrap shrink-0">Drill-down →</span>
               </div>
             </div>
           </div>
@@ -1099,7 +1099,7 @@
             <select id="payments-category-filter" onchange="app.setPaymentCategoryFilter(this.value)" class="p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 font-medium outline-none text-xs">
               <option value="all">All Counterparties</option>
               <option value="retailer">Buyers / Retailers</option>
-              <option value="manufacturer">Pickle Factories (Mfg)</option>
+              <option value="manufacturer">Manufacturers</option>
               <option value="packaging">Packaging Vendors</option>
               <option value="transporter">Transporters</option>
               <option value="other">Other Parties</option>
@@ -1435,7 +1435,7 @@
               <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <span class="w-2 h-2 rounded-full bg-blue-500"></span> Node 3: Primary Manufacturer (Factory)
               </span>
-              <span id="drawer-mfg-name" class="text-xs font-bold text-slate-900 dark:text-white">Pickle Factory</span>
+              <span id="drawer-mfg-name" class="text-xs font-bold text-slate-900 dark:text-white">Manufacturer</span>
             </div>
             <div class="grid grid-cols-3 gap-3 pt-2 text-xs">
               <div>
@@ -1530,7 +1530,7 @@
                 <span id="drawer-float-pkg-need" class="font-mono-num font-medium text-rose-600 dark:text-rose-400">-₹0</span>
               </div>
               <div class="flex justify-between text-slate-600 dark:text-slate-300">
-                <span>Pickle Factory Advance Demanded:</span>
+                <span>Manufacturer Advance Demanded:</span>
                 <span id="drawer-float-mfg-need" class="font-mono-num font-medium text-rose-600 dark:text-rose-400">-₹0</span>
               </div>
               <div class="flex justify-between text-slate-600 dark:text-slate-300">
@@ -1768,7 +1768,7 @@
             <div class="flex items-center gap-2">
               <button type="button" onclick="app.loadS3MDemoOrder()" class="btn-tactile px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-700 rounded-lg flex items-center gap-1 shadow-2xs">
                 <i data-lucide="clipboard-paste" class="w-3.5 h-3.5"></i>
-                <span>Load 'S3M Venture' Order Message</span>
+                <span>Load Sample Message</span>
               </button>
               <button type="button" onclick="app.clearWhatsAppOrderInput()" class="btn-tactile px-2 py-1 text-[11px] font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded">
                 Clear
@@ -1779,8 +1779,7 @@
           <div class="p-4 space-y-3">
             <div class="relative">
               <textarea id="whatsapp-order-input" rows="4" class="w-full p-3 font-mono text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all" placeholder="Paste WhatsApp message here... Example:
-S3m venture (order)
-Magic roots
+Buyer name (order)
 500gm
 MIX 4case, Mango 5case, MIRCH 4case...
 1kg
@@ -1830,7 +1829,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
             </div>
             <div>
               <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Payment Terms</label>
-              <input id="new-order-payment-terms" type="text" value="Net 15 Days" class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:border-amber-500 outline-none">
+              <input id="new-order-payment-terms" type="text" class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:border-amber-500 outline-none">
             </div>
             <div>
               <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Order Date</label>
@@ -1840,7 +1839,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
             <div>
-              <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Pickle Factory (Mfg)</label>
+              <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Manufacturer</label>
               <select id="new-order-mfg" class="w-full p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
                 <!-- Populated dynamically -->
               </select>
@@ -1859,7 +1858,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
             </div>
             <div>
               <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Advance Received (₹)</label>
-              <input id="new-order-advance" oninput="app.recomputeOrderTotals()" type="number" value="30000" class="w-full p-2 font-mono-num font-bold text-emerald-600 dark:text-emerald-400 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
+              <input id="new-order-advance" oninput="app.recomputeOrderTotals()" type="number" class="w-full p-2 font-mono-num font-bold text-emerald-600 dark:text-emerald-400 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
             </div>
             <div>
               <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Advance Mode</label>
@@ -1878,16 +1877,11 @@ Carrot 2case, Red chilli 1case..."></textarea>
           <div class="p-3.5 sm:px-5 bg-slate-100/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-2">
               <i data-lucide="layers" class="w-4 h-4 text-amber-500"></i>
-              <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Multi-SKU Pickle Variety & Case-Pack Breakdown</span>
+              <span class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Multi-SKU Product & Case-Pack Breakdown</span>
               <span id="order-item-count-badge" class="px-2 py-0.5 text-[11px] font-black rounded-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200">0 SKUs</span>
             </div>
             <div class="flex items-center gap-2">
-              <button type="button" onclick="app.quickAddSkuRow('500g')" class="btn-tactile px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg flex items-center gap-1">
-                + 500g Row (24/cs)
-              </button>
-              <button type="button" onclick="app.quickAddSkuRow('1kg')" class="btn-tactile px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg flex items-center gap-1">
-                + 1kg Row (12/cs)
-              </button>
+              <span id="new-order-quick-sizes" class="contents"></span>
               <button type="button" onclick="app.addEmptySkuRow()" class="btn-tactile px-3 py-1 text-xs font-bold text-white bg-slate-900 dark:bg-amber-500 dark:text-slate-950 hover:bg-slate-800 rounded-lg flex items-center gap-1.5 shadow-2xs">
                 <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
                 <span>Add SKU Line</span>
@@ -1970,7 +1964,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
               <thead>
                 <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider text-[11px]">
                   <th class="py-2.5 px-3 w-10 text-center">#</th>
-                  <th class="py-2.5 px-3 min-w-[200px]">Pickle Variety / Flavour</th>
+                  <th class="py-2.5 px-3 min-w-[200px]">Product / Variant</th>
                   <th class="py-2.5 px-3 w-32">Pack Size</th>
                   <th class="py-2.5 px-3 w-24 text-right">Cases</th>
                   <th class="py-2.5 px-3 w-28 text-center">Pack Math</th>
@@ -2050,7 +2044,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
       <div class="bg-white dark:bg-slate-900 p-4 px-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-3 shrink-0">
         <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <i data-lucide="info" class="w-4 h-4 text-amber-500"></i>
-          <span>Case pack math: 24 jars/case for 500g PET, 12 jars/case for 1kg Glass. Jars & GST computed live.</span>
+          <span>Units per case come from each product (editable above). Units, GST and totals update live.</span>
         </div>
         <div class="flex items-center gap-2.5">
           <button type="button" onclick="app.closeNewOrderModal()" class="btn-tactile px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 rounded-lg">
@@ -2099,7 +2093,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
           </span>
           <div class="min-w-0">
             <div class="flex items-center gap-2">
-              <h3 id="factory-po-title" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">Pickle Factory Production PO & Job Work Slip</h3>
+              <h3 id="factory-po-title" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">Manufacturer Production PO & Job Work Slip</h3>
               <span id="factory-po-badge" class="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded bg-emerald-400 text-slate-950">Rule 55 Challan</span>
             </div>
             <p id="factory-po-subtitle" class="text-[11px] text-slate-500 dark:text-slate-400">Official manufacturing batch requisition for Dhirajbhai (Shri Saurashtra Agro).</p>
@@ -2234,7 +2228,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
             <div class="flex items-center gap-2 flex-wrap">
               <h3 id="edit-contact-modal-title" class="text-base font-extrabold text-slate-900 dark:text-white truncate">Company Profile Dossier</h3>
               <span id="edit-contact-role-badge" class="px-2.5 py-0.5 text-xs font-bold rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                Pickle Factory
+                Manufacturer
               </span>
               <span class="text-xs text-slate-400 font-mono-num">ID: <strong id="edit-contact-id-display" class="text-slate-700 dark:text-slate-300">CNT-01</strong></span>
             </div>
@@ -2416,7 +2410,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
               <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Ecosystem Role *</label>
               <select id="edit-contact-role-select" name="role" onchange="app.onContactRoleSelectChange(this.value)" class="w-full p-2.5 text-xs font-bold rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 shadow-2xs focus:ring-1 focus:ring-amber-500">
                 <option value="retailer">Retailer / Buyer Account</option>
-                <option value="manufacturer">Pickle Factory (Contract Mfg)</option>
+                <option value="manufacturer">Manufacturer (Contract Mfg)</option>
                 <option value="packaging">Packaging &amp; Labels Supplier</option>
                 <option value="transporter">Freight &amp; Logistics Partner</option>
                 <option value="marketeer">Sales Marketeer (Trade Broker)</option>
@@ -2753,7 +2747,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
           <div class="min-w-0">
             <div class="flex items-center gap-2">
               <h3 id="payment-modal-title" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">Log Payment &amp; Settlement</h3>
-              <span id="payment-modal-order-badge" class="hidden px-2 py-0.5 text-xs font-mono-num font-bold rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700">ORD-1004</span>
+              <span id="payment-modal-order-badge" class="hidden whitespace-nowrap shrink-0 px-2 py-0.5 text-xs font-mono-num font-bold rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700">ORD-1004</span>
             </div>
             <p id="payment-modal-sub" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">Attach receipt, paste clipboard image, or enter settlement details directly</p>
           </div>
@@ -3028,7 +3022,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
               </div>
               <select id="pay-select-category" onchange="app.onPaymentCategoryChanged(this.value)" class="w-full p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-medium outline-none transition-all">
                 <option value="retailer">Buyer / Retailer</option>
-                <option value="manufacturer">Pickle Factory (Mfg)</option>
+                <option value="manufacturer">Manufacturer</option>
                 <option value="packaging">Packaging Vendor</option>
                 <option value="transporter">Transporter</option>
                 <option value="other">Other Party</option>
@@ -3508,7 +3502,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
             <div>
               <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Document Category / Classification *</label>
               <select id="review-category" name="category" onchange="app.handleReviewCategoryChange(this.value)" required class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold text-slate-900 dark:text-white">
-                <option value="mfg_invoice">Pickle Factory Job-Work Tax Invoice (Manufacturer)</option>
+                <option value="mfg_invoice">Manufacturer Job-Work Tax Invoice</option>
                 <option value="pkg_invoice">Packaging Materials & Jars Invoice (Vendor)</option>
                 <option value="transport_bilty">Logistics Consignment LR / Bilty & Freight Bill</option>
                 <option value="retailer_invoice">Buyer Official Tax Invoice / PO Requisition</option>
@@ -3549,7 +3543,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
             <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2.5">
               <div class="flex items-center justify-between">
                 <span class="font-bold uppercase tracking-wider text-slate-500 text-[10px]">Financial & Tax Reconcile</span>
-                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">12% GST Pickles / Pack</span>
+                <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">GST as per product rate</span>
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div>
@@ -3696,7 +3690,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
             <i data-lucide="tag" class="w-5 h-5"></i>
           </span>
           <div>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white">Edit Pickle SKU &amp; Costing Recipe</h3>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Edit Product SKU &amp; Costing</h3>
             <p class="text-xs text-slate-500 dark:text-slate-400">Update factory production costs, jar packaging, selling rates, and margins</p>
           </div>
         </div>
@@ -3714,7 +3708,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Pickle Variety / Product Name *</label>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Product Name *</label>
             <input id="sku-edit-name" name="name" type="text" required class="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold text-slate-900 dark:text-white">
           </div>
           <div>
@@ -3730,11 +3724,11 @@ Carrot 2case, Red chilli 1case..."></textarea>
           </div>
           <div>
             <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">HSN Code</label>
-            <input id="sku-edit-hsn" name="hsn" type="text" value="20019000" class="w-full p-2.5 font-mono-num bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+            <input id="sku-edit-hsn" name="hsn" type="text" class="w-full p-2.5 font-mono-num bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
           </div>
           <div>
             <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">GST Rate (%)</label>
-            <input id="sku-edit-gst" name="gst" type="number" value="12" class="w-full p-2.5 font-mono-num bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+            <input id="sku-edit-gst" name="gst" type="number" class="w-full p-2.5 font-mono-num bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
           </div>
         </div>
 
@@ -3841,15 +3835,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
               <span>Quick Product Presets:</span>
             </span>
             <div class="flex items-center gap-1.5 flex-wrap">
-              <button onclick="app.loadSimplePreset('coldcream')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
-                🧴 Cold Cream (15ML)
-              </button>
-              <button onclick="app.loadSimplePreset('pickle500g')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
-                🫙 Pickle Jar (500g - 24/cs)
-              </button>
-              <button onclick="app.loadSimplePreset('pickle1kg')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
-                🫙 Pickle Jar (1KG - 8/cs)
-              </button>
+              <span id="calc-simple-presets" class="contents"></span>
               <button onclick="app.loadSimplePreset('blank')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 border border-slate-200 dark:border-slate-700">
                 ✨ Custom Blank
               </button>
@@ -3870,10 +3856,6 @@ Carrot 2case, Red chilli 1case..."></textarea>
               <div class="w-20 shrink-0">
                 <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Pack Size</label>
                 <select id="calc-simple-pack-size" class="w-full p-2 font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs" onchange="app.handleSimplePackSizeChange(this.value)">
-                  <option value="15ml">15ML</option>
-                  <option value="500g">500g</option>
-                  <option value="1kg">1KG</option>
-                  <option value="5kg">5KG</option>
                   <option value="custom">Custom</option>
                 </select>
               </div>
@@ -3923,7 +3905,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <input id="calc-simple-label-cost" type="number" step="0.05" min="0" value="0.00" class="w-full p-2 font-mono-num font-bold text-indigo-700 dark:text-indigo-300 bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs text-center" placeholder="0.00" oninput="app.handleSimpleInput('labelCost', this.value)">
               </div>
 
-              <!-- 9. Magic Roots Margin % (on Landed Cost) -->
+              <!-- 9. Our Margin % (on Landed Cost) -->
               <div class="w-16 shrink-0">
                 <label class="block text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1 text-center" title="Trader profit margin on Landed Cost">Our%</label>
                 <input id="calc-simple-profit-pct" type="number" step="0.5" min="0" class="w-full p-2 font-mono-num font-bold text-emerald-700 dark:text-emerald-300 bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 rounded-lg text-xs text-center" oninput="app.handleSimpleInput('profitPct', this.value)">
@@ -3966,15 +3948,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
 
             <!-- Quick Add SKU Buttons -->
             <div class="flex items-center gap-1.5 flex-wrap">
-              <button onclick="app.addAdvancedProduct('pickle500g')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700">
-                + Pickle 500g (24/cs)
-              </button>
-              <button onclick="app.addAdvancedProduct('pickle1kg')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700">
-                + Pickle 1KG (8/cs)
-              </button>
-              <button onclick="app.addAdvancedProduct('coldcream')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700">
-                + Cold Cream (15ML)
-              </button>
+              <span id="calc-adv-presets" class="contents"></span>
               <button onclick="app.addAdvancedProduct('custom')" class="btn-tactile px-3 py-1 text-[11px] font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs flex items-center gap-1">
                 <i data-lucide="plus" class="w-3 h-3"></i>
                 <span>Add Row</span>
@@ -4422,7 +4396,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
               <div>
                 <div class="flex items-center gap-2">
                   <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    <span>🌿 Magic Roots</span>
+                    <span>🌿 <span data-tf-brand>Our Brand</span></span>
                     <span class="text-slate-500 dark:text-slate-400 font-normal">| Commercial Analysis &amp; P&amp;L</span>
                   </h3>
                   <span id="drilldown-badge" class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">Live Data</span>
@@ -4485,7 +4459,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
               <h3 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 tracking-tight">
                 <span>WhatsApp Quick Messenger</span>
               </h3>
-              <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">Magic Roots</span>
+              <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30" data-tf-brand>Our Brand</span>
             </div>
             <p class="text-xs text-slate-500 dark:text-slate-400">Live contact phone directory, instant custom greetings, 1-click reusables, and WhatsApp dispatch</p>
           </div>
@@ -5515,6 +5489,9 @@ Carrot 2case, Red chilli 1case..."></textarea>
               Open ↗
             </button>
           </div>
+          <button type="button" onclick="app.revokeMobileSnapDevices()" class="mt-2 w-full px-2.5 py-1.5 rounded-lg border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-bold" title="Stop every saved phone from sending files">
+            Unpair all saved phones
+          </button>
         </div>
       </div>
 
@@ -5897,6 +5874,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
   <div id="mobile-snap-slidein-container" class="fixed top-5 right-5 z-[999998] max-w-sm w-full pointer-events-none space-y-3 no-print"></div>
 
   <!-- Floating Notification Toast Container (Topmost Stack Layer: Always Visible Above All Screens & Modals) -->
+  <div id="tf-sidebar-backdrop" onclick="app.toggleMobileSidebar(false)" aria-hidden="true"></div>
   <div id="toast-container" class="fixed bottom-5 right-5 z-[999999] pointer-events-none flex flex-col gap-2"></div>
 
   <!-- ================= UNIVERSAL OMNIBOX MODAL (Ctrl+K) ================= -->
@@ -6449,6 +6427,38 @@ Carrot 2case, Red chilli 1case..."></textarea>
                     <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">UPI ID (VPA)</label>
                     <input id="settings-prof-upi" type="text" class="w-full text-xs p-2.5 font-mono bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500">
                   </div>
+                  <div>
+                    <label for="settings-prof-udyam" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">MSME / Udyam Number</label>
+                    <input id="settings-prof-udyam" type="text" placeholder="UDYAM-XX-00-0000000" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-prof-iec" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Import Export Code (IEC)</label>
+                    <input id="settings-prof-iec" type="text" placeholder="10 characters" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-prof-cin" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">CIN / LLPIN</label>
+                    <input id="settings-prof-cin" type="text" placeholder="21 characters" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-prof-trademarks" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Registered Trademarks</label>
+                    <input id="settings-prof-trademarks" type="text" placeholder="e.g. Class 29 – Brand name" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-prof-bank2-name" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Secondary Bank Name</label>
+                    <input id="settings-prof-bank2-name" type="text"  class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-prof-bank2-acc" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Secondary Account Number</label>
+                    <input id="settings-prof-bank2-acc" type="text" inputmode="numeric" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-prof-bank2-ifsc" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Secondary IFSC</label>
+                    <input id="settings-prof-bank2-ifsc" type="text"  class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-prof-bank2-branch" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Secondary Bank Branch</label>
+                    <input id="settings-prof-bank2-branch" type="text"  class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
                 </div>
               </div>
 
@@ -6456,6 +6466,62 @@ Carrot 2case, Red chilli 1case..."></textarea>
               <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-2">
                 <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">4. Default Invoice Notes &amp; Terms</span>
                 <textarea id="settings-prof-inv-notes" rows="3" class="w-full text-xs p-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg font-mono text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"></textarea>
+              </div>
+
+              <!-- Section 5: Business Defaults (used wherever an order, product or partner has no value of its own) -->
+              <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
+                <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">5. Business Defaults</span>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Used when an order, product or partner has no value of its own. Leave blank to use the value shown as a hint.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div>
+                    <label for="settings-def-gst-rate" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Default GST Rate (%)</label>
+                    <input id="settings-def-gst-rate" type="number" min="0" max="100" step="0.01" placeholder="12" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-hsn" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Default HSN Code</label>
+                    <input id="settings-def-hsn" type="text" placeholder="e.g. 20019000" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-payment-terms" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Default Payment Terms</label>
+                    <input id="settings-def-payment-terms" type="text" placeholder="Net 15 Days" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-commission" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Default Marketeer Commission (%)</label>
+                    <input id="settings-def-commission" type="number" min="0" max="100" step="0.01" placeholder="3" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-mfg-advance" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Manufacturer Advance Required (%)</label>
+                    <input id="settings-def-mfg-advance" type="number" min="0" max="100" step="1" placeholder="30" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-booking-advance" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Customer Booking Advance (%)</label>
+                    <input id="settings-def-booking-advance" type="number" min="0" max="100" step="1" placeholder="30" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-jurisdiction" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Legal Jurisdiction (city)</label>
+                    <input id="settings-def-jurisdiction" type="text" placeholder="City for &quot;Subject to … Jurisdiction&quot;" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-freight-terms" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Default Freight Terms</label>
+                    <input id="settings-def-freight-terms" type="text" placeholder="e.g. Ex-Factory / Freight paid by buyer" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-calc-transport" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Calculator: Freight (%)</label>
+                    <input id="settings-def-calc-transport" type="number" min="0" max="100" step="0.1" placeholder="5" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-calc-profit" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Calculator: Our Margin (%)</label>
+                    <input id="settings-def-calc-profit" type="number" min="0" max="100" step="0.1" placeholder="20" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                  <div>
+                    <label for="settings-def-calc-marketeer" class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Calculator: Marketeer Cut (%)</label>
+                    <input id="settings-def-calc-marketeer" type="number" min="0" max="100" step="0.1" placeholder="30" class="w-full text-xs p-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                  </div>
+                </div>
+                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <input id="settings-def-show-demo" type="checkbox" class="rounded border-slate-300 text-indigo-600">
+                  <span>Show the "Fill demo data" button (for testing; Alt+Shift+D)</span>
+                </label>
               </div>
 
               <div class="flex items-center justify-end gap-2 pt-2">
@@ -6776,7 +6842,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                   <thead class="bg-slate-100 dark:bg-slate-800/80 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
                     <tr>
                       <th class="py-2.5 px-3">System Workspace Area</th>
-                      <th class="py-2.5 px-3 text-center">👑 Owner Mode (Sethji)</th>
+                      <th class="py-2.5 px-3 text-center">👑 Owner Mode</th>
                       <th class="py-2.5 px-3 text-center">👤 Operator Mode</th>
                     </tr>
                   </thead>
@@ -6840,7 +6906,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
           <div class="min-w-0">
             <div class="flex items-center gap-2">
               <h3 id="hub-brand-header-title" class="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight truncate">
-                Magic Roots Enterprises
+                <span data-tf-brand>Your Company</span>
               </h3>
               <span class="px-2 py-0.5 rounded-full text-[9.5px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 shrink-0">
                 Executive Hub
@@ -6900,7 +6966,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>Legal Entity Name</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-legalName').innerText, 'Legal Entity Name')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-legalName" class="text-xs font-black text-slate-900 dark:text-white truncate">Amrit Ras Consumer Products LLP</div>
+              <div id="hub-view-legalName" class="text-xs font-black text-slate-900 dark:text-white truncate">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Registered Corporate Entity</div>
             </div>
 
@@ -6910,7 +6976,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>Trade Brand Name</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-brandName').innerText, 'Brand Name')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-brandName" class="text-xs font-black text-emerald-600 dark:text-emerald-400 truncate">Magic Roots</div>
+              <div id="hub-view-brandName" class="text-xs font-black text-emerald-600 dark:text-emerald-400 truncate">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Commercial Brand &amp; Trademark</div>
             </div>
 
@@ -6920,8 +6986,8 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>GSTIN Identification</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-gstin').innerText, 'GSTIN')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-gstin" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wide">27AAACA9876Q1ZM</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">State Code: 27 (Maharashtra)</div>
+              <div id="hub-view-gstin" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wide">—</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">State Code: <span data-tf-state>—</span></div>
             </div>
 
             <!-- PAN -->
@@ -6930,7 +6996,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>Income Tax PAN</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-pan').innerText, 'PAN')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-pan" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wide">AAACA9876Q</div>
+              <div id="hub-view-pan" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wide">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Permanent Account Number</div>
             </div>
 
@@ -6940,7 +7006,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>FSSAI License #</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-fssai').innerText, 'FSSAI License')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-fssai" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wide">11523998000421</div>
+              <div id="hub-view-fssai" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wide">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Food Safety Standards Authority</div>
             </div>
 
@@ -6950,7 +7016,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>Head Office &amp; Facility</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-address').innerText, 'Head Office Address')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-address" class="text-xs font-semibold text-slate-900 dark:text-white line-clamp-2">Unit 14, Sunrise Industrial Estate, Kanjurmarg West, Mumbai - 400078</div>
+              <div id="hub-view-address" class="text-xs font-semibold text-slate-900 dark:text-white line-clamp-2">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Primary Manufacturing &amp; Dispatch</div>
             </div>
 
@@ -6960,7 +7026,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>Commercial Billing Email</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-email').innerText, 'Billing Email')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-email" class="text-xs font-bold text-slate-900 dark:text-white truncate">billing@amritrasfoods.in</div>
+              <div id="hub-view-email" class="text-xs font-bold text-slate-900 dark:text-white truncate">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Official Invoicing Communication</div>
             </div>
 
@@ -6970,7 +7036,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>Executive Contact Phone</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-phone').innerText, 'Contact Phone')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-phone" class="text-xs font-mono font-bold text-slate-900 dark:text-white truncate">+91 98201 44552</div>
+              <div id="hub-view-phone" class="text-xs font-mono font-bold text-slate-900 dark:text-white truncate">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Commercial Helpline &amp; WhatsApp</div>
             </div>
 
@@ -6981,8 +7047,8 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-accountNumber').innerText, 'Bank Account Number')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
               <div class="text-xs font-bold text-slate-900 dark:text-white flex items-center justify-between">
-                <span id="hub-view-bankName">HDFC Bank Ltd</span>
-                <span id="hub-view-accountNumber" class="font-mono text-emerald-600 dark:text-emerald-400">50200034891122</span>
+                <span id="hub-view-bankName">—</span>
+                <span id="hub-view-accountNumber" class="font-mono text-emerald-600 dark:text-emerald-400">—</span>
               </div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Current Business Account</div>
             </div>
@@ -6993,8 +7059,8 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>RTGS / NEFT IFSC Code</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-ifsc').innerText, 'IFSC Code')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-ifsc" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wider">HDFC0000240</div>
-              <div id="hub-view-branch" class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">Kanjurmarg Branch, Mumbai</div>
+              <div id="hub-view-ifsc" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wider">—</div>
+              <div id="hub-view-branch" class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">—</div>
             </div>
 
             <!-- UPI ID / VPA -->
@@ -7003,7 +7069,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>Official UPI ID (Instant Merchant VPA)</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-upiId').innerText, 'UPI ID')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-upiId" class="text-xs font-mono font-black text-teal-600 dark:text-teal-400 tracking-wide">amritrasfoods@hdfcbank</div>
+              <div id="hub-view-upiId" class="text-xs font-mono font-black text-teal-600 dark:text-teal-400 tracking-wide">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Linked to Dynamic Invoice QR Code Generation</div>
             </div>
 
@@ -7227,12 +7293,12 @@ Carrot 2case, Red chilli 1case..."></textarea>
             
             <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 shadow-2xs">
               <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">Legal Jurisdiction</span>
-              <p id="hub-jurisdiction-text" class="text-xs text-slate-700 dark:text-slate-300 font-medium">Subject to Mumbai Jurisdiction. Goods once sold will not be taken back or exchanged without prior authorization.</p>
+              <p id="hub-jurisdiction-text" class="text-xs text-slate-700 dark:text-slate-300 font-medium">—</p>
             </div>
 
             <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 shadow-2xs">
               <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-1">Commercial Directives</span>
-              <p id="hub-notes-text" class="text-xs text-slate-700 dark:text-slate-300 font-medium">Authentic slow-cured traditional pickles crafted with cold-pressed mustard oil. Verified batches with batch coding.</p>
+              <p id="hub-notes-text" class="text-xs text-slate-700 dark:text-slate-300 font-medium">—</p>
             </div>
           </div>
 
@@ -7259,7 +7325,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
 
       <!-- Modal Footer -->
       <div class="p-3 px-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 flex items-center justify-between shrink-0">
-        <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Magic Roots Executive Hub • Version 3.0</span>
+        <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium"><span data-tf-brand>Company</span> Executive Hub • Version 3.0</span>
         <button type="button" onclick="app.closeCompanyExecutiveHubModal()" class="btn-tactile px-4 py-1.5 rounded-lg text-xs font-bold text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer">
           Close Hub
         </button>
@@ -7327,7 +7393,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
             
             <div class="bg-white/80 dark:bg-slate-900/80 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
               <span class="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">Google Cloud Sheets Sync</span>
-              <span class="font-bold text-emerald-700 dark:text-emerald-400 truncate block">Magic Roots Cloud Master</span>
+              <span class="font-bold text-emerald-700 dark:text-emerald-400 truncate block"><span data-tf-brand>Company</span> Cloud Master</span>
               <span class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 block">Automated Polling Active</span>
             </div>
           </div>
@@ -7486,8 +7552,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
   <!-- Scripts -->
   <script src="data/mock-data.js"></script>
   <script src="js/components.js"></script>
+  <script src="js/partner-ui.js"></script>
   <script src="js/app.js"></script>
   <script src="js/smart-fill.js"></script>
+  <script src="js/form-guard.js"></script>
 </body>
 </html>
 

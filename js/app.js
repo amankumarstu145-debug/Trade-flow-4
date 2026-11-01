@@ -16,7 +16,6 @@ class TradeFlowApp {
     this.isFactoryPOMaximized = false;
     this.orderSkuItems = [];
     this.currentFactoryPOOrder = null;
-    this.casePackConfig = { '500g': 24, '1kg': 12, '5kg': 4 };
     
     // Trade Margin & Order Profit Calculator State (Simple 1-Row + Advanced Multi-Product)
     this.calcMode = 'simple';
@@ -109,11 +108,17 @@ class TradeFlowApp {
     ) || null;
   }
 
+  // QR image as a data URL, or '' when the text is too long for a QR code.
   createQrDataUrl(text) {
-    const code = qrcode(0, 'M');
-    code.addData(String(text));
-    code.make();
-    return code.createDataURL(5, 4);
+    try {
+      const code = qrcode(0, 'M');
+      code.addData(String(text));
+      code.make();
+      return code.createDataURL(5, 4);
+    } catch (err) {
+      console.warn('QR code not generated:', err.message);
+      return '';
+    }
   }
 
   /* ---------- UNIVERSAL CONTACT & HARD-RULE PROFILE RESOLUTION ENGINE ---------- */
@@ -159,12 +164,187 @@ class TradeFlowApp {
     return null;
   }
 
+  // Next number for an ID series (ORD/INV, CNT, ...). Uses the highest number ever issued, including
+  // deleted records and a stored high-water mark, so a number is never handed out twice.
+  nextSequenceNumber(series, prefixes, records, minimum = 0) {
+    const pattern = new RegExp('^(?:' + prefixes.join('|') + ')-(\\d+)$', 'i');
+    let highest = minimum;
+    for (const record of [...records, ...(this.data.recycleBin || [])]) {
+      for (const value of [record && record.id, record && record.invoiceNumber]) {
+        const match = pattern.exec(String(value || ''));
+        if (match) highest = Math.max(highest, Number(match[1]));
+      }
+    }
+    this.data.idCounters = this.data.idCounters || {};
+    const next = Math.max(highest, Number(this.data.idCounters[series]) || 0) + 1;
+    this.data.idCounters[series] = next;
+    return next;
+  }
+
+  // Next order: one sequential number shared by the order ID and its invoice number (with your prefix).
+  nextOrderNumbers() {
+    const cfg = this.config();
+    const n = this.nextSequenceNumber('order', ['ORD', 'INV'], this.data.orders || [], Math.max(0, cfg.startingNumber - 1));
+    return { n, orderId: `ORD-${n}`, invoiceNumber: `${cfg.invoicePrefix}${n}` };
+  }
+
+  nextContactId() {
+    return `CNT-${String(this.nextSequenceNumber('contact', ['CNT'], this.data.contacts || [])).padStart(2, '0')}`;
+  }
+
+  // Adds (sign 1) or reverses (sign -1) one payment's effect on its order's running totals.
+  // Used when a payment is recorded, edited, deleted, restored or undone, so balances never drift.
+  applyPaymentToOrder(payment, sign = 1) {
+    if (!payment || !payment.orderRef) return;
+    const order = this.findOrder(payment.orderRef);
+    if (!order) return;
+    const amount = (Number(payment.amount) || 0) * sign;
+    const round2 = v => Math.round(v * 100) / 100;
+    const type = payment.partyType || payment.category;
+    if (payment.direction === 'received') {
+      order.customerAdvanceReceived = Math.max(0, round2((Number(order.customerAdvanceReceived) || 0) + amount));
+      order.customerBalanceDue = Math.max(0, round2((Number(order.totalInvoiceAmount) || 0) - order.customerAdvanceReceived));
+      if (order.customerBalanceDue === 0 && order.status === 'delivered_overdue') order.status = 'settled';
+      else if (order.customerBalanceDue > 0 && order.status === 'settled') order.status = 'delivered_overdue';
+    } else if (type === 'manufacturer') {
+      order.manufacturerAdvancePaid = Math.max(0, round2((Number(order.manufacturerAdvancePaid) || 0) + amount));
+      if (sign > 0 && order.status === 'action_needed') { order.status = 'in_production'; order.urgentAlert = null; }
+    } else if (type === 'packaging') {
+      order.packagingAdvancePaid = Math.max(0, round2((Number(order.packagingAdvancePaid) || 0) + amount));
+    }
+  }
+
+  // Total of payments recorded as paid to a partner (matched by partner id, else by name).
+  paymentsPaidToContact(contact) {
+    const name = String(contact.name || '').trim().toLowerCase();
+    return (this.data.payments || []).filter(p => !p.isDeleted && p.direction === 'paid' && ((p.partyId && p.partyId === contact.id) || (name && String(p.partyName || '').trim().toLowerCase() === name)))
+      .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  }
+
+  // Units per case for each pack size, kept in the business profile so they persist and can be edited.
+  get casePackConfig() {
+    const profile = this.data && this.data.businessProfile;
+    if (!profile) return (this._casePackFallback = this._casePackFallback || {});
+    if (!profile.casePacks || typeof profile.casePacks !== 'object') profile.casePacks = {};
+    return profile.casePacks;
+  }
+
+  /* ---------- Business defaults: every default lives in the business profile (Settings > Business Profile) ---------- */
+  config() {
+    const p = (this.data && this.data.businessProfile) || {};
+    const num = (value, fallback) => (value === undefined || value === null || value === '' || !Number.isFinite(Number(value))) ? fallback : Number(value);
+    const fyStart = new Date().getMonth() >= 3 ? new Date().getFullYear() : new Date().getFullYear() - 1;
+    return {
+      brand: p.brandName || p.legalName || 'Your Company',
+      legalName: p.legalName || p.brandName || '',
+      city: p.city || '',
+      state: p.state || '',
+      stateCode: p.stateCode || (p.gstin ? String(p.gstin).slice(0, 2) : ''),
+      defaultGstRate: num(p.defaultGstRate, 12),
+      defaultHsn: p.defaultHsn || '',
+      defaultPaymentTerms: p.defaultPaymentTerms || p.paymentTerms || 'Net 15 Days',
+      defaultCommissionRate: num(p.defaultCommissionRate, 3),
+      manufacturerAdvancePct: num(p.manufacturerAdvancePct, 30),
+      bookingAdvancePct: num(p.bookingAdvancePct, 30),
+      defaultCasePack: Math.max(1, Math.round(num(p.defaultCasePack, 24))),
+      jurisdiction: p.jurisdiction || p.city || '',
+      defaultFreightTerms: p.defaultFreightTerms || '',
+      calcTransportPct: num(p.calcTransportPct, 5),
+      calcProfitPct: num(p.calcProfitPct, 20),
+      calcMarketeerPct: num(p.calcMarketeerPct, 30),
+      invoicePrefix: p.invoicePrefix || 'INV-',
+      startingNumber: num(p.startingNumber, 1001),
+      financialYear: `${fyStart}-${String(fyStart + 1).slice(-2)}`,
+      placeOfSupply: p.state ? `${p.state}${p.stateCode ? ` (${p.stateCode})` : ''}` : ''
+    };
+  }
+
+  // Notes printed on invoices: the profile's own notes, else a generic set ending with the jurisdiction line.
+  defaultInvoiceNotes() {
+    const profileNotes = this.data.businessProfile && this.data.businessProfile.invoiceNotes;
+    if (profileNotes) return profileNotes;
+    const lines = ['Goods once sold and inspected will not be returned without authorization.', 'Transit damage claims must be lodged with LR endorsement within 24 hours.', this.jurisdictionLine()].filter(Boolean);
+    return lines.map((line, index) => `${index + 1}. ${line}`).join('\n');
+  }
+
+  // "Subject to <city> Jurisdiction" line, or '' when no city is set.
+  jurisdictionLine() {
+    const city = this.config().jurisdiction;
+    return city ? `Subject to ${city} Jurisdiction.` : '';
+  }
+
+  /* ---------- GST: one place for rates, amounts and labels ---------- */
+  // Rate for one invoice line: the line's own rate, else its product's rate, else the profile default, else 12%.
+  itemGstRate(item) {
+    const valid = value => value !== undefined && value !== null && value !== '' && Number.isFinite(Number(value)) && Number(value) >= 0;
+    if (item && valid(item.gstRate)) return Number(item.gstRate);
+    const product = item && (this.data.products || []).find(p => (item.productId && p.id === item.productId) || (item.sku && p.sku === item.sku) || (item.name && p.name === item.name));
+    if (product && valid(product.gstRate)) return Number(product.gstRate);
+    if (product && valid(product.gst)) return Number(product.gst); // older records
+    return this.config().defaultGstRate;
+  }
+
+  // Tax is worked out per line at that line's rate and rounded to paise, then added up.
+  computeGst(items, interState) {
+    const round2 = value => Math.round((value + Number.EPSILON) * 100) / 100;
+    let taxable = 0, cgst = 0, sgst = 0, igst = 0;
+    const rates = new Set();
+    for (const item of items || []) {
+      const amount = Number(item && item.totalAmount) || 0;
+      const rate = this.itemGstRate(item);
+      rates.add(rate);
+      taxable += amount;
+      if (interState) igst += round2(amount * rate / 100);
+      else { const half = round2(amount * rate / 200); cgst += half; sgst += half; }
+    }
+    return { taxable: round2(taxable), cgst: round2(cgst), sgst: round2(sgst), igst: round2(igst), total: round2(taxable + cgst + sgst + igst), rates: [...rates].sort((a, b) => a - b) };
+  }
+
+  // HSN code for a line: its own, else its product's.
+  itemHsn(item) {
+    const product = item && (this.data.products || []).find(p => (item.productId && p.id === item.productId) || (item.name && p.name === item.name));
+    return String((item && (item.hsn || item.hsnCode)) || (product && (product.hsn || product.hsnCode)) || this.config().defaultHsn || '—');
+  }
+
+  // One summary row per HSN code and GST rate, as a tax invoice requires.
+  hsnSummaryRows(items, interState) {
+    const groups = new Map();
+    for (const item of items || []) {
+      const key = this.itemHsn(item) + '|' + this.itemGstRate(item);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(item);
+    }
+    return [...groups.entries()].map(([key, groupItems]) => {
+      const [hsn, rate] = key.split('|');
+      return { hsn, rate: Number(rate), ...this.computeGst(groupItems, interState) };
+    });
+  }
+
+  // Rates used by an order (stored when last calculated, else derived from its items).
+  orderGstRates(order) {
+    if (order && Array.isArray(order.gstRates) && order.gstRates.length) return order.gstRates;
+    const items = (order && order.items) || [];
+    return items.length ? [...new Set(items.map(item => this.itemGstRate(item)))].sort((a, b) => a - b) : [12];
+  }
+
+  // Display strings, e.g. { cgst: 'CGST (9%)', igst: 'IGST (18%)', combined: 'CGST 9% + SGST 9%' }.
+  gstLabels(order, interState) {
+    const rates = this.orderGstRates(order);
+    const inter = interState === undefined ? !(order && order.gstType === 'intra') : interState;
+    const fmt = n => String(Math.round(n * 100) / 100);
+    if (rates.length !== 1) {
+      return { single: false, rate: null, cgst: 'CGST', sgst: 'SGST', igst: 'IGST', combined: inter ? 'IGST (mixed rates)' : 'CGST + SGST (mixed rates)', total: 'GST (mixed rates)' };
+    }
+    const r = rates[0];
+    return { single: true, rate: r, cgst: `CGST (${fmt(r / 2)}%)`, sgst: `SGST (${fmt(r / 2)}%)`, igst: `IGST (${fmt(r)}%)`, combined: inter ? `IGST ${fmt(r)}%` : `CGST ${fmt(r / 2)}% + SGST ${fmt(r / 2)}%`, total: `GST ${fmt(r)}%` };
+  }
+
   ensureContact(partyName, defaultRole = 'manufacturer') {
     let contact = this.findContact(partyName);
     if (contact) return contact;
 
     const cleanName = String(partyName || 'New Partner').trim();
-    const newId = `CNT-${(this.data.contacts.length + 1).toString().padStart(2, '0')}`;
+    const newId = this.nextContactId();
     const isRetailer = /supermarket|mart|kirana|stores|retail|buyer/i.test(cleanName);
     const isTransporter = /transport|logistics|cargo|roadways/i.test(cleanName);
     const isPackaging = /pack|polymer|flexo|box|carton|label/i.test(cleanName);
@@ -176,29 +356,23 @@ class TradeFlowApp {
     else if (isPackaging) role = 'packaging';
     else if (isMarketeer) role = 'marketeer';
 
-    const cityMatch = cleanName.match(/(Sonipat|Delhi|Mumbai|Ahmedabad|Rajkot|Surat|Pune|Indore|Karnal|Gondal)/i);
-    const city = cityMatch ? cityMatch[1] : 'Industrial Area';
-
+    // Created from a name only: every other detail is left blank for the user to complete, never guessed.
     const newContact = {
       id: newId,
       name: cleanName,
-      contactPerson: cleanName.replace(/(Sonipat|Delhi|Mumbai|Ahmedabad|Rajkot|Surat|Pune|Indore|Karnal|Gondal|Pvt|Ltd)/ig, '').trim() || cleanName,
+      contactPerson: '',
       role: role,
-      phone: '+91 98120 44891',
-      email: `${cleanName.toLowerCase().replace(/[^a-z0-9]/g, '')}@partner.tradeflow.in`,
-      gstin: '06AABCI9921M1Z5',
-      billingAddress: `${city}, Industrial Cluster, State Pin 131001`,
-      shippingAddress: `${city}, Industrial Cluster, State Pin 131001`,
-      bankDetails: {
-        bankName: 'Bank of Baroda',
-        accountNumber: '924030044297037',
-        ifsc: 'BARBW2626994',
-        beneficiaryName: cleanName
-      },
-      bankName: 'Bank of Baroda',
-      accountNumber: '924030044297037',
-      ifsc: 'BARBW2626994',
-      paymentTerms: 'Net 15 Days',
+      phone: '',
+      email: '',
+      gstin: '',
+      billingAddress: '',
+      shippingAddress: '',
+      bankDetails: { bankName: '', accountNumber: '', ifsc: '', beneficiaryName: '' },
+      bankName: '',
+      accountNumber: '',
+      ifsc: '',
+      needsDetails: true,
+      paymentTerms: this.config().defaultPaymentTerms,
       totalOrders: 1,
       currentBalanceDue: 0,
       createdAt: new Date().toISOString()
@@ -386,7 +560,7 @@ class TradeFlowApp {
           title: `Vendor PO Unplaced: ${o.retailerName}`,
           badgeText: 'Action Urgent',
           badgeClass: 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30',
-          description: `Customer gave ${this.formatCurrency(o.customerAdvanceReceived)} advance for ${o.items && o.items[0] ? o.items[0].name : 'Pickles'}. Production not yet triggered.`,
+          description: `Customer gave ${this.formatCurrency(o.customerAdvanceReceived)} advance for ${o.items && o.items[0] ? o.items[0].name : 'products'}. Production not yet triggered.`,
           amount: o.customerAdvanceReceived,
           amountLabel: 'Idle Advance',
           timestamp: o.createdAt || (o.date ? new Date(o.date).toISOString() : new Date().toISOString()),
@@ -434,8 +608,8 @@ class TradeFlowApp {
           type: 'mfg_advance_needed',
           orderId: o.id,
           invoiceNumber: o.invoiceNumber,
-          partyName: o.manufacturerName || 'Pickle Factory',
-          title: `Factory Advance Due: ${o.manufacturerName || 'Pickle Factory'}`,
+          partyName: o.manufacturerName || 'Manufacturer',
+          title: `Factory Advance Due: ${o.manufacturerName || 'Manufacturer'}`,
           badgeText: 'Mfg Advance Due',
           badgeClass: 'bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/30',
           description: `Factory requires ${this.formatCurrency(advReq)} advance to proceed with bottling (Paid: ${this.formatCurrency(advPaid)}).`,
@@ -510,7 +684,7 @@ class TradeFlowApp {
     if (badge) {
       badge.textContent = `${items.length} ${items.length === 1 ? 'Matter' : 'Matters'}`;
       if (items.length > 0) {
-        badge.className = 'px-2 py-0.5 text-xs font-mono-num font-bold rounded-md bg-amber-500 text-slate-950 animate-pulse';
+        badge.className = 'px-2 py-0.5 text-xs font-mono-num font-bold rounded-md bg-amber-500 text-slate-950';
       } else {
         badge.className = 'px-2 py-0.5 text-xs font-mono-num font-bold rounded-md bg-emerald-500 text-white';
       }
@@ -669,7 +843,18 @@ class TradeFlowApp {
     return JSON.parse(JSON.stringify(INITIAL_DATA));
   }
 
-  async saveData(userName = 'Operator', reason = 'App State Update') {
+  // Saves run one at a time so each carries the timestamp returned by the previous one.
+  saveData(userName = 'Operator', reason = 'App State Update') {
+    this._saveChain = (this._saveChain || Promise.resolve()).then(() => this._saveDataNow(userName, reason));
+    return this._saveChain;
+  }
+
+  get tabId() {
+    if (!this._tabId) this._tabId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'tab-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    return this._tabId;
+  }
+
+  async _saveDataNow(userName, reason) {
     // 1. Cache to localStorage for offline resilience
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(this.data));
@@ -685,11 +870,19 @@ class TradeFlowApp {
       const resp = await fetch('/api/data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: this.data, userName, reason })
+        body: JSON.stringify({ data: this.data, userName, reason, baseTimestamp: this.serverSyncedAt || null, tabId: this.tabId })
       });
       const res = await resp.json();
 
       if (res.success) {
+        if (res.timestamp) this.serverSyncedAt = res.timestamp;
+        if (Array.isArray(res.conflicts) && res.conflicts.length) {
+          // Another window, the phone or an import changed these records first; their version was kept.
+          const ids = res.conflicts.map(c => c.id).slice(0, 5).join(', ');
+          await this.syncAuthoritativeDataFromServer();
+          this.render();
+          this.showSyncAlert(`Some records were changed elsewhere before this save (${ids}${res.conflicts.length > 5 ? '…' : ''}). The newer version was kept and this window has been refreshed. Please check and redo your last change if needed.`);
+        }
         if (res.excelSync && res.excelSync.locked) {
           this.showSyncAlert('TradeFlow_Master_Database.xlsx is currently open in Microsoft Excel. Data is saved safely to TradeFlow DB, but Excel sync is paused. Close the file and click Retry Sync.');
           this.updateExcelSyncPill('locked');
@@ -777,6 +970,7 @@ class TradeFlowApp {
         const json = await resp.json();
         if (json.success && json.data) {
           this.data = json.data;
+          if (json.timestamp) this.serverSyncedAt = json.timestamp;
           try {
             localStorage.setItem(this.storageKey, JSON.stringify(this.data));
           } catch (_) {}
@@ -1002,6 +1196,31 @@ class TradeFlowApp {
     setVal('settings-prof-branch', p.branch);
     setVal('settings-prof-upi', p.upiId);
     setVal('settings-prof-inv-notes', p.invoiceNotes);
+    setVal('settings-prof-udyam', p.udyam);
+    setVal('settings-prof-cin', p.cin);
+    setVal('settings-prof-trademarks', p.trademarks);
+    setVal('settings-prof-bank2-name', p.secondaryBankName);
+    setVal('settings-prof-bank2-acc', p.secondaryAccountNumber);
+    setVal('settings-prof-bank2-ifsc', p.secondaryIfsc);
+    setVal('settings-prof-bank2-branch', p.secondaryBranch);
+    setVal('settings-prof-iec', p.iec);
+    // Business defaults: show saved values; empty fields show the built-in default as a hint.
+    const cfg = this.config();
+    const defaultFields = {
+      'settings-def-gst-rate': ['defaultGstRate', cfg.defaultGstRate], 'settings-def-hsn': ['defaultHsn', cfg.defaultHsn],
+      'settings-def-payment-terms': ['defaultPaymentTerms', cfg.defaultPaymentTerms], 'settings-def-commission': ['defaultCommissionRate', cfg.defaultCommissionRate],
+      'settings-def-mfg-advance': ['manufacturerAdvancePct', cfg.manufacturerAdvancePct], 'settings-def-booking-advance': ['bookingAdvancePct', cfg.bookingAdvancePct], 'settings-def-jurisdiction': ['jurisdiction', cfg.jurisdiction],
+      'settings-def-freight-terms': ['defaultFreightTerms', cfg.defaultFreightTerms], 'settings-def-calc-transport': ['calcTransportPct', cfg.calcTransportPct],
+      'settings-def-calc-profit': ['calcProfitPct', cfg.calcProfitPct], 'settings-def-calc-marketeer': ['calcMarketeerPct', cfg.calcMarketeerPct]
+    };
+    for (const [id, [key, effective]] of Object.entries(defaultFields)) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      el.value = p[key] ?? '';
+      if (effective !== '' && effective !== undefined) el.placeholder = String(effective);
+    }
+    const demoToggle = document.getElementById('settings-def-show-demo');
+    if (demoToggle) demoToggle.checked = p.showDemoTools !== false;
 
     // Tab 2: AI & Gemini Settings
     const isAi = !!this.isAIEnabled;
@@ -1080,7 +1299,7 @@ class TradeFlowApp {
       if (roleDesc) roleDesc.innerText = 'Operator Mode: Trade margins, vendor purchase costs, and raw profits are shielded from screen.';
     } else {
       if (roleBadge) {
-        roleBadge.innerText = '👑 Owner Mode (Sethji) Active';
+        roleBadge.innerText = '👑 Owner Mode Active';
         roleBadge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold font-mono bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 shrink-0';
       }
       if (roleBtn) roleBtn.innerText = 'Switch to Operator Mode';
@@ -1097,8 +1316,8 @@ class TradeFlowApp {
       return el ? el.value.trim() : '';
     };
 
-    p.brandName = getVal('settings-prof-brand') || 'Magic Roots';
-    p.legalName = getVal('settings-prof-legal') || 'Amrit Ras Consumer Products LLP';
+    p.brandName = getVal('settings-prof-brand');
+    p.legalName = getVal('settings-prof-legal') || '';
     p.tagline = getVal('settings-prof-tagline');
     p.gstin = getVal('settings-prof-gstin');
     p.pan = getVal('settings-prof-pan');
@@ -1117,12 +1336,37 @@ class TradeFlowApp {
     p.branch = getVal('settings-prof-branch');
     p.upiId = getVal('settings-prof-upi');
     p.invoiceNotes = getVal('settings-prof-inv-notes');
+    p.udyam = getVal('settings-prof-udyam').toUpperCase();
+    p.cin = getVal('settings-prof-cin').toUpperCase();
+    p.trademarks = getVal('settings-prof-trademarks');
+    p.secondaryBankName = getVal('settings-prof-bank2-name');
+    p.secondaryAccountNumber = getVal('settings-prof-bank2-acc').replace(/\s/g, '');
+    p.secondaryIfsc = getVal('settings-prof-bank2-ifsc').toUpperCase();
+    p.secondaryBranch = getVal('settings-prof-bank2-branch');
+    p.iec = getVal('settings-prof-iec').toUpperCase();
+    // Business defaults: numbers are stored as numbers; an empty field removes the override.
+    const numberOrUnset = (key, id) => { const v = getVal(id); if (v === '') delete p[key]; else if (Number.isFinite(Number(v))) p[key] = Number(v); };
+    const textOrUnset = (key, id) => { const v = getVal(id); if (v === '') delete p[key]; else p[key] = v; };
+    numberOrUnset('defaultGstRate', 'settings-def-gst-rate');
+    textOrUnset('defaultHsn', 'settings-def-hsn');
+    textOrUnset('defaultPaymentTerms', 'settings-def-payment-terms');
+    numberOrUnset('defaultCommissionRate', 'settings-def-commission');
+    numberOrUnset('manufacturerAdvancePct', 'settings-def-mfg-advance');
+    numberOrUnset('bookingAdvancePct', 'settings-def-booking-advance');
+    textOrUnset('jurisdiction', 'settings-def-jurisdiction');
+    textOrUnset('defaultFreightTerms', 'settings-def-freight-terms');
+    numberOrUnset('calcTransportPct', 'settings-def-calc-transport');
+    numberOrUnset('calcProfitPct', 'settings-def-calc-profit');
+    numberOrUnset('calcMarketeerPct', 'settings-def-calc-marketeer');
+    const demoToggle = document.getElementById('settings-def-show-demo');
+    if (demoToggle) p.showDemoTools = demoToggle.checked;
+    window.TFFormGuard?.refreshDemoButton();
 
     this.saveData();
     this.populateSettingsForm();
 
     const brandHeader = document.getElementById('sidebar-brand-name');
-    if (brandHeader) brandHeader.innerText = p.brandName;
+    if (brandHeader) brandHeader.innerText = this.config().brand;
 
     this.showToast('✓ Business Profile & GST Tax Master saved successfully!');
   }
@@ -1180,7 +1424,7 @@ class TradeFlowApp {
     resultEl.innerHTML = tfSanitizeHtml('⏳ Testing connection to Google Generative Language API...');
 
     try {
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+      const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models', { headers: { 'x-goog-api-key': key } });
       const data = await resp.json();
       if (resp.ok && data.models) {
         resultEl.className = 'p-2.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
@@ -1530,7 +1774,7 @@ class TradeFlowApp {
       warnings.push('Order is marked dispatched but lacks a Lorry Receipt (LR) number.');
     }
 
-    if (order.customerAdvanceReceived > 0 && !order.advancePaymentMode) {
+    if (order.customerAdvanceReceived > 0 && !(order.advancePaymentMode || order.customerAdvanceMode)) {
       warnings.push('Advance received recorded without specifying payment mode.');
     }
 
@@ -1560,7 +1804,7 @@ class TradeFlowApp {
       issues.push('Seller legal/trade name is missing in Business Profile.');
     }
     if (!sellerGstin) {
-      warnings.push('Seller GSTIN is not specified in Business Profile.');
+      issues.push('Seller GSTIN is not set. Add it in Business Profile before issuing a tax invoice.');
     } else if (!gstinRegex.test(sellerGstin)) {
       warnings.push(`Seller GSTIN "${sellerGstin}" does not match standard 15-character GSTIN format.`);
     }
@@ -1952,12 +2196,35 @@ class TradeFlowApp {
     if (typeof this.closeEditContactModal === 'function') this.closeEditContactModal();
   }
 
+  // Phones and tablets: the sidebar slides in over the page instead of taking a fixed column.
+  toggleMobileSidebar(force) {
+    const open = typeof force === 'boolean' ? force : !document.body.classList.contains('tf-sidebar-open');
+    document.body.classList.toggle('tf-sidebar-open', open);
+    const btn = document.getElementById('tf-menu-btn');
+    if (btn) { btn.setAttribute('aria-expanded', String(open)); btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu'); }
+  }
+
   bindEvents() {
+    // Close the mobile sidebar after choosing a screen, and with Escape.
+    document.getElementById('app-sidebar')?.addEventListener('click', e => {
+      if (e.target.closest('button, a') && window.matchMedia('(max-width: 1023px)').matches) this.toggleMobileSidebar(false);
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('tf-sidebar-open')) this.toggleMobileSidebar(false); });
+
     // Left Sidebar Navigation Items
     document.querySelectorAll('[data-sidebar-tab]').forEach(btn => {
       btn.addEventListener('click', () => {
         this.activeTab = btn.getAttribute('data-sidebar-tab');
+        // The fixed first tab always shows the sidebar screen you are on (it used to stay "Orders Pipeline").
+        const homeTab = (this.openTabs || []).find(t => t.id === 'tab-orders');
+        if (homeTab) {
+          homeTab.type = this.activeTab;
+          homeTab.title = (btn.querySelector('span') || btn).textContent.trim() || this.getCurrentViewLabel();
+          homeTab.icon = btn.querySelector('[data-lucide]')?.getAttribute('data-lucide') || homeTab.icon;
+          this.activeWorkspaceTab = 'tab-orders';
+        }
         this.updateSidebarUI();
+        this.renderWorkspaceTabs();
         this.renderActiveView();
       });
     });
@@ -1989,6 +2256,7 @@ class TradeFlowApp {
         this.closePaymentModal();
         this.closePaymentDetailDrawer();
         this.closeDocPreview();
+        this.closeSettingsModal();
       }
     });
 
@@ -2135,16 +2403,16 @@ class TradeFlowApp {
           finance: 'Finance & Commercial Cockpit',
           vault: 'Document Vault & File Manager',
           payments: 'Payment Ledger & Cash Flow',
-          manufacturers: 'Manufacturers & Pickle Factories',
+          manufacturers: 'Manufacturers',
           packaging: 'Packaging & Labels Suppliers',
           transport: 'Logistics & Transporters',
           retailers: 'Retailers & Buyers Directory',
           marketeers: 'Marketeers & Sales Brokers',
-          products: 'Pickle SKU & Product Catalog',
+          products: 'Product Catalog',
           profile: 'Business Profile & Tax Settings',
           'daily-diary': 'Daily Business Diary (Roznamcha)',
           exceptions: 'Unified Exception Center',
-          'executive-hub': 'Magic Roots • Executive Hub & Corporate Operations'
+          'executive-hub': `${this.config().brand} • Executive Hub & Corporate Operations`
         };
         breadcrumb.innerText = titles[this.activeTab] || 'Dashboard';
       }
@@ -2152,6 +2420,7 @@ class TradeFlowApp {
   }
 
   render() {
+    this.applyBrandText();
     this.renderWorkspaceTabs();
     this.updateSidebarUI();
     this.renderKPIs();
@@ -2530,7 +2799,7 @@ class TradeFlowApp {
 
     tbody.innerHTML = pagedOrders.map(order => {
       const mfg = this.data.contacts.find(c => c.id === order.manufacturerId);
-      const totalCases = (order.items || []).reduce((sum, i) => sum + (i.cases || Math.ceil((i.quantity || 0) / (i.casePack || (i.variant && i.variant.includes('1kg') ? 12 : (i.variant && i.variant.includes('5kg') ? 4 : 24))))), 0);
+      const totalCases = (order.items || []).reduce((sum, i) => sum + (i.cases || Math.ceil((i.quantity || 0) / (i.casePack || this.casePackConfig[i.packSize] || this.config().defaultCasePack))), 0);
       const totalJars = (order.items || []).reduce((sum, i) => sum + (i.quantity || 0), 0);
       const varCount = (order.items || []).length;
       const caseWord = totalCases === 1 ? 'Case' : 'Cases';
@@ -2646,10 +2915,16 @@ class TradeFlowApp {
     setBadge('filter-count-delivered_overdue', orders.filter(o => o.status === 'delivered_overdue').length);
   }
 
-  // View: Manufacturers & Pickle Factories
+  // View: Manufacturers
   renderManufacturersView() {
     const container = document.getElementById('view-manufacturers-container');
     if (!container) return;
+
+    if (window.TFPartnerUI) {
+      container.innerHTML = window.TFPartnerUI.renderDirectory(this, 'manufacturer');
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
 
     const mfgs = this.data.contacts.filter(c => c.role === 'manufacturer');
 
@@ -2665,12 +2940,12 @@ class TradeFlowApp {
       const cleanPhone = rawPhone.replace(/[^0-9+]/g, '');
       const digitsOnly = rawPhone.replace(/[^0-9]/g, '');
       const waPhone = digitsOnly.length === 10 ? '91' + digitsOnly : digitsOnly;
-      const waMsg = encodeURIComponent(`Hello ${mfg.name || ''}, inquiring regarding our pickle production batches and payments on TradeFlow.`);
+      const waMsg = encodeURIComponent(`Hello ${mfg.name || ''}, inquiring regarding our production batches and payments on TradeFlow.`);
 
       const mfgLogo = mfg.logo || mfg.logoUrl;
       const logoHtml = mfgLogo ? `
         <div class="tf-banner-avatar-v4">
-          <img src="${tfEscapeHtml(tfSafeUrl(mfgLogo))}" alt="${tfEscapeHtml(mfg.name)}" class="w-full h-full object-contain p-1" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'font-black text-emerald-950 text-lg\\'>${tfEscapeHtml(tfEscapeJs((mfg.name||'MF').substring(0,2).toUpperCase()))}</span>'">
+          <img src="${tfEscapeHtml(tfSafeUrl(mfgLogo))}" alt="${tfEscapeHtml(mfg.name)}" class="w-full h-full object-contain p-1" onerror="this.onerror=null; if (this.parentElement) this.parentElement.innerHTML='<span class=\\'font-black text-emerald-950 text-lg\\'>${tfEscapeHtml(tfEscapeJs((mfg.name||'MF').substring(0,2).toUpperCase()))}</span>'">
         </div>
       ` : `
         <div class="tf-banner-avatar-v4">
@@ -2678,9 +2953,9 @@ class TradeFlowApp {
         </div>
       `;
 
-      const safeAddress = (mfg.billingAddress || mfg.shippingAddress || 'Shop 14, APMC Market, Sector 19, Vashi, Navi Mumbai - 400703').replace(/'/g, "\\'");
+      const safeAddress = (mfg.billingAddress || mfg.shippingAddress || '').replace(/'/g, "\\'");
       const safeEmail = (mfg.email || `sales@${(mfg.name || 'mfg').toLowerCase().replace(/[^a-z0-9]/g, '')}.com`).replace(/'/g, "\\'");
-      const safeGstin = (mfg.gstin || '27AABCG1234F1Z9').replace(/'/g, "\\'");
+      const safeGstin = (mfg.gstin || '').replace(/'/g, "\\'");
 
       const healthBadgeText = remainingBalance > 0 ? `Payable ${this.formatCurrency(remainingBalance)}` : 'Clear';
       const healthBadgeClass = remainingBalance > 0 ? 'bg-amber-500/20 text-amber-200 border border-amber-400/30' : 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/30';
@@ -2694,7 +2969,7 @@ class TradeFlowApp {
               <div class="flex items-center gap-1.5 flex-wrap min-w-0">
                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/15 backdrop-blur-md text-white border border-white/20 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
-                  <span>PICKLE FACTORY</span>
+                  <span>MANUFACTURER</span>
                 </span>
                 <span class="font-mono text-[10px] text-white/90 font-bold bg-white/15 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15">${tfEscapeHtml(mfg.id)}</span>
                 <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${tfEscapeHtml(healthBadgeClass)}">${tfEscapeHtml(healthBadgeText)}</span>
@@ -2782,13 +3057,13 @@ class TradeFlowApp {
                     <span>Address</span>
                   </div>
                   <div class="text-[11px] text-white font-medium line-clamp-2 leading-tight mt-0.5">
-                    ${tfEscapeHtml(mfg.billingAddress || mfg.shippingAddress || 'Shop 14, APMC Market, Sector 19, Vashi, Navi Mumbai - 400703')}
+                    ${tfEscapeHtml(mfg.billingAddress || mfg.shippingAddress || '')}
                   </div>
                 </div>
                 <div class="tf-copy-clickable truncate" onclick="event.stopPropagation(); app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeEmail))}', 'Email', this)" title="Click to copy Email">
                   <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="mail" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
-                    <span class="truncate text-[11px] text-white font-medium">${tfEscapeHtml(mfg.email || 'sales@ssafp.com')}</span>
+                    <span class="truncate text-[11px] text-white font-medium">${tfEscapeHtml(mfg.email || '')}</span>
                   </div>
                 </div>
               </div>
@@ -2810,7 +3085,7 @@ class TradeFlowApp {
                     <span>GSTIN</span>
                   </div>
                   <div class="text-[11px] text-white font-mono font-semibold truncate mt-0.5">
-                    ${tfEscapeHtml(mfg.gstin || '27AABCG1234F1Z9')}
+                    ${tfEscapeHtml(mfg.gstin || '')}
                   </div>
                 </div>
               </div>
@@ -2896,9 +3171,9 @@ class TradeFlowApp {
                   ${latestBatches.slice(0, 2).map(o => `
                     <div onclick="event.stopPropagation(); app.openOrderDetailPage('${tfEscapeHtml(tfEscapeJs(o.id))}')" class="minitable-row" title="Click to inspect batch ${tfEscapeHtml(o.invoiceNumber)}">
                       <span class="font-mono font-bold text-slate-900 dark:text-white truncate">${tfEscapeHtml(o.invoiceNumber)}</span>
-                      <span class="truncate text-slate-700 dark:text-slate-300 font-medium">${tfEscapeHtml((o.items && o.items[0]) ? (o.items[0].variant || o.items[0].name) : 'Mixed Pickle')}</span>
+                      <span class="truncate text-slate-700 dark:text-slate-300 font-medium">${tfEscapeHtml((o.items && o.items[0]) ? (o.items[0].variant || o.items[0].name) : '—')}</span>
                       <span class="text-right font-medium text-slate-600 dark:text-slate-400 flex items-center justify-end gap-0.5 truncate">
-                        <span>${tfEscapeHtml((o.items || []).reduce((sum, i) => sum + (i.quantity || 0), 0) || 15)} Cases</span>
+                        <span>${tfEscapeHtml((o.items || []).reduce((sum, i) => sum + (Number(i.cases) || 0), 0))} Cases</span>
                         <i data-lucide="chevron-right" class="w-2.5 h-2.5 text-slate-400 shrink-0"></i>
                       </span>
                     </div>
@@ -2951,7 +3226,7 @@ class TradeFlowApp {
         </div>
 
         <!-- 4 Cards Per Row Grid with Responsive Squeezing -->
-        <div id="manufacturers-card-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-4.5 w-full">
+        <div id="manufacturers-card-grid" class="grid gap-4 w-full tf-partner-grid">
           ${cardsHtml}
         </div>
       </div>
@@ -2963,6 +3238,12 @@ class TradeFlowApp {
   renderPackagingView() {
     const container = document.getElementById('view-packaging-container');
     if (!container) return;
+
+    if (window.TFPartnerUI) {
+      container.innerHTML = window.TFPartnerUI.renderDirectory(this, 'packaging');
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
 
     const pkgs = this.data.contacts.filter(c => c.role === 'packaging');
 
@@ -2982,7 +3263,7 @@ class TradeFlowApp {
       const pkgLogo = pkg.logo || pkg.logoUrl;
       const logoHtml = pkgLogo ? `
         <div class="tf-banner-avatar-v4" style="background: #dbeafe; color: #1e3a8a;">
-          <img src="${tfEscapeHtml(tfSafeUrl(pkgLogo))}" alt="${tfEscapeHtml(pkg.name)}" class="w-full h-full object-contain p-1" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'font-black text-blue-950 text-lg\\'>${tfEscapeHtml(tfEscapeJs((pkg.name||'PK').substring(0,2).toUpperCase()))}</span>'">
+          <img src="${tfEscapeHtml(tfSafeUrl(pkgLogo))}" alt="${tfEscapeHtml(pkg.name)}" class="w-full h-full object-contain p-1" onerror="this.onerror=null; if (this.parentElement) this.parentElement.innerHTML='<span class=\\'font-black text-blue-950 text-lg\\'>${tfEscapeHtml(tfEscapeJs((pkg.name||'PK').substring(0,2).toUpperCase()))}</span>'">
         </div>
       ` : `
         <div class="tf-banner-avatar-v4" style="background: #dbeafe; color: #1e3a8a;">
@@ -2990,9 +3271,9 @@ class TradeFlowApp {
         </div>
       `;
 
-      const safeAddress = (pkg.billingAddress || pkg.shippingAddress || 'Packaging Industrial Area, Ahmedabad').replace(/'/g, "\\'");
+      const safeAddress = (pkg.billingAddress || pkg.shippingAddress || '').replace(/'/g, "\\'");
       const safeEmail = (pkg.email || `orders@${(pkg.name || 'pkg').toLowerCase().replace(/[^a-z0-9]/g, '')}.com`).replace(/'/g, "\\'");
-      const safeGstin = (pkg.gstin || '24AAACT1234E1Z5').replace(/'/g, "\\'");
+      const safeGstin = (pkg.gstin || '').replace(/'/g, "\\'");
 
       const healthBadgeText = balance > 0 ? `Payable ${this.formatCurrency(balance)}` : 'Clear';
       const healthBadgeClass = balance > 0 ? 'bg-amber-500/20 text-amber-200 border border-amber-400/30' : 'bg-blue-500/20 text-blue-200 border border-blue-400/30';
@@ -3094,7 +3375,7 @@ class TradeFlowApp {
                     <span>Address</span>
                   </div>
                   <div class="text-[11px] text-white font-medium line-clamp-2 leading-tight mt-0.5">
-                    ${tfEscapeHtml(pkg.billingAddress || pkg.shippingAddress || 'Packaging Industrial Area, Ahmedabad')}
+                    ${tfEscapeHtml(pkg.billingAddress || pkg.shippingAddress || '')}
                   </div>
                 </div>
                 <div class="tf-copy-clickable truncate" onclick="event.stopPropagation(); app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeEmail))}', 'Email', this)" title="Click to copy Email">
@@ -3122,7 +3403,7 @@ class TradeFlowApp {
                     <span>GSTIN</span>
                   </div>
                   <div class="text-[11px] text-white font-mono font-semibold truncate mt-0.5">
-                    ${tfEscapeHtml(pkg.gstin || '24AAACT1234E1Z5')}
+                    ${tfEscapeHtml(pkg.gstin || '')}
                   </div>
                 </div>
               </div>
@@ -3263,7 +3544,7 @@ class TradeFlowApp {
         </div>
 
         <!-- 4 Cards Per Row Grid with Responsive Squeezing -->
-        <div id="packaging-card-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-4.5 w-full">
+        <div id="packaging-card-grid" class="grid gap-4 w-full tf-partner-grid">
           ${cardsHtml}
         </div>
       </div>
@@ -3288,7 +3569,7 @@ class TradeFlowApp {
     if (headerName) headerName.textContent = contact.name;
     if (headerRole) {
       const roleMap = {
-        manufacturer: 'Pickle Factory',
+        manufacturer: 'Manufacturer',
         packaging: 'Packaging & Labels',
         retailer: 'Buyer / Retailer',
         transporter: 'Transporter / Logistics',
@@ -3393,24 +3674,24 @@ class TradeFlowApp {
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div class="bg-white dark:bg-slate-900/90 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
               <span class="text-[10px] text-slate-400 block font-medium">Bank Name</span>
-              <span class="font-bold text-slate-800 dark:text-slate-200">${tfEscapeHtml(contact.bankName || 'State Bank of India')}</span>
+              <span class="font-bold text-slate-800 dark:text-slate-200">${tfEscapeHtml(contact.bankName || '')}</span>
             </div>
             <div class="bg-white dark:bg-slate-900/90 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
               <span class="text-[10px] text-slate-400 block font-medium">Account Number</span>
               <div class="flex items-center justify-between">
-                <span class="font-mono font-bold text-slate-800 dark:text-slate-200">${tfEscapeHtml(contact.accountNumber || '62340200001451')}</span>
-                <button type="button" onclick="navigator.clipboard.writeText('${tfEscapeHtml(tfEscapeJs(contact.accountNumber || '62340200001451'))}'); app.showToast('📋 Account number copied!');" class="text-slate-400 hover:text-amber-500" title="Copy Account Number">
+                <span class="font-mono font-bold text-slate-800 dark:text-slate-200">${tfEscapeHtml(contact.accountNumber || '')}</span>
+                <button type="button" onclick="navigator.clipboard.writeText('${tfEscapeHtml(tfEscapeJs(contact.accountNumber || ''))}'); app.showToast('📋 Account number copied!');" class="text-slate-400 hover:text-amber-500" title="Copy Account Number">
                   <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                 </button>
               </div>
             </div>
             <div class="bg-white dark:bg-slate-900/90 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
               <span class="text-[10px] text-slate-400 block font-medium">IFSC Code</span>
-              <span class="font-mono font-bold text-amber-600 dark:text-amber-400">${tfEscapeHtml(contact.ifsc || 'SBIN0001234')}</span>
+              <span class="font-mono font-bold text-amber-600 dark:text-amber-400">${tfEscapeHtml(contact.ifsc || '')}</span>
             </div>
             <div class="bg-white dark:bg-slate-900/90 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
               <span class="text-[10px] text-slate-400 block font-medium">Payment Terms</span>
-              <span class="font-semibold text-slate-800 dark:text-slate-200">${tfEscapeHtml(contact.paymentTerms || 'Net 30 Days')}</span>
+              <span class="font-semibold text-slate-800 dark:text-slate-200">${tfEscapeHtml(contact.paymentTerms || this.config().defaultPaymentTerms)}</span>
             </div>
           </div>
         </div>
@@ -3482,8 +3763,9 @@ class TradeFlowApp {
 
     const orders = this.data.orders;
     const totalFreightPaid = orders.reduce((s, o) => s + (o.transportPaidByUs ? o.totalTransportCost : 0), 0);
+    const partnerDirectory = window.TFPartnerUI ? window.TFPartnerUI.renderDirectory(this, 'transporter') + '<h2 class="text-base font-bold text-slate-900 dark:text-slate-100 mt-8 mb-3">All trips · LR &amp; freight tracker</h2>' : '';
 
-    container.innerHTML = `
+    container.innerHTML = partnerDirectory + `
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-2xs mb-4 flex items-center justify-between">
         <div>
           <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Lorry Receipt (LR / Bilty) & Freight Tracker</h3>
@@ -3516,16 +3798,16 @@ class TradeFlowApp {
                 </td>
                 <td class="p-3.5 font-medium text-slate-800 dark:text-slate-200">
                   <div class="flex items-center justify-between gap-1">
-                    <button onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(o.transporterId || 'CNT-06'))}')" class="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1.5 font-semibold" title="Click to open Transporter hub">
+                    <button onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(o.transporterId || ''))}')" class="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1.5 font-semibold" title="Click to open Transporter hub">
                       <i data-lucide="truck" class="w-3.5 h-3.5 text-blue-500"></i>
                       <span>${tfEscapeHtml(o.transporterName)}</span>
                     </button>
-                    <button onclick="event.stopPropagation(); app.openEditContactModal('${tfEscapeHtml(tfEscapeJs(o.transporterId || 'CNT-06'))}')" class="text-slate-400 hover:text-amber-500 p-0.5" title="Edit Transporter Details">
+                    <button onclick="event.stopPropagation(); app.openEditContactModal('${tfEscapeHtml(tfEscapeJs(o.transporterId || ''))}')" class="text-slate-400 hover:text-amber-500 p-0.5" title="Edit Transporter Details">
                       <i data-lucide="edit-3" class="w-3 h-3"></i>
                     </button>
                   </div>
                   ${tfEscapeHtml((() => {
-                    const tr = this.data.contacts.find(c => c.id === (o.transporterId || 'CNT-06'));
+                    const tr = this.data.contacts.find(c => c.id === (o.transporterId || ''));
                     return tr && tr.phone ? `<a href="tel:${tfEscapeHtml(tr.phone.replace(/[^0-9+]/g, ''))}" class="inline-flex items-center gap-1 text-[11px] font-mono-num font-bold text-emerald-600 dark:text-emerald-400 hover:underline mt-0.5"><i data-lucide="phone" class="w-3 h-3"></i> ${tfEscapeHtml(tr.phone)}</a>` : '';
                   })())}
                 </td>
@@ -3556,6 +3838,12 @@ class TradeFlowApp {
   renderRetailersView() {
     const container = document.getElementById('view-retailers-container');
     if (!container) return;
+
+    if (window.TFPartnerUI) {
+      container.innerHTML = window.TFPartnerUI.renderDirectory(this, 'retailer');
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
 
     if (window.TFComponents && typeof window.TFComponents.renderRetailersDirectory === 'function') {
       const retailers = this.data.contacts.filter(c => c.role === 'retailer');
@@ -3621,6 +3909,12 @@ class TradeFlowApp {
   renderMarketeersView() {
     const container = document.getElementById('view-marketeers-container');
     if (!container) return;
+
+    if (window.TFPartnerUI) {
+      container.innerHTML = window.TFPartnerUI.renderDirectory(this, 'marketeer');
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
 
     if (window.TFComponents && typeof window.TFComponents.renderMarketeersDirectory === 'function') {
       const marketeers = this.data.contacts.filter(c => c.role === 'marketeer');
@@ -3698,7 +3992,7 @@ class TradeFlowApp {
     this.renderActiveView();
   }
 
-  // View: Pickle Products Catalog
+  // View: Products Catalog
   renderProductsGrid() {
     const container = document.getElementById('products-grid');
     if (!container) return;
@@ -3747,7 +4041,7 @@ class TradeFlowApp {
             <div>
               <span class="text-[11px] text-slate-400 block">Selling to Retailer</span>
               <span class="text-base font-bold font-mono-num text-slate-900 dark:text-slate-100">${tfEscapeHtml(this.formatCurrency(p.standardSellingRate))}</span>
-              <span class="text-[10px] text-slate-400 block">MRP: ${tfEscapeHtml(this.formatCurrency(p.mrp))} (GST 12%)</span>
+              <span class="text-[10px] text-slate-400 block">MRP: ${tfEscapeHtml(this.formatCurrency(p.mrp))} (GST ${tfEscapeHtml(this.itemGstRate({ productId: p.id }))}%)</span>
             </div>
             <div class="text-right">
               <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold block">+${tfEscapeHtml(this.formatCurrency(profitPerJar))}/unit</span>
@@ -3834,7 +4128,7 @@ class TradeFlowApp {
             class="text-[11px] font-medium text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 px-2 py-0.5 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
             title="Close all inspection tabs"
           >
-            Close Other Tabs
+            Close tabs
           </button>
         ` : ''}
       </div>
@@ -3915,7 +4209,7 @@ class TradeFlowApp {
       const c = this.data.contacts.find(x => x.id === this.activeContactId);
       return c ? c.name : 'Partner Hub';
     }
-    if (this.activeTab === 'manufacturers') return 'Pickle Factories';
+    if (this.activeTab === 'manufacturers') return 'Manufacturers';
     if (this.activeTab === 'packaging') return 'Packaging & Labels';
     if (this.activeTab === 'transport') return 'Logistics & Transport';
     if (this.activeTab === 'retailers') return 'Retailers & Buyers';
@@ -4305,26 +4599,13 @@ class TradeFlowApp {
     this.renderContactDetailView(contactId);
   }
 
+  // Reads a visiting card / letterhead with the real Smart Fill OCR so values are reviewed before saving.
   handleDossierImageUpload(input) {
     if (!input || !input.files || !input.files[0]) return;
     const file = input.files[0];
-    this.showToast(`🔍 Processing card image "${file.name}" with AI Vision OCR...`);
-
-    setTimeout(() => {
-      const contactId = this.activeContactId;
-      const contact = (this.data.contacts || []).find(c => c.id === contactId);
-      if (contact) {
-        if (!contact.msme) contact.msme = 'UDYAM-MH-33-0091823';
-        if (!contact.fssai) {
-          contact.fssai = '11521034000492';
-          contact.fssaiNumber = '11521034000492';
-        }
-        if (!contact.upiId) contact.upiId = `${(contact.name||'trade').toLowerCase().replace(/[^a-z0-9]/g, '')}@icici`;
-        this.saveData();
-        this.showToast('✓ AI Smart OCR extracted and merged FSSAI, MSME & UPI coordinates!');
-        this.renderContactDetailView(contactId);
-      }
-    }, 900);
+    if (window.TradeFlowSmartFill) window.TradeFlowSmartFill.open('partner', file);
+    else this.showToast('Smart Fill is not available to read this image.');
+    input.value = '';
   }
 
   navigateBack() {
@@ -4372,13 +4653,13 @@ class TradeFlowApp {
     const phoneClean = (contact.phone || '').replace(/[^0-9]/g, '');
     let msg = '';
     if (contact.role === 'manufacturer') {
-      msg = `Namaste ${contact.contactPerson || contact.name},\nReaching out from Amrit Ras Foods regarding active pickle production lots and delivery schedule. Please share current dispatch status. Dhanyawad!`;
+      msg = `Namaste ${contact.contactPerson || contact.name},\nReaching out from ${this.data.businessProfile?.brandName || this.data.businessProfile?.legalName || 'our team'} regarding active pickle production lots and delivery schedule. Please share current dispatch status. Dhanyawad!`;
     } else if (contact.role === 'retailer') {
-      msg = `Dear ${contact.name},\nGreetings from Amrit Ras Foods! Sharing your account statement and latest consignment updates. Please let us know if any new replenishment is needed. Thank you!`;
+      msg = `Dear ${contact.name},\nGreetings from ${this.data.businessProfile?.brandName || this.data.businessProfile?.legalName || 'our team'}! Sharing your account statement and latest consignment updates. Please let us know if any new replenishment is needed. Thank you!`;
     } else if (contact.role === 'marketeer') {
-      msg = `Namaste ${contact.name},\nRegarding recent retail bookings and commission settlement from Amrit Ras Foods. Let us connect.`;
+      msg = `Namaste ${contact.name},\nRegarding recent retail bookings and commission settlement from ${this.data.businessProfile?.brandName || this.data.businessProfile?.legalName || 'our team'}. Let us connect.`;
     } else {
-      msg = `Hello ${contact.contactPerson || contact.name},\nGreetings from Amrit Ras Foods regarding pending consignment logistics and packaging delivery.`;
+      msg = `Hello ${contact.contactPerson || contact.name},\nGreetings from ${this.data.businessProfile?.brandName || this.data.businessProfile?.legalName || 'our team'} regarding pending consignment logistics and packaging delivery.`;
     }
     const url = `https://wa.me/${phoneClean}?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
@@ -4480,7 +4761,7 @@ class TradeFlowApp {
           <div class="flex items-center gap-2">
             <h2 class="text-xl font-black font-mono-num text-slate-900 dark:text-white tracking-tight">${tfEscapeHtml(order.invoiceNumber)}</h2>
             <span class="px-2 py-0.5 text-[11px] font-bold rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 font-mono-num whitespace-nowrap">
-              ${tfEscapeHtml(order.gstType === 'intra' ? 'Intrastate (CGST+SGST)' : 'Interstate (IGST 12%)')}
+              ${tfEscapeHtml(order.gstType === 'intra' ? 'Intrastate (CGST+SGST)' : `Interstate (${this.gstLabels(order, true).combined})`)}
             </span>
           </div>
           ${statusBadge}
@@ -4489,7 +4770,7 @@ class TradeFlowApp {
         <!-- Right Side: The 6 Action Buttons (Alert + 5 Main Actions) in ONE Row -->
         <div class="flex items-center gap-2 flex-wrap">
           <!-- 1. Manufacturing PO Placement Alert Button (Persistent Across All Orders) -->
-          <button onclick="app.toggleOrderPoAlert()" id="order-po-alert-btn" class="btn-tactile px-3 py-1.5 text-xs font-bold ${tfEscapeHtml(order.urgentAlert ? 'text-amber-950 dark:text-amber-100 bg-amber-400 hover:bg-amber-300 dark:bg-amber-500 dark:hover:bg-amber-400 border border-amber-500 shadow-xs animate-pulse' : 'text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 shadow-2xs')} rounded-lg flex items-center gap-1.5 transition-all" title="${tfEscapeHtml(order.urgentAlert ? 'Click to view urgent Manufacturing PO placement alert' : 'Click to view Manufacturing PO production status')}">
+          <button onclick="app.toggleOrderPoAlert()" id="order-po-alert-btn" class="btn-tactile px-3 py-1.5 text-xs font-bold ${tfEscapeHtml(order.urgentAlert ? 'text-amber-950 dark:text-amber-100 bg-amber-400 hover:bg-amber-300 dark:bg-amber-500 dark:hover:bg-amber-400 border border-amber-500 shadow-xs ring-2 ring-amber-300/70 dark:ring-amber-400/40' : 'text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 shadow-2xs')} rounded-lg flex items-center gap-1.5 transition-all" title="${tfEscapeHtml(order.urgentAlert ? 'Click to view urgent Manufacturing PO placement alert' : 'Click to view Manufacturing PO production status')}">
             <i data-lucide="alert-triangle" class="w-3.5 h-3.5 ${tfEscapeHtml(order.urgentAlert ? 'text-amber-900 dark:text-amber-950' : 'text-slate-400 dark:text-slate-400')}"></i>
             <span>⚠️ PO Alert</span>
           </button>
@@ -4498,6 +4779,12 @@ class TradeFlowApp {
           <button onclick="app.openEditOrderModal('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-3 py-1.5 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 border border-amber-500 rounded-lg flex items-center gap-1.5 shadow-xs" title="Edit this order, quantities, and rates">
             <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
             <span>Edit Order</span>
+          </button>
+
+          <!-- Delete (moves to Recycle Bin) -->
+          <button onclick="app.deleteOrder('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-3 py-1.5 text-xs font-bold text-rose-600 dark:text-rose-400 bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-300 dark:border-rose-800 rounded-lg flex items-center gap-1.5" title="Move this order to the Recycle Bin">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            <span>Delete</span>
           </button>
 
           <!-- 3. GST Invoice -->
@@ -4601,7 +4888,7 @@ class TradeFlowApp {
             <div>
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="font-black text-amber-950 dark:text-amber-200 uppercase tracking-wide">⚠️ Attention: ${tfEscapeHtml(orderIssues.length)} Missing Document(s) Detected</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-500 text-white font-mono-num animate-pulse">Audit Action Needed</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-500 text-white font-mono-num">Audit Action Needed</span>
               </div>
               <div class="flex items-center gap-1.5 flex-wrap mt-1">
                 ${orderIssues.map(iss => `
@@ -4671,7 +4958,7 @@ class TradeFlowApp {
         <div class="tf-kpi-block py-2">
           <span class="tf-kpi-label text-[10px]">Customer Bill (GST)</span>
           <span class="tf-kpi-value text-base font-black text-emerald-600 dark:text-emerald-400">${tfEscapeHtml(this.formatCurrency(order.totalInvoiceAmount))}</span>
-          <span class="tf-kpi-sub text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">12% GST Included</span>
+          <span class="tf-kpi-sub text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">${tfEscapeHtml(this.gstLabels(order).total)} Included</span>
         </div>
 
         <div class="tf-kpi-block py-2">
@@ -4691,12 +4978,12 @@ class TradeFlowApp {
       <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
         <div class="p-4 px-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Pickle SKU Compounding & Bottling Breakdown</h3>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Product Line Breakdown</h3>
             <span class="px-2 py-0.5 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 rounded text-slate-600 dark:text-slate-400 font-mono-num">
               ${tfEscapeHtml((order.items || []).length)} SKUs
             </span>
           </div>
-          <span class="text-xs text-slate-500 font-medium">HSN: 20019000 (Pickles & Chutneys • 12% GST)</span>
+          <span class="text-xs text-slate-500 font-medium">HSN: ${tfEscapeHtml([...new Set((order.items || []).map(i => this.itemHsn(i)))].join(', ') || '—')} • ${tfEscapeHtml(this.gstLabels(order).total)}</span>
         </div>
 
         <div class="overflow-x-auto">
@@ -4704,7 +4991,7 @@ class TradeFlowApp {
             <thead>
               <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 <th class="py-3 px-4 w-10 text-center">#</th>
-                <th class="py-3 px-4 min-w-[200px]">Pickle Flavour</th>
+                <th class="py-3 px-4 min-w-[200px]">Product</th>
                 <th class="py-3 px-4 w-32">Pack Size</th>
                 <th class="py-3 px-4 w-24 text-right">Cases</th>
                 <th class="py-3 px-4 w-28 text-center">Pack Math</th>
@@ -4794,11 +5081,11 @@ class TradeFlowApp {
     );
 
     // 2. Compute Manufacturer Costs & Disbursed Totals
-    const mfgTotalCost = Number(order.manufacturerTotalCost) || 100000;
+    const mfgTotalCost = Number(order.manufacturerTotalCost) || 0;
     const mfgPaidFromLedger = mfgPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
     const mfgPaid = Math.max(mfgPaidFromLedger, Number(order.manufacturerAdvancePaid) || 0);
     const mfgRemaining = Math.max(0, mfgTotalCost - mfgPaid);
-    const mfgPercent = Math.min(100, Math.round((mfgPaid / mfgTotalCost) * 100));
+    const mfgPercent = mfgTotalCost > 0 ? Math.min(100, Math.round((mfgPaid / mfgTotalCost) * 100)) : 0;
     const isMfgFullyPaid = mfgPaid >= mfgTotalCost && mfgTotalCost > 0;
 
     // 3. Compute Buyer Receivables & Collections
@@ -4827,7 +5114,7 @@ class TradeFlowApp {
                 <span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500 text-white">100% Settled</span>
               </div>
               <p class="text-emerald-800 dark:text-emerald-300 text-[11px] mt-0.5">
-                Total ${tfEscapeHtml(this.formatCurrency(mfgPaid))} disbursed in full to ${tfEscapeHtml(mfg ? mfg.name : 'Pickle Factory')}${tfEscapeHtml(mfgPayments.length > 0 ? ' across ' + mfgPayments.length + ' logged installment(s)' : '')}. Production and job-work fully funded!
+                Total ${tfEscapeHtml(this.formatCurrency(mfgPaid))} disbursed in full to ${tfEscapeHtml(mfg ? mfg.name : 'Manufacturer')}${tfEscapeHtml(mfgPayments.length > 0 ? ' across ' + mfgPayments.length + ' logged installment(s)' : '')}. Production and job-work fully funded!
               </p>
             </div>
           </div>
@@ -4908,7 +5195,7 @@ class TradeFlowApp {
               </div>
               <div class="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5 cursor-pointer group" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.manufacturerId))}')" title="Click to view Pickle Factory profile">
                 <i data-lucide="factory" class="w-4 h-4 text-blue-500 shrink-0"></i>
-                <span class="group-hover:text-blue-600 transition-colors">${tfEscapeHtml(mfg ? mfg.name : 'Pickle Factory')}</span>
+                <span class="group-hover:text-blue-600 transition-colors">${tfEscapeHtml(mfg ? mfg.name : 'Manufacturer')}</span>
               </div>
               <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                 ${tfEscapeHtml(mfg ? mfg.contactPerson + ' · ' + mfg.phone : 'Gondal Factory')}
@@ -5008,7 +5295,7 @@ class TradeFlowApp {
               <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1.5 text-xs">
                 <div class="flex items-center justify-between text-[11px]">
                   <span class="text-slate-500 dark:text-slate-400">Vehicle:</span>
-                  <strong class="font-mono-num text-slate-800 dark:text-slate-200">${tfEscapeHtml(order.vehicleNumber || 'GJ-03-BW-9921')}</strong>
+                  <strong class="font-mono-num text-slate-800 dark:text-slate-200">${tfEscapeHtml(order.vehicleNumber || '')}</strong>
                 </div>
                 <div class="flex items-center justify-between text-[11px]">
                   <span class="text-slate-500 dark:text-slate-400">Consignment:</span>
@@ -5068,7 +5355,7 @@ class TradeFlowApp {
                 </div>
                 <div class="flex items-center justify-between text-[11px]">
                   <span class="text-slate-500 dark:text-slate-400">Commission:</span>
-                  <strong class="font-mono-num text-amber-600 dark:text-amber-400">${tfEscapeHtml(this.formatCurrency(Math.round((order.taxableSubtotal || 0) * 0.03)))}</strong>
+                  <strong class="font-mono-num text-amber-600 dark:text-amber-400">${tfEscapeHtml(this.formatCurrency(Math.round(Number(order.marketeerCommissionAmount) || (order.taxableSubtotal || 0) * (Number(order.marketeerCommissionRate ?? this.config().defaultCommissionRate) || 0) / 100)))}</strong>
                 </div>
                 <div class="flex items-center justify-between text-[11px]">
                   <span class="text-slate-500 dark:text-slate-400">Brokerage Status:</span>
@@ -5135,7 +5422,7 @@ class TradeFlowApp {
                 </div>
                 <div class="flex items-center justify-between text-[11px]">
                   <span class="text-slate-500 dark:text-slate-400">Payment Terms:</span>
-                  <span class="text-slate-700 dark:text-slate-300 font-semibold">${tfEscapeHtml(order.paymentTerms || 'Net 15 Days')}</span>
+                  <span class="text-slate-700 dark:text-slate-300 font-semibold">${tfEscapeHtml(order.paymentTerms || this.config().defaultPaymentTerms)}</span>
                 </div>
               </div>
 
@@ -5192,7 +5479,7 @@ class TradeFlowApp {
             </span>
             <div>
               <span class="font-bold text-slate-800 dark:text-slate-200">Packaging Vendor: </span>
-              <span class="text-slate-600 dark:text-slate-300">${tfEscapeHtml(pkg ? pkg.name : 'Apex Polymer & Flexo-Pack Ltd')}</span>
+              <span class="text-slate-600 dark:text-slate-300">${tfEscapeHtml(pkg ? pkg.name : 'Not assigned')}</span>
               <span class="text-slate-400 dark:text-slate-500 text-[11px] ml-2">(${tfEscapeHtml(totalJars.toLocaleString('en-IN'))} PET Jars, Caps & Hologram Labels Supplied)</span>
             </div>
           </div>
@@ -5285,16 +5572,16 @@ class TradeFlowApp {
     if (mktSel) mktSel.value = order.marketeerId || '';
 
     const mfgSel = document.getElementById('new-order-mfg');
-    if (mfgSel) mfgSel.value = order.manufacturerId || 'CNT-04';
+    if (mfgSel) mfgSel.value = order.manufacturerId || '';
 
     const pkgSel = document.getElementById('new-order-pkg');
-    if (pkgSel) pkgSel.value = order.packagingVendorId || 'CNT-05';
+    if (pkgSel) pkgSel.value = order.packagingVendorId || '';
 
     const trnSel = document.getElementById('new-order-transporter');
-    if (trnSel) trnSel.value = order.transporterId || 'CNT-06';
+    if (trnSel) trnSel.value = order.transporterId || '';
 
     const termSel = document.getElementById('new-order-payment-terms');
-    if (termSel) termSel.value = order.paymentTerms || 'Net 15 Days';
+    if (termSel) termSel.value = order.paymentTerms || this.config().defaultPaymentTerms;
 
     const dateInp = document.getElementById('new-order-date');
     if (dateInp) dateInp.value = order.date || new Date().toISOString().split('T')[0];
@@ -5308,7 +5595,7 @@ class TradeFlowApp {
     // Sync carton packaging config inputs
     ['500g', '1kg', '5kg'].forEach(ps => {
       const el = document.getElementById(`master-pack-${ps}`);
-      if (el) el.value = this.casePackConfig[ps] || (ps === '1kg' ? 12 : (ps === '5kg' ? 4 : 24));
+      if (el) el.value = this.casePackConfig[ps] || this.config().defaultCasePack;
     });
 
     // Populate SKU items
@@ -5404,6 +5691,12 @@ class TradeFlowApp {
       return;
     }
 
+    if (window.TFPartnerUI) {
+      container.innerHTML = window.TFPartnerUI.renderPage(this, contact);
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
+
     if (window.TFComponents && typeof window.TFComponents.renderPartnerDossier === 'function') {
       container.innerHTML = window.TFComponents.renderPartnerDossier(contact, this.data.orders, this.data.payments, {
         viewMode: this.activeContactViewMode || 'hub'
@@ -5443,18 +5736,18 @@ class TradeFlowApp {
       totalPaid = linkedOrders.reduce((s, o) => s + o.customerAdvanceReceived, 0);
       balanceDue = Math.max(0, totalBilled - totalPaid);
     } else if (contact.role === 'marketeer') {
-      const salesVolume = linkedOrders.reduce((s, o) => s + o.taxableSubtotal, 0);
-      totalBilled = salesVolume * 0.03; // 3% brokerage
-      totalPaid = totalBilled * 0.5; // Estimated 50% paid
-      balanceDue = totalBilled - totalPaid;
+      // Commission earned on each order (its own rate), and what the payments ledger shows as paid to this partner.
+      totalBilled = linkedOrders.reduce((s, o) => s + (Number(o.marketeerCommissionAmount) || (Number(o.taxableSubtotal) || 0) * (Number(o.marketeerCommissionRate ?? contact.commissionRate ?? this.config().defaultCommissionRate) || 0) / 100), 0);
+      totalPaid = this.paymentsPaidToContact(contact);
+      balanceDue = Math.max(0, totalBilled - totalPaid);
     } else if (contact.role === 'packaging') {
       totalBilled = linkedOrders.reduce((s, o) => s + o.packagingCost, 0);
       totalPaid = linkedOrders.reduce((s, o) => s + o.packagingAdvancePaid, 0);
       balanceDue = Math.max(0, totalBilled - totalPaid);
     } else if (contact.role === 'transporter') {
-      totalBilled = linkedOrders.reduce((s, o) => s + o.transportationCost, 0);
-      totalPaid = totalBilled;
-      balanceDue = 0;
+      totalBilled = linkedOrders.reduce((s, o) => s + (Number(o.totalTransportCost ?? o.transportationCost) || 0), 0);
+      totalPaid = this.paymentsPaidToContact(contact);
+      balanceDue = Math.max(0, totalBilled - totalPaid);
     }
 
     const prevCrumb = this.navigationStack.length > 0 ? this.navigationStack[this.navigationStack.length - 1] : null;
@@ -5516,7 +5809,7 @@ class TradeFlowApp {
               <span>Email: <strong class="text-slate-800 dark:text-slate-200">${tfEscapeHtml(contact.email || '—')}</strong></span>
             </p>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Address: ${tfEscapeHtml(contact.billingAddress || 'Gujarat, India')}
+              Address: ${tfEscapeHtml(contact.billingAddress || '')}
             </p>
           </div>
 
@@ -5549,17 +5842,17 @@ class TradeFlowApp {
           </div>
           <div class="tf-tile">
             <span class="tf-tile-label">FSSAI License</span>
-            <span class="tf-tile-value">${tfEscapeHtml(contact.fssaiNumber || '20724031000192')}</span>
+            <span class="tf-tile-value">${tfEscapeHtml(contact.fssaiNumber || '')}</span>
           </div>
           <div class="tf-tile">
             <span class="tf-tile-label">Bank Account & IFSC</span>
-            <span class="tf-tile-value text-xs truncate block" title="${tfEscapeHtml(contact.bankDetails ? contact.bankDetails.bankName + ' • ' + contact.bankDetails.accountNumber + ' • ' + contact.bankDetails.ifsc : 'HDFC Bank • HDFC0001234')}">
-              ${tfEscapeHtml(contact.bankDetails ? contact.bankDetails.bankName + ' • ' + contact.bankDetails.ifsc : 'HDFC Bank • HDFC0001234')}
+            <span class="tf-tile-value text-xs truncate block" title="${tfEscapeHtml(contact.bankDetails ? contact.bankDetails.bankName + ' • ' + contact.bankDetails.accountNumber + ' • ' + contact.bankDetails.ifsc : 'Bank details not set')}">
+              ${tfEscapeHtml(contact.bankDetails ? contact.bankDetails.bankName + ' • ' + contact.bankDetails.ifsc : 'Bank details not set')}
             </span>
           </div>
           <div class="tf-tile">
             <span class="tf-tile-label">Payment Terms</span>
-            <span class="tf-tile-value text-amber-500">${tfEscapeHtml(contact.paymentTerms || 'Net 15 Days')}</span>
+            <span class="tf-tile-value text-amber-500">${tfEscapeHtml(contact.paymentTerms || this.config().defaultPaymentTerms)}</span>
           </div>
         </div>
 
@@ -5731,7 +6024,7 @@ class TradeFlowApp {
           <span class="text-base">⚠️</span>
           <div>
             <strong>Advance in Hand:</strong> Customer paid ${tfEscapeHtml(this.formatCurrency(order.customerAdvanceReceived))}.
-            The Pickle Factory & Packaging vendor have not received advances yet. Initiate payments below to start bottling.
+            The manufacturer and packaging vendor have not received advances yet. Initiate payments below to start bottling.
           </div>
         </div>
       `;
@@ -5813,7 +6106,7 @@ class TradeFlowApp {
         floatBadgeEl.className = 'px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300';
         floatBadgeEl.innerText = 'Positive Buffer (Safe)';
       } else {
-        floatBadgeEl.className = 'px-2 py-0.5 text-[10px] font-bold rounded bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 animate-pulse';
+        floatBadgeEl.className = 'px-2 py-0.5 text-[10px] font-bold rounded bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300';
         floatBadgeEl.innerText = 'Negative Float Deficit!';
       }
     }
@@ -6579,17 +6872,17 @@ class TradeFlowApp {
     const order = this.invoiceDraftData || this.currentInvoiceOrder;
     const profile = this.data.businessProfile;
     const retailer = this.data.contacts.find(c => c.id === order.retailerId) || {
-      name: order.retailerName,
-      billingAddress: "Thane, Maharashtra",
-      shippingAddress: "Central Godown, Bhiwandi, Thane, Maharashtra",
-      gstin: "27AABCS1234F1ZP",
-      state: "Maharashtra",
-      stateCode: "27"
+      name: order.retailerName || '',
+      billingAddress: order.billingAddress || '',
+      shippingAddress: order.shippingAddress || '',
+      gstin: order.retailerGstin || '',
+      state: order.retailerState || '',
+      stateCode: order.retailerStateCode || ''
     };
 
     if (!container || !order) return;
 
-    const currentPhone = (retailer && (retailer.whatsappPhone || retailer.phone)) || order.customerPhone || '+91 98220 11984';
+    const currentPhone = (retailer && (retailer.whatsappPhone || retailer.phone)) || order.customerPhone || '';
     const waInput = document.getElementById('invoice-whatsapp-phone');
     if (waInput) {
       waInput.value = currentPhone;
@@ -6610,7 +6903,7 @@ class TradeFlowApp {
               <input type="text" value="${tfEscapeHtml(item.variant)}" onchange="app.onInvoiceItemChange(${tfEscapeHtml(idx)}, 'variant', this.value)" class="w-full p-1 border border-slate-200 rounded text-[11px] text-slate-500 mt-1">
             </td>
             <td class="py-2 px-2 text-center text-xs font-mono-num">
-              <input type="text" value="20019000" class="w-20 p-1 text-center border border-slate-200 rounded text-xs">
+              <input type="text" inputmode="numeric" value="${tfEscapeHtml(this.itemHsn(item) === '—' ? '' : this.itemHsn(item))}" onchange="app.onInvoiceItemChange(${tfEscapeHtml(idx)}, 'hsn', this.value)" class="w-20 p-1 text-center border border-slate-200 rounded text-xs">
             </td>
             <td class="py-2 px-2 text-right text-xs">
               <input type="number" value="${tfEscapeHtml(item.quantity)}" min="1" onchange="app.onInvoiceItemChange(${tfEscapeHtml(idx)}, 'quantity', this.value)" class="w-24 p-1 text-right border border-amber-300 bg-amber-50/40 rounded font-mono-num font-bold">
@@ -6630,7 +6923,7 @@ class TradeFlowApp {
             <span class="font-bold text-slate-900">${tfEscapeHtml(item.name)}</span>
             <span class="text-slate-500 block">${tfEscapeHtml(item.variant)}</span>
           </td>
-          <td class="py-2.5 px-3 text-center text-xs font-mono-num">20019000</td>
+          <td class="py-2.5 px-3 text-center text-xs font-mono-num">${tfEscapeHtml(this.itemHsn(item))}</td>
           <td class="py-2.5 px-3 text-right text-xs font-mono-num">${tfEscapeHtml(item.quantity.toLocaleString('en-IN'))} Jars</td>
           <td class="py-2.5 px-3 text-right text-xs font-mono-num">${tfEscapeHtml(this.formatCurrency(item.unitRate))}</td>
           <td class="py-2.5 px-3 text-right text-xs font-mono-num font-bold text-slate-900">${tfEscapeHtml(this.formatCurrency(item.totalAmount))}</td>
@@ -6643,18 +6936,18 @@ class TradeFlowApp {
     if (order.gstType === 'intra') {
       taxBreakupHtml = `
         <div class="flex justify-between py-1 text-xs">
-          <span class="text-slate-500">CGST (6%):</span>
+          <span class="text-slate-500">${tfEscapeHtml(this.gstLabels(order, false).cgst)}:</span>
           <span class="font-mono-num font-medium text-slate-800">${tfEscapeHtml(this.formatCurrency(order.cgstAmount))}</span>
         </div>
         <div class="flex justify-between py-1 text-xs">
-          <span class="text-slate-500">SGST (6%):</span>
+          <span class="text-slate-500">${tfEscapeHtml(this.gstLabels(order, false).sgst)}:</span>
           <span class="font-mono-num font-medium text-slate-800">${tfEscapeHtml(this.formatCurrency(order.sgstAmount))}</span>
         </div>
       `;
     } else {
       taxBreakupHtml = `
         <div class="flex justify-between py-1 text-xs">
-          <span class="text-slate-500">IGST (12%):</span>
+          <span class="text-slate-500">${tfEscapeHtml(this.gstLabels(order, true).igst)}:</span>
           <span class="font-mono-num font-medium text-slate-800">${tfEscapeHtml(this.formatCurrency(order.igstAmount))}</span>
         </div>
       `;
@@ -6862,7 +7155,7 @@ class TradeFlowApp {
               </div>
               <div class="flex justify-between py-1.5 text-xs text-blue-800 font-bold bg-blue-50 px-2 rounded border border-blue-200">
                 <span>Booking Advance Required to Start Bottling:</span>
-                <span class="font-mono-num">${tfEscapeHtml(this.formatCurrency(order.customerAdvanceReceived || Math.round(order.totalInvoiceAmount * 0.3)))}</span>
+                <span class="font-mono-num">${tfEscapeHtml(this.formatCurrency(order.customerAdvanceReceived || Math.round(order.totalInvoiceAmount * this.config().bookingAdvancePct / 100)))}</span>
               </div>
               <div class="flex justify-between py-1 text-xs text-slate-600 font-medium px-2">
                 <span>Balance Payable against Dispatch / LR:</span>
@@ -6935,10 +7228,10 @@ class TradeFlowApp {
               <p class="mt-1"><strong>GSTIN:</strong> <span class="font-mono-num font-bold">${tfEscapeHtml(profile.gstin)}</span></p>
             </div>
             <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200/60">
-              <span class="font-bold text-slate-900 uppercase tracking-wider text-[11px] block mb-1">Consignee (Job Worker / Pickle Factory):</span>
+              <span class="font-bold text-slate-900 uppercase tracking-wider text-[11px] block mb-1">Consignee (Job Worker / Manufacturer):</span>
               <p class="font-bold text-slate-900 text-sm">${tfEscapeHtml(order.manufacturerName)}</p>
-              <p class="text-slate-600 mt-0.5">Plot 18-22, GIDC Industrial Area, Rajkot, Gujarat - 360003</p>
-              <p class="mt-1"><strong>GSTIN:</strong> <span class="font-mono-num font-bold">24AAACS5432K1ZP</span> • <strong>State:</strong> Gujarat (24)</p>
+              <p class="text-slate-600 mt-0.5">${tfEscapeHtml((this.data.contacts.find(c => c.id === order.manufacturerId) || {}).billingAddress || 'Address not set')}</p>
+              <p class="mt-1"><strong>GSTIN:</strong> <span class="font-mono-num font-bold">${tfEscapeHtml((this.data.contacts.find(c => c.id === order.manufacturerId) || {}).gstin || 'Not set')}</span></p>
             </div>
           </div>
 
@@ -6957,23 +7250,16 @@ class TradeFlowApp {
               <tbody>
                 <tr class="border-b border-slate-200">
                   <td class="py-2.5 px-3 text-center font-mono-num">1</td>
-                  <td class="py-2.5 px-3 font-semibold">Food-Grade PET / Glass Jars with Caps (${tfEscapeHtml(order.items[0]?.variant || '500g')})</td>
-                  <td class="py-2.5 px-3 text-center font-mono-num">392330</td>
-                  <td class="py-2.5 px-3 text-right font-mono-num">${tfEscapeHtml(totalQty.toLocaleString('en-IN'))} Pcs</td>
-                  <td class="py-2.5 px-3 text-right font-mono-num">${tfEscapeHtml(this.formatCurrency(order.packagingCost * 0.7))}</td>
+                  <td class="py-2.5 px-3 font-semibold">Packaging material for ${tfEscapeHtml((order.items || []).map(i => [i.name, i.variant || i.packSize].filter(Boolean).join(' ')).join(', ') || 'this order')}</td>
+                  <td class="py-2.5 px-3 text-center font-mono-num">${tfEscapeHtml(order.packagingHsn || '—')}</td>
+                  <td class="py-2.5 px-3 text-right font-mono-num">${tfEscapeHtml(totalQty.toLocaleString('en-IN'))} Units</td>
+                  <td class="py-2.5 px-3 text-right font-mono-num">${tfEscapeHtml(this.formatCurrency(Number(order.packagingCost) || 0))}</td>
                 </tr>
                 <tr class="border-b border-slate-200">
                   <td class="py-2.5 px-3 text-center font-mono-num">2</td>
-                  <td class="py-2.5 px-3 font-semibold">Printed Metallic BOPP Labels (Front & Back Brand Art)</td>
-                  <td class="py-2.5 px-3 text-center font-mono-num">482110</td>
-                  <td class="py-2.5 px-3 text-right font-mono-num">${tfEscapeHtml(totalQty.toLocaleString('en-IN'))} Sets</td>
-                  <td class="py-2.5 px-3 text-right font-mono-num">${tfEscapeHtml(this.formatCurrency(order.packagingCost * 0.3))}</td>
-                </tr>
-                <tr class="border-b border-slate-200">
-                  <td class="py-2.5 px-3 text-center font-mono-num">3</td>
-                  <td class="py-2.5 px-3 font-semibold">Corrugated 5-Ply Outer Master Shipping Cartons</td>
-                  <td class="py-2.5 px-3 text-center font-mono-num">481910</td>
-                  <td class="py-2.5 px-3 text-right font-mono-num">${tfEscapeHtml(Math.ceil(totalQty / 24).toLocaleString('en-IN'))} Boxes</td>
+                  <td class="py-2.5 px-3 font-semibold">Outer shipping cartons</td>
+                  <td class="py-2.5 px-3 text-center font-mono-num">—</td>
+                  <td class="py-2.5 px-3 text-right font-mono-num">${tfEscapeHtml((order.items || []).reduce((s, i) => s + (Number(i.cases) || 0), 0).toLocaleString('en-IN'))} Boxes</td>
                   <td class="py-2.5 px-3 text-right font-mono-num">Included</td>
                 </tr>
               </tbody>
@@ -6984,7 +7270,7 @@ class TradeFlowApp {
           <div class="grid grid-cols-2 gap-6 mt-4 pt-3 border-t border-slate-200 text-xs">
             <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
               <span class="font-bold text-slate-800 block mb-1">Dispatch Logistics (Leg 1 - Pkg Supplier to Factory):</span>
-              <p>Transporter: <strong>${tfEscapeHtml(order.transporterName || 'Western Golden Logistics')}</strong></p>
+              <p>Transporter: <strong>${tfEscapeHtml(order.transporterName || '')}</strong></p>
               ${order.lrNumber ? `<p>LR / Bilty No: <strong class="font-mono-num">${tfEscapeHtml(order.lrNumber)}</strong></p>` : `<p class="text-slate-400 italic">Dispatched directly via packaging supplier fleet</p>`}
               ${order.vehicleNumber ? `<p>Vehicle No: <strong class="font-mono-num">${tfEscapeHtml(order.vehicleNumber)}</strong></p>` : ''}
             </div>
@@ -7025,8 +7311,10 @@ class TradeFlowApp {
 
     // 4. GST CREDIT NOTE VIEW (SECTION 34 - TRANSIT BREAKAGE / OIL LEAKAGE)
     if (docType === 'CREDIT NOTE') {
-      const damageTotal = order.damageAmount || 3500;
-      const damageTaxable = damageTotal / 1.12;
+      const damageTotal = Number(order.damageAmount) || 0;
+      const damageRates = this.orderGstRates(order);
+      const damageRate = damageRates.length === 1 ? damageRates[0] : this.config().defaultGstRate;
+      const damageTaxable = damageTotal / (1 + damageRate / 100);
       const damageGst = damageTotal - damageTaxable;
       const newBalanceDue = Math.max(0, order.customerBalanceDue - damageTotal);
 
@@ -7084,7 +7372,7 @@ class TradeFlowApp {
                   <th class="py-2.5 px-3 text-left">Reason & Description of Deduction</th>
                   <th class="py-2.5 px-3 text-center">HSN</th>
                   <th class="py-2.5 px-3 text-right">Taxable Deduction (₹)</th>
-                  <th class="py-2.5 px-3 text-right">GST Adjustment (12%)</th>
+                  <th class="py-2.5 px-3 text-right">GST Adjustment</th>
                   <th class="py-2.5 px-3 text-right">Total Credit Value (₹)</th>
                 </tr>
               </thead>
@@ -7093,9 +7381,9 @@ class TradeFlowApp {
                   <td class="py-2.5 px-3 text-center font-mono-num">1</td>
                   <td class="py-2.5 px-3">
                     <strong>Transit Breakage / Seal Leakage Adjustment</strong>
-                    <p class="text-slate-500 text-[11px] mt-0.5">${tfEscapeHtml(order.damageNote || 'Jars found ruptured/oil leaking during unloading as endorsed on LR')}</p>
+                    <p class="text-slate-500 text-[11px] mt-0.5">${tfEscapeHtml(order.damageNote || '')}</p>
                   </td>
-                  <td class="py-2.5 px-3 text-center font-mono-num">20019000</td>
+                  <td class="py-2.5 px-3 text-center font-mono-num">${tfEscapeHtml([...new Set((order.items || []).map(i => this.itemHsn(i)))].join(', ') || '—')}</td>
                   <td class="py-2.5 px-3 text-right font-mono-num font-semibold text-slate-900">${tfEscapeHtml(this.formatCurrency(damageTaxable))}</td>
                   <td class="py-2.5 px-3 text-right font-mono-num font-semibold text-slate-900">${tfEscapeHtml(this.formatCurrency(damageGst))}</td>
                   <td class="py-2.5 px-3 text-right font-mono-num font-bold text-rose-600">${tfEscapeHtml(this.formatCurrency(damageTotal))}</td>
@@ -7241,7 +7529,7 @@ class TradeFlowApp {
                   <input type="text" value="${tfEscapeHtml(order.ewayBillNumber || '')}" placeholder="Mandatory if > ₹50k" onchange="app.invoiceDraftData.ewayBillNumber = this.value" class="w-44 p-1 border border-amber-300 rounded font-mono-num font-semibold text-xs ml-1">
                 </p>
               ` : `
-                ${order.lrNumber ? `<p><strong>Transport / LR No:</strong> <span class="font-mono-num font-semibold">${tfEscapeHtml(order.lrNumber)}</span> (${tfEscapeHtml(order.transporterName || 'Western Golden Logistics')})</p>` : ''}
+                ${order.lrNumber ? `<p><strong>Transport / LR No:</strong> <span class="font-mono-num font-semibold">${tfEscapeHtml(order.lrNumber)}</span> (${tfEscapeHtml(order.transporterName || '')})</p>` : ''}
                 ${order.vehicleNumber ? `<p><strong>Vehicle No:</strong> <span class="font-mono-num font-semibold">${tfEscapeHtml(order.vehicleNumber)}</span></p>` : ''}
                 ${order.ewayBillNumber ? `<p><strong>E-Way Bill No:</strong> <span class="font-mono-num font-bold text-amber-700">${tfEscapeHtml(order.ewayBillNumber)}</span></p>` : ''}
                 ${!order.lrNumber && !order.vehicleNumber ? `<p class="text-slate-400 italic text-[11px] no-print">Dispatch details not yet assigned</p>` : ''}
@@ -7342,8 +7630,8 @@ class TradeFlowApp {
           <div>
             <span class="font-bold text-slate-800 uppercase tracking-wider text-[11px] block mb-1">Terms & Conditions:</span>
             ${isEdit ? 
-              `<textarea rows="3" onchange="app.invoiceDraftData.customNotes = this.value" class="w-full p-2 border border-slate-300 rounded text-xs font-mono-num">${tfEscapeHtml(order.customNotes || profile.invoiceNotes)}</textarea>` : 
-              `<p class="text-slate-500 whitespace-pre-line text-[11px]">${tfEscapeHtml(order.customNotes || profile.invoiceNotes)}</p>`
+              `<textarea rows="3" onchange="app.invoiceDraftData.customNotes = this.value" class="w-full p-2 border border-slate-300 rounded text-xs font-mono-num">${tfEscapeHtml(order.customNotes || this.defaultInvoiceNotes())}</textarea>` : 
+              `<p class="text-slate-500 whitespace-pre-line text-[11px]">${tfEscapeHtml(order.customNotes || this.defaultInvoiceNotes())}</p>`
             }
           </div>
 
@@ -7368,6 +7656,8 @@ class TradeFlowApp {
     if (field === 'unitRate') item.unitRate = parseFloat(value) || 0;
     if (field === 'name') item.name = value;
     if (field === 'variant') item.variant = value;
+    if (field === 'hsn') item.hsn = String(value || '').replace(/\D/g, '').slice(0, 8);
+    if (field === 'gstRate') item.gstRate = value === '' ? undefined : Number(value);
 
     item.totalAmount = item.quantity * item.unitRate;
 
@@ -7385,29 +7675,40 @@ class TradeFlowApp {
 
   recalculateDraftOrderFinancials() {
     const o = this.invoiceDraftData;
-    o.taxableSubtotal = o.items.reduce((s, i) => s + i.totalAmount, 0);
+    o.items = o.items || [];
+    const gst = this.computeGst(o.items, o.gstType !== 'intra');
+    o.taxableSubtotal = gst.taxable;
+    o.cgstAmount = gst.cgst;
+    o.sgstAmount = gst.sgst;
+    o.igstAmount = gst.igst;
+    o.gstRates = gst.rates;
+    o.totalInvoiceAmount = gst.total;
+    o.customerAdvanceReceived = Number(o.customerAdvanceReceived) || 0;
+    o.customerBalanceDue = Math.max(0, Math.round((o.totalInvoiceAmount - o.customerAdvanceReceived) * 100) / 100);
 
-    if (o.gstType === 'intra') {
-      o.cgstAmount = o.taxableSubtotal * 0.06;
-      o.sgstAmount = o.taxableSubtotal * 0.06;
-      o.igstAmount = 0.00;
-    } else {
-      o.cgstAmount = 0.00;
-      o.sgstAmount = 0.00;
-      o.igstAmount = o.taxableSubtotal * 0.12;
-    }
-
-    o.totalInvoiceAmount = o.taxableSubtotal + o.cgstAmount + o.sgstAmount + o.igstAmount;
-    o.customerBalanceDue = Math.max(0, o.totalInvoiceAmount - o.customerAdvanceReceived);
-
-    // Recalculate profit
-    const totalQty = o.items.reduce((s, i) => s + i.quantity, 0);
-    o.manufacturerTotalCost = totalQty * (o.items[0]?.baseCostPerUnit || 48.00);
-    o.packagingCost = totalQty * (o.items[0]?.pkgCostPerUnit || 11.50);
-    o.marketeerCommissionAmount = (o.marketeerCommissionRate || 0) > 0 ? (o.taxableSubtotal * (o.marketeerCommissionRate / 100)) : 0;
-    o.totalDirectCosts = o.manufacturerTotalCost + o.packagingCost + o.totalTransportCost + o.marketeerCommissionAmount;
+    // Profit: each line's own unit costs. Lines without a cost add nothing and are flagged, not guessed.
+    const costs = this.orderLineCosts(o.items);
+    o.manufacturerTotalCost = costs.manufacturing;
+    o.packagingCost = costs.packaging;
+    o.costsIncomplete = costs.incomplete;
+    o.marketeerCommissionAmount = (Number(o.marketeerCommissionRate) || 0) > 0 ? (o.taxableSubtotal * (Number(o.marketeerCommissionRate) / 100)) : 0;
+    o.totalDirectCosts = o.manufacturerTotalCost + o.packagingCost + (Number(o.totalTransportCost) || 0) + o.marketeerCommissionAmount;
     o.netProfit = o.taxableSubtotal - o.totalDirectCosts;
-    o.profitMarginPercent = (o.netProfit / o.taxableSubtotal) * 100;
+    o.profitMarginPercent = o.taxableSubtotal > 0 ? (o.netProfit / o.taxableSubtotal) * 100 : 0;
+  }
+
+  // Manufacturing and packaging cost for each line from that line's unit costs (or its product's).
+  orderLineCosts(items) {
+    let manufacturing = 0, packaging = 0, incomplete = false;
+    for (const item of items || []) {
+      const qty = Number(item.quantity) || 0;
+      const product = (this.data.products || []).find(p => (item.productId && p.id === item.productId) || (item.name && p.name === item.name));
+      const mfgUnit = Number(item.baseCostPerUnit ?? product?.baseCostPerUnit ?? product?.baseMfgCost);
+      const pkgUnit = Number(item.pkgCostPerUnit ?? product?.pkgCostPerUnit ?? product?.pkgCost);
+      if (Number.isFinite(mfgUnit)) manufacturing += qty * mfgUnit; else if (qty) incomplete = true;
+      if (Number.isFinite(pkgUnit)) packaging += qty * pkgUnit;
+    }
+    return { manufacturing, packaging, incomplete };
   }
 
   saveInvoiceEditsAndSync() {
@@ -7573,7 +7874,7 @@ class TradeFlowApp {
       msg += `*Requested Products:*\n${itemsList}\n\n`;
       msg += `💰 *Taxable Subtotal:* ${this.formatCurrency(order.taxableSubtotal)}\n`;
       msg += `🧾 *Estimated Total with GST:* *${this.formatCurrency(order.totalInvoiceAmount)}*\n`;
-      msg += `⏳ *Required Booking Advance:* *${this.formatCurrency(order.customerAdvanceReceived || Math.round(order.totalInvoiceAmount * 0.3))}*\n\n`;
+      msg += `⏳ *Required Booking Advance:* *${this.formatCurrency(order.customerAdvanceReceived || Math.round(order.totalInvoiceAmount * this.config().bookingAdvancePct / 100))}*\n\n`;
       msg += `*Bank Account for Advance Transfer:*\n`;
       msg += `• Bank: ${profile.bankName}\n`;
       msg += `• A/C No: ${profile.accountNumber}\n`;
@@ -7589,13 +7890,13 @@ class TradeFlowApp {
       msg += `📅 *Date:* ${this.formatDate(order.date)}\n`;
       msg += `🏭 *Job Worker / Factory:* ${order.manufacturerName}\n`;
       msg += `📦 *Materials Dispatched:* Jars, Printed Labels, and Master Outer Boxes\n`;
-      msg += `🚚 *Transporter:* ${order.transporterName || 'Western Golden Logistics'} (Leg 1)\n`;
+      msg += `🚚 *Transporter:* ${order.transporterName || ''} (Leg 1)\n`;
       if (order.lrNumber) msg += `📄 *LR No:* ${order.lrNumber}\n`;
       msg += `\n*NOT FOR SALE - JOB WORK PURPOSES ONLY*\n`;
       msg += `📎 *Attached:* Official Delivery Challan PDF\n`;
       msg += `*${profile.legalName}*`;
     } else if (docType === 'CREDIT NOTE') {
-      const damageTotal = order.damageAmount || 3500;
+      const damageTotal = Number(order.damageAmount) || 0;
       const newBalanceDue = Math.max(0, order.customerBalanceDue - damageTotal);
       msg = `*GST CREDIT NOTE (DAMAGE ADJUSTMENT) - ${profile.brandName}*\n`;
       msg += `═══════════════════════════\n`;
@@ -7604,7 +7905,7 @@ class TradeFlowApp {
       msg += `✂️ *Credit Note No:* CRN-${order.invoiceNumber}\n`;
       msg += `📄 *Against Original Invoice:* ${order.invoiceNumber}\n`;
       msg += `💵 *Damage Adjustment Amount:* *${this.formatCurrency(damageTotal)}*\n`;
-      msg += `📝 *Reason:* ${order.damageNote || 'Transit damage / oil leakage adjustment'}\n`;
+      msg += `📝 *Reason:* ${order.damageNote || ''}\n`;
       msg += `🚨 *Revised Balance Due:* *${this.formatCurrency(newBalanceDue)}*\n\n`;
       msg += `📎 *Attached:* Official Credit Note PDF (Sec 34 CGST)\n`;
       msg += `*${profile.legalName}*`;
@@ -7620,9 +7921,9 @@ class TradeFlowApp {
       msg += `*Dispatched Goods:*\n${itemsList}\n\n`;
       msg += `💰 *Taxable Subtotal:* ${this.formatCurrency(order.taxableSubtotal)}\n`;
       if (order.gstType === 'intra') {
-        msg += `🏛️ *CGST (6%) + SGST (6%):* ${this.formatCurrency(order.cgstAmount + order.sgstAmount)}\n`;
+        msg += `🏛️ *${this.gstLabels(order, false).combined}:* ${this.formatCurrency(order.cgstAmount + order.sgstAmount)}\n`;
       } else {
-        msg += `🏛️ *IGST (12%):* ${this.formatCurrency(order.igstAmount)}\n`;
+        msg += `🏛️ *${this.gstLabels(order, true).igst}:* ${this.formatCurrency(order.igstAmount)}\n`;
       }
       msg += `🧾 *Total Invoice Amount:* *${this.formatCurrency(order.totalInvoiceAmount)}*\n`;
       msg += `✅ *Advance Paid:* ${this.formatCurrency(order.customerAdvanceReceived)}\n`;
@@ -7658,60 +7959,48 @@ class TradeFlowApp {
   // SMART INVOICE & BILLING STUDIO ENGINE (TOOLS & UTILITIES)
   // =========================================================================
 
-  numberToIndianWords(num) {
-    if (isNaN(num) || num === null || num === undefined) return 'Zero Rupees Only';
-    const n = Math.floor(Math.abs(Number(num)));
-    const paise = Math.round((Math.abs(Number(num)) - n) * 100);
-
-    if (n === 0 && paise === 0) return 'Zero Rupees Only';
-
+  // Whole number in the Indian system (Crore / Lakh / Thousand), any size, e.g. 1500000000 -> "One Hundred Fifty Crore".
+  indianIntegerWords(n) {
     const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
       'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
     const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-
-    const convertTwoDigit = (val) => {
-      if (val < 20) return ones[val];
-      const t = Math.floor(val / 10);
-      const o = val % 10;
-      return (tens[t] + (o ? ' ' + ones[o] : '')).trim();
-    };
-
-    const convertThreeDigit = (val) => {
-      const h = Math.floor(val / 100);
-      const r = val % 100;
-      let str = '';
-      if (h) str += ones[h] + ' Hundred';
-      if (r) str += (str ? ' ' : '') + convertTwoDigit(r);
-      return str.trim();
-    };
-
+    const twoDigit = val => val < 20 ? ones[val] : (tens[Math.floor(val / 10)] + (val % 10 ? ' ' + ones[val % 10] : ''));
+    const threeDigit = val => [Math.floor(val / 100) ? ones[Math.floor(val / 100)] + ' Hundred' : '', val % 100 ? twoDigit(val % 100) : ''].filter(Boolean).join(' ');
+    if (!n) return '';
     const crore = Math.floor(n / 10000000);
     let rem = n % 10000000;
-    const lakh = Math.floor(rem / 100000);
-    rem = rem % 100000;
-    const thousand = Math.floor(rem / 1000);
-    rem = rem % 1000;
-    const hundredAndUnits = rem;
+    const lakh = Math.floor(rem / 100000); rem %= 100000;
+    const thousand = Math.floor(rem / 1000); rem %= 1000;
+    return [
+      crore ? this.indianIntegerWords(crore) + ' Crore' : '',
+      lakh ? twoDigit(lakh) + ' Lakh' : '',
+      thousand ? twoDigit(thousand) + ' Thousand' : '',
+      rem ? threeDigit(rem) : ''
+    ].filter(Boolean).join(' ');
+  }
 
-    const parts = [];
-    if (crore) parts.push(convertTwoDigit(crore) + ' Crore');
-    if (lakh) parts.push(convertTwoDigit(lakh) + ' Lakh');
-    if (thousand) parts.push(convertTwoDigit(thousand) + ' Thousand');
-    if (hundredAndUnits) parts.push(convertThreeDigit(hundredAndUnits));
+  // Splits an amount into whole rupees and paise after rounding to the paisa (1999.995 -> 2000, 0).
+  splitRupeesPaise(num) {
+    const totalPaise = Math.round(Math.abs(Number(num)) * 100);
+    return { rupees: Math.floor(totalPaise / 100), paise: totalPaise % 100, negative: Number(num) < 0 && totalPaise > 0 };
+  }
 
-    let words = 'Rupees ' + (parts.join(' ') || 'Zero');
-    if (paise > 0) {
-      words += ' and ' + convertTwoDigit(paise) + ' Paise';
-    }
-    words += ' Only';
-    return words;
+  numberToIndianWords(num) {
+    if (num === null || num === undefined || num === '' || Number.isNaN(Number(num))) return 'Zero Rupees Only';
+    const { rupees, paise, negative } = this.splitRupeesPaise(num);
+    if (rupees === 0 && paise === 0) return 'Zero Rupees Only';
+    let words = (negative ? 'Minus ' : '') + 'Rupees ' + (this.indianIntegerWords(rupees) || 'Zero');
+    if (paise > 0) words += ' and ' + this.indianIntegerWords(paise) + ' Paise';
+    return words + ' Only';
   }
 
   generateUpiQrUrl(upiId, name, amount, invoiceNo) {
+    // No UPI ID in the business profile means no QR code: never route money to a default account.
+    if (!upiId || !String(upiId).includes('@')) return '';
     const cleanAmount = Math.max(0, Number(amount || 0)).toFixed(2);
-    const cleanName = encodeURIComponent(name || 'Magic Roots');
+    const cleanName = encodeURIComponent(name || this.config().brand);
     const cleanNote = encodeURIComponent(`Invoice ${invoiceNo || 'MR'}`);
-    const upiUri = `upi://pay?pa=${upiId || 'amritras@hdfcbank'}&pn=${cleanName}&am=${cleanAmount}&cu=INR&tn=${cleanNote}`;
+    const upiUri = `upi://pay?pa=${encodeURIComponent(String(upiId).trim())}&pn=${cleanName}&am=${cleanAmount}&cu=INR&tn=${cleanNote}`;
     return this.createQrDataUrl(upiUri);
   }
 
@@ -7746,12 +8035,12 @@ class TradeFlowApp {
     this.studioActiveStep = 0;
     this.studioIsDirty = false;
     this.studioTargetDocType = null;
-    this.studioCreditReason = this.studioCreditReason || 'Damaged Goods in Transit';
+    this.studioCreditReason = this.studioCreditReason || '';
 
     // Set phone input
     const phoneInput = document.getElementById('studio-whatsapp-phone');
     if (phoneInput && this.studioDraftData) {
-      phoneInput.value = this.studioDraftData.customerPhone || '+91 98201 44552';
+      phoneInput.value = this.studioDraftData.customerPhone || '';
     }
 
     // Ensure legacy modal is closed so there is never modal overlap
@@ -7804,70 +8093,65 @@ class TradeFlowApp {
 
   getInitialStudioDraft() {
     const now = new Date();
-    const curYear = now.getFullYear();
+    // Indian financial year runs April to March.
+    const curYear = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
     const nextYearShort = String(curYear + 1).slice(-2);
-    const fyStr = `MR/${curYear}-${nextYearShort}/0101`;
+    const fyStr = `${this.config().invoicePrefix}${curYear}-${nextYearShort}/${String(this.config().startingNumber).padStart(4, '0')}`;
+    const product = ((this.data && this.data.products) || []).find(p => p.active !== false) || {};
+    const casePack = Number(product.casePack) || this.config().defaultCasePack;
+    const unitRate = Number(product.defaultUnitRate ?? product.standardSellingRate) || 0;
+    const starterItem = {
+      id: product.id || 'ITEM-1', productId: product.id, name: product.name || '', variant: product.variant || '', packSize: product.defaultPackSize || product.packSize || '',
+      hsn: product.hsn, gstRate: this.itemGstRate({ productId: product.id }), casePack, cases: 1, quantity: casePack, unitRate,
+      totalAmount: Math.round(casePack * unitRate * 100) / 100, isOptional: false, creditQty: 0
+    };
+    const starterTax = this.computeGst([starterItem], false);
 
     return {
       id: 'DRAFT-' + Date.now().toString().slice(-4),
       invoiceNumber: fyStr,
       date: now.toISOString().split('T')[0],
-      dueDate: new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0],
+      dueDate: this.dueDateFromTerms(now.toISOString().split('T')[0], this.config().defaultPaymentTerms),
       documentType: 'TAX INVOICE',
-      retailerName: 'Ambika Super Market & Traders',
+      retailerName: '',
       retailerId: null,
-      customerPhone: '+91 98201 44552',
-      retailerGstin: '27AABCS1234F1ZP',
-      billingAddress: 'Shop 12-14, APMC Market Yard, Vashi, Navi Mumbai',
-      shippingAddress: 'Central Transit Godown, Bhiwandi, Thane, Maharashtra',
+      customerPhone: '',
+      retailerGstin: '',
+      billingAddress: '',
+      shippingAddress: '',
       gstType: 'intra',
       paymentTerms: '50% Advance, Balance against LR Delivery',
-      lrNumber: 'LR-WEST-8910',
-      transporterName: 'Western Golden Logistics',
-      vehicleNumber: 'MH-04-GP-8842',
-      driverName: 'Ramesh Yadav',
-      driverPhone: '+91 98205 11223',
-      ewayBillNumber: '281099238812',
-      batchNumber: 'MR-26/B-04',
-      mfgDate: '09/2026',
-      bestBefore: '12 Months from Packing',
-      items: [
-        {
-          id: 'PRD-01',
-          name: 'Traditional Mango Pickle',
-          variant: '500g Jar',
-          packSize: '500g',
-          casePack: 24,
-          cases: 50,
-          quantity: 1200,
-          unitRate: 46.50,
-          totalAmount: 55800.00,
-          isOptional: false,
-          creditQty: 120
-        }
-      ],
-      taxableSubtotal: 55800.00,
-      cgstRate: 0.06,
-      cgstAmount: 3348.00,
-      sgstRate: 0.06,
-      sgstAmount: 3348.00,
-      igstRate: 0.12,
-      igstAmount: 0.00,
-      totalInvoiceAmount: 62496.00,
-      customerAdvanceReceived: 25000.00,
-      amountReceived: 25000.00,
+      lrNumber: '',
+      transporterName: '',
+      vehicleNumber: '',
+      driverName: '',
+      driverPhone: '',
+      ewayBillNumber: '',
+      batchNumber: '',
+      mfgDate: '',
+      bestBefore: product.bestBefore || product.shelfLife || '',
+      // One starter line from the first catalogue product; totals are worked out from it.
+      items: [starterItem],
+      taxableSubtotal: starterTax.taxable,
+      cgstAmount: starterTax.cgst,
+      sgstAmount: starterTax.sgst,
+      igstAmount: starterTax.igst,
+      gstRates: starterTax.rates,
+      totalInvoiceAmount: starterTax.total,
+      customerAdvanceReceived: 0,
+      amountReceived: 0,
       paymentMode: 'UPI',
-      utrNumber: 'UPI-REF-99214',
-      customerBalanceDue: 37496.00,
+      utrNumber: '',
+      customerBalanceDue: starterTax.total,
       movementPurpose: 'Job Work / Supply to Processor',
       validityDays: 15,
       advancePercent: 50,
       originalInvoiceNumber: fyStr,
       originalInvoiceDate: now.toISOString().split('T')[0],
-      originalInvoiceAmount: 62496.00,
-      creditReason: 'Damaged Goods in Transit',
+      originalInvoiceAmount: starterTax.total,
+      creditReason: '',
       settlementMode: 'Adjust against outstanding invoice balance',
-      customNotes: '1. Goods once sold and inspected will not be returned without authorization.\n2. In case of transit damage, claims must be lodged with LR endorsement within 24 hours.\n3. Subject to Mumbai Jurisdiction.'
+      customNotes: this.defaultInvoiceNotes()
     };
   }
 
@@ -7888,7 +8172,7 @@ class TradeFlowApp {
     }
     const phoneInput = document.getElementById('studio-whatsapp-phone');
     if (phoneInput && this.studioDraftData) {
-      phoneInput.value = this.studioDraftData.customerPhone || '+91 98201 44552';
+      phoneInput.value = this.studioDraftData.customerPhone || '';
     }
     this.studioIsDirty = false;
     this.recalculateStudioFinancials();
@@ -7943,18 +8227,19 @@ class TradeFlowApp {
       this.studioDraftData.validityDays = this.studioDraftData.validityDays || 15;
       this.studioDraftData.advancePercent = this.studioDraftData.advancePercent || 50;
     } else if (normalized === 'ADVANCE RECEIPT') {
-      this.studioDraftData.amountReceived = Number(this.studioDraftData.customerAdvanceReceived || this.studioDraftData.amountReceived || Math.round((this.studioDraftData.totalInvoiceAmount || 50000) * 0.5));
+      // A receipt shows only money actually received; the user enters amount and UTR if not recorded yet.
+      this.studioDraftData.amountReceived = Number(this.studioDraftData.customerAdvanceReceived || this.studioDraftData.amountReceived) || 0;
       this.studioDraftData.paymentMode = this.studioDraftData.paymentMode || this.studioAdvancePaymentMode || 'UPI';
-      this.studioDraftData.utrNumber = this.studioDraftData.utrNumber || 'UPI-REF-' + Math.floor(100000 + Math.random() * 900000);
+      this.studioDraftData.utrNumber = this.studioDraftData.utrNumber || '';
     } else if (normalized === 'DELIVERY CHALLAN') {
       this.studioDraftData.movementPurpose = this.studioDraftData.movementPurpose || this.studioChallanPurpose || 'Job Work / Supply to Processor';
-      this.studioDraftData.driverName = this.studioDraftData.driverName || 'Ramesh Yadav';
-      this.studioDraftData.driverPhone = this.studioDraftData.driverPhone || '+91 98205 11223';
+      this.studioDraftData.driverName = this.studioDraftData.driverName || '';
+      this.studioDraftData.driverPhone = this.studioDraftData.driverPhone || '';
     } else if (normalized === 'CREDIT NOTE') {
       this.studioDraftData.originalInvoiceNumber = this.studioDraftData.originalInvoiceNumber || this.studioDraftData.invoiceNumber;
       this.studioDraftData.originalInvoiceDate = this.studioDraftData.originalInvoiceDate || this.studioDraftData.date;
       this.studioDraftData.originalInvoiceAmount = this.studioDraftData.originalInvoiceAmount || this.studioDraftData.totalInvoiceAmount;
-      this.studioDraftData.creditReason = this.studioDraftData.creditReason || this.studioCreditReason || 'Damaged Goods in Transit';
+      this.studioDraftData.creditReason = this.studioDraftData.creditReason || this.studioCreditReason || '';
       this.studioDraftData.settlementMode = this.studioDraftData.settlementMode || 'Adjust against outstanding invoice balance';
     }
 
@@ -8166,15 +8451,15 @@ class TradeFlowApp {
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">GST Tax Supply Type</label>
                 <select onchange="app.studioDraftData.gstType = this.value; app.studioIsDirty = true; app.recalculateStudioFinancials(); app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white font-semibold">
-                  <option value="intra" ${tfEscapeHtml(o.gstType === 'intra' ? 'selected' : '')}>Intra-State Supply (CGST 6% + SGST 6%)</option>
-                  <option value="inter" ${tfEscapeHtml(o.gstType === 'inter' ? 'selected' : '')}>Inter-State Supply (IGST 12%)</option>
+                  <option value="intra" ${tfEscapeHtml(o.gstType === 'intra' ? 'selected' : '')}>Intra-State Supply (${tfEscapeHtml(this.gstLabels(o, false).combined)})</option>
+                  <option value="inter" ${tfEscapeHtml(o.gstType === 'inter' ? 'selected' : '')}>Inter-State Supply (${tfEscapeHtml(this.gstLabels(o, true).combined)})</option>
                 </select>
               </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Place of Supply</label>
-                <input type="text" value="${tfEscapeHtml(o.placeOfSupply || 'Maharashtra (27)')}" oninput="app.studioDraftData.placeOfSupply = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">
+                <input type="text" value="${tfEscapeHtml(o.placeOfSupply || this.config().placeOfSupply)}" oninput="app.studioDraftData.placeOfSupply = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">
               </div>
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Reverse Charge (RCM)</label>
@@ -8195,7 +8480,7 @@ class TradeFlowApp {
               </div>
               <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px] pt-1 border-t border-slate-200 dark:border-slate-700">
                 <span>Tax Breakdown:</span>
-                <span class="font-mono font-semibold">${tfEscapeHtml(o.gstType === 'intra' ? 'CGST 6% + SGST 6%' : 'IGST 12%')} (${tfEscapeHtml(this.formatCurrency((o.cgstAmount || 0) + (o.sgstAmount || 0) + (o.igstAmount || 0)))})</span>
+                <span class="font-mono font-semibold">${tfEscapeHtml(this.gstLabels(o).combined)} (${tfEscapeHtml(this.formatCurrency((o.cgstAmount || 0) + (o.sgstAmount || 0) + (o.igstAmount || 0)))})</span>
               </div>
             </div>
           </div>
@@ -8226,15 +8511,15 @@ class TradeFlowApp {
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">GSTIN (15 Digits)</label>
-              <input type="text" value="${tfEscapeHtml(o.retailerGstin || '27AABCS1234F1ZP')}" oninput="app.studioDraftData.retailerGstin = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono uppercase text-slate-900 dark:text-white">
+              <input type="text" value="${tfEscapeHtml(o.retailerGstin || '')}" oninput="app.studioDraftData.retailerGstin = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono uppercase text-slate-900 dark:text-white">
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Billing Address</label>
-              <textarea rows="2" oninput="app.studioDraftData.billingAddress = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">${tfEscapeHtml(o.billingAddress || 'Shop 12-14, APMC Market Yard, Vashi, Navi Mumbai')}</textarea>
+              <textarea rows="2" oninput="app.studioDraftData.billingAddress = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">${tfEscapeHtml(o.billingAddress || '')}</textarea>
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Shipping / Godown Address</label>
-              <textarea rows="2" oninput="app.studioDraftData.shippingAddress = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">${tfEscapeHtml(o.shippingAddress || 'Central Transit Godown, Bhiwandi, Thane, Maharashtra')}</textarea>
+              <textarea rows="2" oninput="app.studioDraftData.shippingAddress = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">${tfEscapeHtml(o.shippingAddress || '')}</textarea>
             </div>
           </div>
         `;
@@ -8318,7 +8603,7 @@ class TradeFlowApp {
             <div class="grid grid-cols-3 gap-2">
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Batch No</label>
-                <input type="text" value="${tfEscapeHtml(o.batchNumber || 'MR-26/B-04')}" oninput="app.studioDraftData.batchNumber = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-900 dark:text-white">
+                <input type="text" value="${tfEscapeHtml(o.batchNumber || '')}" oninput="app.studioDraftData.batchNumber = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-900 dark:text-white">
               </div>
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Mfg Date</label>
@@ -8340,7 +8625,7 @@ class TradeFlowApp {
                 <span class="font-mono font-bold text-slate-900 dark:text-white">${tfEscapeHtml(this.formatCurrency(o.taxableSubtotal))}</span>
               </div>
               <div class="flex justify-between text-slate-600 dark:text-slate-400">
-                <span>Total GST (${tfEscapeHtml(o.gstType === 'intra' ? 'CGST 6% + SGST 6%' : 'IGST 12%')}):</span>
+                <span>Total GST (${tfEscapeHtml(this.gstLabels(o).combined)}):</span>
                 <span class="font-mono font-bold text-slate-900 dark:text-white">${tfEscapeHtml(this.formatCurrency((o.cgstAmount || 0) + (o.sgstAmount || 0) + (o.igstAmount || 0)))}</span>
               </div>
               <div class="flex justify-between text-sm font-black border-t border-slate-200 dark:border-slate-700 pt-2 text-slate-900 dark:text-white">
@@ -8422,12 +8707,12 @@ class TradeFlowApp {
               </div>
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Delivery Destination</label>
-                <input type="text" value="${tfEscapeHtml(o.destinationCity || 'Mumbai, Maharashtra')}" oninput="app.studioDraftData.destinationCity = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">
+                <input type="text" value="${tfEscapeHtml(o.destinationCity || '')}" oninput="app.studioDraftData.destinationCity = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">
               </div>
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Commercial Billing Address</label>
-              <textarea rows="2" oninput="app.studioDraftData.billingAddress = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">${tfEscapeHtml(o.billingAddress || 'Commercial Complex, Sector 19, Vashi')}</textarea>
+              <textarea rows="2" oninput="app.studioDraftData.billingAddress = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">${tfEscapeHtml(o.billingAddress || '')}</textarea>
             </div>
           </div>
         `;
@@ -8498,7 +8783,7 @@ class TradeFlowApp {
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Freight & Logistics Terms</label>
-              <input type="text" value="${tfEscapeHtml(o.freightTerms || 'Ex-Factory Mumbai / Freight to pay by buyer')}" oninput="app.studioDraftData.freightTerms = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">
+              <input type="text" value="${tfEscapeHtml(o.freightTerms || this.config().defaultFreightTerms)}" oninput="app.studioDraftData.freightTerms = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">
             </div>
           </div>
         `;
@@ -8549,7 +8834,7 @@ class TradeFlowApp {
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">GSTIN of Customer</label>
-                <input type="text" value="${tfEscapeHtml(o.retailerGstin || '27AABCS1234F1ZP')}" oninput="app.studioDraftData.retailerGstin = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono uppercase text-slate-900 dark:text-white">
+                <input type="text" value="${tfEscapeHtml(o.retailerGstin || '')}" oninput="app.studioDraftData.retailerGstin = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono uppercase text-slate-900 dark:text-white">
               </div>
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Contact Phone</label>
@@ -8582,7 +8867,7 @@ class TradeFlowApp {
               </div>
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">UTR / Ref / Cheque No</label>
-                <input type="text" value="${tfEscapeHtml(o.utrNumber || 'UPI-REF-99214')}" oninput="app.studioDraftData.utrNumber = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono font-bold text-slate-900 dark:text-white">
+                <input type="text" value="${tfEscapeHtml(o.utrNumber || '')}" oninput="app.studioDraftData.utrNumber = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono font-bold text-slate-900 dark:text-white">
               </div>
             </div>
           </div>
@@ -8592,7 +8877,7 @@ class TradeFlowApp {
           <div class="space-y-3">
             <div>
               <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Allocation Reference</label>
-              <input type="text" value="${tfEscapeHtml(o.allocationRef || 'Supply Order #' + (o.invoiceNumber || 'ORD-1004'))}" oninput="app.studioDraftData.allocationRef = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-900 dark:text-white">
+              <input type="text" value="${tfEscapeHtml(o.allocationRef || 'Supply Order #' + (o.invoiceNumber || ''))}" oninput="app.studioDraftData.allocationRef = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-900 dark:text-white">
             </div>
             <div class="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               <p class="font-bold text-slate-800 dark:text-slate-200">Statutory Tax Treatment:</p>
@@ -8659,7 +8944,7 @@ class TradeFlowApp {
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Delivery Destination / Godown Address</label>
-              <textarea rows="2" oninput="app.studioDraftData.shippingAddress = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">${tfEscapeHtml(o.shippingAddress || 'Central Transit Godown, Bhiwandi, Thane')}</textarea>
+              <textarea rows="2" oninput="app.studioDraftData.shippingAddress = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">${tfEscapeHtml(o.shippingAddress || '')}</textarea>
             </div>
           </div>
         `;
@@ -8702,21 +8987,21 @@ class TradeFlowApp {
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Vehicle Registration No *</label>
-                <input type="text" value="${tfEscapeHtml(o.vehicleNumber || 'MH-04-GP-8842')}" oninput="app.studioDraftData.vehicleNumber = this.value; app.studioIsDirty = true; app.updateStudioValidation(); app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono font-bold text-slate-900 dark:text-white">
+                <input type="text" value="${tfEscapeHtml(o.vehicleNumber || '')}" oninput="app.studioDraftData.vehicleNumber = this.value; app.studioIsDirty = true; app.updateStudioValidation(); app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono font-bold text-slate-900 dark:text-white">
               </div>
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Transporter / Fleet</label>
-                <input type="text" value="${tfEscapeHtml(o.transporterName || 'Western Golden Logistics')}" oninput="app.studioDraftData.transporterName = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">
+                <input type="text" value="${tfEscapeHtml(o.transporterName || '')}" oninput="app.studioDraftData.transporterName = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">
               </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Driver Name</label>
-                <input type="text" value="${tfEscapeHtml(o.driverName || 'Ramesh Yadav')}" oninput="app.studioDraftData.driverName = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">
+                <input type="text" value="${tfEscapeHtml(o.driverName || '')}" oninput="app.studioDraftData.driverName = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white">
               </div>
               <div>
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Driver Phone</label>
-                <input type="text" value="${tfEscapeHtml(o.driverPhone || '+91 98205 11223')}" oninput="app.studioDraftData.driverPhone = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-900 dark:text-white">
+                <input type="text" value="${tfEscapeHtml(o.driverPhone || '')}" oninput="app.studioDraftData.driverPhone = this.value; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-900 dark:text-white">
               </div>
             </div>
           </div>
@@ -8735,7 +9020,7 @@ class TradeFlowApp {
               </div>
               <div class="flex justify-between">
                 <span class="text-slate-500">Vehicle:</span>
-                <span class="font-mono font-bold text-slate-900 dark:text-white">${tfEscapeHtml(o.vehicleNumber || 'MH-04-GP-8842')}</span>
+                <span class="font-mono font-bold text-slate-900 dark:text-white">${tfEscapeHtml(o.vehicleNumber || '')}</span>
               </div>
             </div>
             <button type="button" onclick="app.executeStudioPrimaryAction()" class="btn-tactile w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg">
@@ -8822,7 +9107,7 @@ class TradeFlowApp {
             <div class="grid grid-cols-3 gap-2 text-xs">
               <div>
                 <label class="block text-[10px] text-slate-400 font-medium">Credit Qty (Jars)</label>
-                <input type="number" min="0" max="${tfEscapeHtml(it.quantity)}" value="${tfEscapeHtml(it.creditQty !== undefined ? it.creditQty : Math.round(it.quantity * 0.1))}" oninput="app.studioDraftData.items[${tfEscapeHtml(idx)}].creditQty = Math.min(${tfEscapeHtml(it.quantity)}, parseInt(this.value) || 0); app.studioIsDirty = true; app.recalculateStudioFinancials(); app.renderStudioInvoiceContent();" class="w-full p-1 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-center font-mono font-bold text-rose-500">
+                <input type="number" min="0" max="${tfEscapeHtml(it.quantity)}" value="${tfEscapeHtml(it.creditQty !== undefined ? it.creditQty : 0)}" oninput="app.studioDraftData.items[${tfEscapeHtml(idx)}].creditQty = Math.min(${tfEscapeHtml(it.quantity)}, parseInt(this.value) || 0); app.studioIsDirty = true; app.recalculateStudioFinancials(); app.renderStudioInvoiceContent();" class="w-full p-1 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-center font-mono font-bold text-rose-500">
               </div>
               <div>
                 <label class="block text-[10px] text-slate-400 font-medium">Unit Rate (₹)</label>
@@ -8831,7 +9116,7 @@ class TradeFlowApp {
               <div>
                 <label class="block text-[10px] text-slate-400 font-medium">Credit Amount</label>
                 <div class="p-1 font-mono font-bold text-right text-rose-500">
-                  ${tfEscapeHtml(this.formatCurrency((it.creditQty !== undefined ? it.creditQty : Math.round(it.quantity * 0.1)) * it.unitRate))}
+                  ${tfEscapeHtml(this.formatCurrency((it.creditQty !== undefined ? it.creditQty : 0) * it.unitRate))}
                 </div>
               </div>
             </div>
@@ -8918,10 +9203,10 @@ class TradeFlowApp {
     this.studioDraftData.originalInvoiceDate = ord.date;
     this.studioDraftData.originalInvoiceAmount = ord.totalInvoiceAmount;
     this.studioDraftData.retailerName = ord.retailerName;
-    this.studioDraftData.retailerGstin = ord.retailerGstin || '27AABCS1234F1ZP';
+    this.studioDraftData.retailerGstin = ord.retailerGstin || '';
     this.studioDraftData.items = JSON.parse(JSON.stringify(ord.items));
     this.studioDraftData.items.forEach(it => {
-      it.creditQty = Math.round(it.quantity * 0.1);
+      it.creditQty = 0; // the user enters the quantity actually returned or credited
     });
     this.studioIsDirty = true;
     this.recalculateStudioFinancials();
@@ -8959,10 +9244,8 @@ class TradeFlowApp {
 
   convertProformaToTaxInvoice() {
     if (!this.studioDraftData) return;
-    const now = new Date();
-    const curYear = now.getFullYear();
-    const nextYearShort = String(curYear + 1).slice(-2);
-    const newInvNo = `MR/${curYear}-${nextYearShort}/${Math.floor(100 + Math.random() * 900)}`;
+    // A proforma keeps its order; it only receives the next sequential invoice number.
+    const newInvNo = this.nextOrderNumbers().invoiceNumber;
 
     const validItems = this.studioDraftData.items.map(i => ({
       ...i,
@@ -9252,20 +9535,14 @@ class TradeFlowApp {
     if (!o) return;
 
     // Filter out optional items in proforma
-    const effectiveItems = o.items.filter(i => !i.isOptional);
-    o.taxableSubtotal = effectiveItems.reduce((s, i) => s + (i.totalAmount || 0), 0);
-
-    const rate = 0.12;
-    if (o.gstType === 'intra') {
-      o.cgstAmount = parseFloat((o.taxableSubtotal * 0.06).toFixed(2));
-      o.sgstAmount = parseFloat((o.taxableSubtotal * 0.06).toFixed(2));
-      o.igstAmount = 0.00;
-    } else {
-      o.cgstAmount = 0.00;
-      o.sgstAmount = 0.00;
-      o.igstAmount = parseFloat((o.taxableSubtotal * rate).toFixed(2));
-    }
-    o.totalInvoiceAmount = parseFloat((o.taxableSubtotal + o.cgstAmount + o.sgstAmount + o.igstAmount).toFixed(2));
+    const effectiveItems = (o.items || []).filter(i => !i.isOptional);
+    const gst = this.computeGst(effectiveItems, o.gstType !== 'intra');
+    o.taxableSubtotal = gst.taxable;
+    o.cgstAmount = gst.cgst;
+    o.sgstAmount = gst.sgst;
+    o.igstAmount = gst.igst;
+    o.gstRates = gst.rates;
+    o.totalInvoiceAmount = gst.total;
     o.customerAdvanceReceived = Number(o.customerAdvanceReceived || o.amountReceived || 0);
     o.customerBalanceDue = Math.max(0, parseFloat((o.totalInvoiceAmount - o.customerAdvanceReceived).toFixed(2)));
   }
@@ -9273,36 +9550,18 @@ class TradeFlowApp {
   renderStudioInvoiceContent() {
     const container = document.getElementById('printable-studio-invoice-container');
     const order = this.studioDraftData;
-    const profile = this.data.businessProfile || {
-      brandName: "Magic Roots",
-      legalName: "Amrit Ras Consumer Products LLP",
-      gstin: "27AAACA9876Q1ZM",
-      fssai: "11523998000421",
-      address: "Unit 14, Sunrise Industrial Estate, Kanjurmarg West",
-      city: "Mumbai",
-      state: "Maharashtra",
-      stateCode: "27",
-      pincode: "400078",
-      phone: "+91 98201 44552",
-      email: "billing@amritrasfoods.in",
-      bankName: "HDFC Bank Ltd",
-      accountHolder: "Amrit Ras Consumer Products LLP",
-      accountNumber: "50200088991122",
-      ifsc: "HDFC0000128",
-      upiId: "amritras@hdfcbank",
-      invoiceNotes: "1. Goods once inspected and accepted in good condition cannot be returned without prior authorization.\n2. In case of transit damage, claims must be lodged with Lorry Receipt (LR) endorsement within 24 hours.\n3. Subject to Mumbai Jurisdiction."
-    };
+    const profile = this.data.businessProfile || {};
 
     if (!container || !order) return;
 
     const retailer = (order.retailerId && this.data.contacts.find(c => c.id === order.retailerId)) || {
-      name: order.retailerName || "Super Stockist Traders",
-      billingAddress: order.billingAddress || "Shop 12-14, APMC Market Yard, Vashi, Navi Mumbai",
-      shippingAddress: order.shippingAddress || "Central Transit Godown, Bhiwandi, Thane, Maharashtra",
-      gstin: order.retailerGstin || "27AABCS1234F1ZP",
-      state: "Maharashtra",
-      stateCode: "27",
-      phone: order.customerPhone || "+91 98201 44552"
+      name: order.retailerName || '',
+      billingAddress: order.billingAddress || '',
+      shippingAddress: order.shippingAddress || '',
+      gstin: order.retailerGstin || '',
+      state: order.retailerState || '',
+      stateCode: order.retailerStateCode || '',
+      phone: order.customerPhone || ''
     };
 
     const docType = this.studioActiveDocType || order.documentType || 'TAX INVOICE';
@@ -9356,7 +9615,7 @@ class TradeFlowApp {
     // ================= 1. PROFORMA INVOICE PREVIEW =================
     if (docType === 'PROFORMA INVOICE') {
       const itemsHtml = order.items.map((item, idx) => {
-        const cPack = item.casePack || (item.packSize === '1kg' ? 12 : 24);
+        const cPack = item.casePack || this.config().defaultCasePack;
         const cs = item.cases || Math.ceil(item.quantity / cPack);
         const varLabel = (item.variant && item.variant !== 'undefined') ? item.variant : (item.packSize && item.packSize !== 'undefined' ? item.packSize : '');
         return `
@@ -9367,7 +9626,7 @@ class TradeFlowApp {
               ${varLabel ? `<span class="text-slate-500 font-medium text-[8.5px] ml-1">(${tfEscapeHtml(varLabel)})</span>` : ''}
               ${item.isOptional ? '<span class="ml-1.5 px-1.5 py-0.2 text-[8px] font-black uppercase bg-amber-100 text-amber-900 rounded border border-amber-300">Optional</span>' : ''}
             </td>
-            ${!hideHsn ? `<td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num text-slate-600">20019000</td>` : ''}
+            ${!hideHsn ? `<td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num text-slate-600">${tfEscapeHtml(this.itemHsn(item))}</td>` : ''}
             ${showCases ? `<td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num font-bold text-slate-900">${tfEscapeHtml(cs)} ${tfEscapeHtml(cs === 1 ? 'case' : 'cases')}</td>` : ''}
             <td class="${tfEscapeHtml(rowPad)} text-right ${tfEscapeHtml(numFont)} font-mono-num font-semibold text-slate-900">${tfEscapeHtml(item.quantity.toLocaleString('en-IN'))}</td>
             <td class="${tfEscapeHtml(rowPad)} text-right ${tfEscapeHtml(numFont)} font-mono-num">${tfEscapeHtml(this.formatCurrency(item.unitRate))}</td>
@@ -9426,7 +9685,7 @@ class TradeFlowApp {
               <span class="font-bold uppercase tracking-wider text-[8px] block text-slate-500 mb-0.5">Commercial Dispatch Terms:</span>
               <p><strong>Advance Required:</strong> ${tfEscapeHtml(order.advancePercent || 50)}% with Purchase Confirmation</p>
               <p class="mt-0.5"><strong>Est. Dispatch:</strong> ${tfEscapeHtml(order.dispatchDays || '5-7 Working Days')}</p>
-              <p class="mt-0.5"><strong>Freight:</strong> ${tfEscapeHtml(order.freightTerms || 'Ex-Factory Mumbai')}</p>
+              <p class="mt-0.5"><strong>Freight:</strong> ${tfEscapeHtml(order.freightTerms || this.config().defaultFreightTerms || '—')}</p>
             </div>
           </div>
 
@@ -9465,7 +9724,7 @@ class TradeFlowApp {
                 <span class="font-mono font-medium">${tfEscapeHtml(this.formatCurrency(order.taxableSubtotal))}</span>
               </div>
               <div class="flex justify-between text-slate-600">
-                <span>Estimated GST (12%):</span>
+                <span>Estimated GST (${tfEscapeHtml(this.gstLabels(order).combined)}):</span>
                 <span class="font-mono font-medium">${tfEscapeHtml(this.formatCurrency((order.cgstAmount || 0) + (order.sgstAmount || 0) + (order.igstAmount || 0)))}</span>
               </div>
               <div class="flex justify-between py-1 border-t-2 border-slate-900 font-bold text-[10.5px]">
@@ -9537,7 +9796,7 @@ class TradeFlowApp {
             </div>
             <div class="text-right space-y-1">
               <span class="px-2.5 py-1 rounded-md bg-emerald-700 text-white font-black text-[9.5px] uppercase tracking-wider shadow-2xs">${tfEscapeHtml(order.paymentMode || 'UPI')}</span>
-              <p class="text-[8.5px] text-slate-600 font-mono-num mt-1 font-bold">UTR / Ref: ${tfEscapeHtml(order.utrNumber || 'UPI-REF-99214')}</p>
+              <p class="text-[8.5px] text-slate-600 font-mono-num mt-1 font-bold">UTR / Ref: ${tfEscapeHtml(order.utrNumber || '')}</p>
             </div>
           </div>
 
@@ -9583,7 +9842,7 @@ class TradeFlowApp {
     // ================= 3. DELIVERY CHALLAN PREVIEW =================
     if (docType === 'DELIVERY CHALLAN') {
       const itemsHtml = order.items.map((item, idx) => {
-        const cPack = item.casePack || (item.packSize === '1kg' ? 12 : 24);
+        const cPack = item.casePack || this.config().defaultCasePack;
         const cs = item.cases || Math.ceil(item.quantity / cPack);
         const netKg = (item.quantity * (item.packSize === '1kg' ? 1.0 : (item.packSize === '5kg' ? 5.0 : 0.5))).toFixed(1);
         const grossKg = (netKg * 1.1).toFixed(1);
@@ -9596,7 +9855,7 @@ class TradeFlowApp {
               <span class="font-bold text-slate-900">${tfEscapeHtml(item.name)}</span>
               ${varLabel ? `<span class="text-slate-500 text-[8.5px] ml-1">(${tfEscapeHtml(varLabel)})</span>` : ''}
             </td>
-            <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num text-slate-700">${tfEscapeHtml(order.batchNumber || 'MR-26/B-04')}</td>
+            <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num text-slate-700">${tfEscapeHtml(order.batchNumber || '')}</td>
             <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num font-bold text-slate-900">${tfEscapeHtml(cs)} ${tfEscapeHtml(cs === 1 ? 'case' : 'cases')} (${tfEscapeHtml(cPack)}/case)</td>
             <td class="${tfEscapeHtml(rowPad)} text-right ${tfEscapeHtml(numFont)} font-mono-num font-bold text-slate-900">${tfEscapeHtml(item.quantity.toLocaleString('en-IN'))} Jars</td>
             <td class="${tfEscapeHtml(rowPad)} text-right ${tfEscapeHtml(numFont)} font-mono-num">${tfEscapeHtml(netKg)} kg</td>
@@ -9637,7 +9896,7 @@ class TradeFlowApp {
           <!-- Nature of Movement Banner -->
           <div class="my-1.5 py-1 px-3 bg-sky-50 border border-sky-300 rounded text-center text-[9px] font-black uppercase tracking-wider text-sky-950 flex items-center justify-center gap-1.5">
             <span>📦 NATURE OF MOVEMENT:</span>
-            <span class="text-sky-800">${tfEscapeHtml(order.movementPurpose || 'JOB WORK / SUPPLY TO PROCESSOR (PICKLE FACTORY)')}</span>
+            <span class="text-sky-800">${tfEscapeHtml(order.movementPurpose || 'JOB WORK / SUPPLY TO PROCESSOR')}</span>
           </div>
 
           <!-- Consignee & Transport 2-Column Strip -->
@@ -9650,9 +9909,9 @@ class TradeFlowApp {
             </div>
             <div class="bg-slate-50 p-2 rounded-lg border border-slate-200">
               <span class="font-bold uppercase tracking-wider text-[8px] block text-slate-500 mb-0.5">Transport &amp; Vehicle Details:</span>
-              <p><strong>Vehicle No:</strong> <span class="font-mono-num font-bold text-slate-900">${tfEscapeHtml(order.vehicleNumber || 'MH-04-GP-8842')}</span></p>
-              <p class="mt-0.5"><strong>Fleet / Transporter:</strong> ${tfEscapeHtml(order.transporterName || 'Western Golden Logistics')}</p>
-              <p class="mt-0.5"><strong>Driver:</strong> ${tfEscapeHtml(order.driverName || 'Ramesh Yadav')} (${tfEscapeHtml(order.driverPhone || '+91 98205 11223')})</p>
+              <p><strong>Vehicle No:</strong> <span class="font-mono-num font-bold text-slate-900">${tfEscapeHtml(order.vehicleNumber || '')}</span></p>
+              <p class="mt-0.5"><strong>Fleet / Transporter:</strong> ${tfEscapeHtml(order.transporterName || '')}</p>
+              <p class="mt-0.5"><strong>Driver:</strong> ${tfEscapeHtml(order.driverName || '')} (${tfEscapeHtml(order.driverPhone || '')})</p>
             </div>
           </div>
 
@@ -9685,7 +9944,7 @@ class TradeFlowApp {
           <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-200 text-[8px]">
             <div class="border border-dashed border-slate-300 p-2 rounded text-center">
               <span class="text-slate-400 block mb-4">Driver's Signature</span>
-              <p class="font-bold text-slate-700">${tfEscapeHtml(order.driverName || 'Ramesh Yadav')}</p>
+              <p class="font-bold text-slate-700">${tfEscapeHtml(order.driverName || '')}</p>
             </div>
             <div class="border border-dashed border-slate-300 p-2 rounded text-center">
               <span class="text-slate-400 block mb-4">Receiver's Seal &amp; Signature</span>
@@ -9706,7 +9965,7 @@ class TradeFlowApp {
     // ================= 4. CREDIT NOTE PREVIEW =================
     if (docType === 'CREDIT NOTE') {
       const itemsHtml = order.items.map((item, idx) => {
-        const cQty = item.creditQty !== undefined ? item.creditQty : Math.round(item.quantity * 0.1);
+        const cQty = item.creditQty !== undefined ? item.creditQty : 0;
         const cAmt = cQty * item.unitRate;
 
         return `
@@ -9724,9 +9983,11 @@ class TradeFlowApp {
         `;
       }).join('');
 
-      const creditSubtotal = order.items.reduce((s, i) => s + ((i.creditQty !== undefined ? i.creditQty : Math.round(i.quantity * 0.1)) * i.unitRate), 0);
-      const creditGst = parseFloat((creditSubtotal * 0.12).toFixed(2));
-      const creditTotal = parseFloat((creditSubtotal + creditGst).toFixed(2));
+      const creditLines = order.items.map(i => ({ ...i, totalAmount: (Number(i.creditQty) || 0) * (Number(i.unitRate) || 0) }));
+      const creditTax = this.computeGst(creditLines, order.gstType !== 'intra');
+      const creditSubtotal = creditTax.taxable;
+      const creditGst = Math.round((creditTax.cgst + creditTax.sgst + creditTax.igst) * 100) / 100;
+      const creditTotal = creditTax.total;
 
       container.innerHTML = `
         <div class="studio-invoice-sheet bg-white p-4 sm:p-5 max-w-4xl mx-auto border border-slate-300 shadow-xl rounded-xl text-slate-800" style="max-width: 820px;">
@@ -9765,7 +10026,7 @@ class TradeFlowApp {
               <p class="text-slate-600 mt-0.5">Original Date: ${tfEscapeHtml(this.formatDate(order.originalInvoiceDate || order.date))} • Invoiced Value: ${tfEscapeHtml(this.formatCurrency(order.originalInvoiceAmount || order.totalInvoiceAmount))}</p>
             </div>
             <div class="text-right">
-              <span class="px-2 py-0.5 rounded bg-rose-600 text-white font-bold uppercase text-[8.5px] shadow-2xs">${tfEscapeHtml(order.creditReason || this.studioCreditReason || 'Damaged Goods in Transit')}</span>
+              <span class="px-2 py-0.5 rounded bg-rose-600 text-white font-bold uppercase text-[8.5px] shadow-2xs">${tfEscapeHtml(order.creditReason || this.studioCreditReason || '')}</span>
               <p class="text-[8px] text-rose-700 font-medium mt-1">Sec 34(1) CGST Act</p>
             </div>
           </div>
@@ -9804,7 +10065,7 @@ class TradeFlowApp {
                 <span class="font-mono font-medium text-rose-600">-${tfEscapeHtml(this.formatCurrency(creditSubtotal))}</span>
               </div>
               <div class="flex justify-between text-slate-600">
-                <span>GST Reversal (12%):</span>
+                <span>GST Reversal (${tfEscapeHtml(this.gstLabels(order).combined)}):</span>
                 <span class="font-mono font-medium text-rose-600">-${tfEscapeHtml(this.formatCurrency(creditGst))}</span>
               </div>
               <div class="flex justify-between py-1 border-t-2 border-slate-900 font-bold text-[10.5px]">
@@ -9837,7 +10098,7 @@ class TradeFlowApp {
     const upiQrUrl = this.generateUpiQrUrl(profile.upiId, profile.brandName, order.customerBalanceDue, order.invoiceNumber);
 
     const itemsHtml = order.items.map((item, idx) => {
-      const cPack = item.casePack || (item.packSize === '1kg' ? 12 : (item.packSize === '5kg' ? 4 : 24));
+      const cPack = item.casePack || this.casePackConfig[item.packSize] || this.config().defaultCasePack;
       const cs = item.cases || Math.ceil(item.quantity / cPack);
       const varLabel = (item.variant && item.variant !== 'undefined') ? item.variant : (item.packSize && item.packSize !== 'undefined' ? item.packSize : '');
 
@@ -9849,7 +10110,7 @@ class TradeFlowApp {
               <input type="text" value="${tfEscapeHtml(item.name)}" onchange="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'name', this.value)" class="w-full p-0.5 border border-amber-300 bg-amber-50/50 rounded font-bold text-[9.5px]">
               <input type="text" value="${tfEscapeHtml(varLabel)}" onchange="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'variant', this.value)" class="w-full p-0.5 border border-slate-200 rounded text-[8.5px] text-slate-500 mt-0.5">
             </td>
-            ${!hideHsn ? `<td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num">20019000</td>` : ''}
+            ${!hideHsn ? `<td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num">${tfEscapeHtml(this.itemHsn(item))}</td>` : ''}
             ${showCases ? `
               <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num whitespace-nowrap">
                 <input type="number" value="${tfEscapeHtml(cs)}" min="1" onchange="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'cases', this.value)" class="w-12 p-0.5 text-center border border-amber-300 bg-amber-50/50 rounded font-bold text-[9.5px]">
@@ -9874,7 +10135,7 @@ class TradeFlowApp {
             <span class="font-bold text-slate-900">${tfEscapeHtml(item.name)}</span>
             ${varLabel ? `<span class="text-slate-500 font-medium text-[8.5px] ml-1.5 whitespace-nowrap">(${tfEscapeHtml(varLabel)})</span>` : ''}
           </td>
-          ${!hideHsn ? `<td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num text-slate-600 whitespace-nowrap">20019000</td>` : ''}
+          ${!hideHsn ? `<td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num text-slate-600 whitespace-nowrap">${tfEscapeHtml(this.itemHsn(item))}</td>` : ''}
           ${showCases ? `
             <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num whitespace-nowrap">
               <span class="font-bold text-slate-900">${tfEscapeHtml(cs)} ${tfEscapeHtml(cs === 1 ? 'case' : 'cases')}</span>
@@ -9908,21 +10169,22 @@ class TradeFlowApp {
             </tr>
           </thead>
           <tbody>
+            ${this.hsnSummaryRows((order.items || []).filter(i => !i.isOptional), order.gstType !== 'intra').map(row => `
             <tr class="border-t border-slate-200 font-mono-num">
-              <td class="py-1 px-2 text-left font-bold text-slate-800">20019000</td>
-              <td class="py-1 px-2 text-right">${tfEscapeHtml(this.formatCurrency(order.taxableSubtotal))}</td>
+              <td class="py-1 px-2 text-left font-bold text-slate-800">${tfEscapeHtml(row.hsn)}</td>
+              <td class="py-1 px-2 text-right">${tfEscapeHtml(this.formatCurrency(row.taxable))}</td>
               ${order.gstType === 'intra' ? `
-                <td class="py-1 px-1 text-center">6%</td>
-                <td class="py-1 px-2 text-right">${tfEscapeHtml(this.formatCurrency(order.cgstAmount))}</td>
-                <td class="py-1 px-1 text-center">6%</td>
-                <td class="py-1 px-2 text-right">${tfEscapeHtml(this.formatCurrency(order.sgstAmount))}</td>
-                <td class="py-1 px-2 text-right font-bold text-slate-900">${tfEscapeHtml(this.formatCurrency(order.cgstAmount + order.sgstAmount))}</td>
+                <td class="py-1 px-1 text-center">${tfEscapeHtml(row.rate / 2)}%</td>
+                <td class="py-1 px-2 text-right">${tfEscapeHtml(this.formatCurrency(row.cgst))}</td>
+                <td class="py-1 px-1 text-center">${tfEscapeHtml(row.rate / 2)}%</td>
+                <td class="py-1 px-2 text-right">${tfEscapeHtml(this.formatCurrency(row.sgst))}</td>
+                <td class="py-1 px-2 text-right font-bold text-slate-900">${tfEscapeHtml(this.formatCurrency(row.cgst + row.sgst))}</td>
               ` : `
-                <td class="py-1 px-1 text-center">12%</td>
-                <td class="py-1 px-2 text-right">${tfEscapeHtml(this.formatCurrency(order.igstAmount))}</td>
-                <td class="py-1 px-2 text-right font-bold text-slate-900">${tfEscapeHtml(this.formatCurrency(order.igstAmount))}</td>
+                <td class="py-1 px-1 text-center">${tfEscapeHtml(row.rate)}%</td>
+                <td class="py-1 px-2 text-right">${tfEscapeHtml(this.formatCurrency(row.igst))}</td>
+                <td class="py-1 px-2 text-right font-bold text-slate-900">${tfEscapeHtml(this.formatCurrency(row.igst))}</td>
               `}
-            </tr>
+            </tr>`).join('')}
           </tbody>
         </table>
       </div>
@@ -9979,7 +10241,7 @@ class TradeFlowApp {
             <p class="font-black text-slate-900 text-[11px] leading-snug">${tfEscapeHtml(retailer.shippingAddress === retailer.billingAddress ? 'Same as Billed Address' : retailer.name)}</p>
             ${retailer.shippingAddress !== retailer.billingAddress ? `<p class="text-slate-600 leading-snug mt-0.5 truncate">${tfEscapeHtml(retailer.shippingAddress)}</p>` : ''}
             <div class="mt-0.5 space-y-0.5">
-              <p><strong>Transport:</strong> ${tfEscapeHtml(order.transporterName || 'Western Golden')} ${order.lrNumber ? `(LR: <span class="font-mono-num font-semibold">${tfEscapeHtml(order.lrNumber)}</span>)` : ''}</p>
+              <p><strong>Transport:</strong> ${tfEscapeHtml(order.transporterName || '')} ${order.lrNumber ? `(LR: <span class="font-mono-num font-semibold">${tfEscapeHtml(order.lrNumber)}</span>)` : ''}</p>
               ${order.vehicleNumber ? `<p><strong>Vehicle:</strong> <span class="font-mono-num">${tfEscapeHtml(order.vehicleNumber)}</span>` : ''}
               ${order.ewayBillNumber ? ` • <strong>E-Way:</strong> <span class="font-mono-num font-bold text-emerald-800">${tfEscapeHtml(order.ewayBillNumber)}</span>` : ''}
             </div>
@@ -9989,7 +10251,7 @@ class TradeFlowApp {
         <!-- Quality Strip -->
         <div class="my-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-md text-[8.5px] flex items-center justify-between text-slate-600">
           <div class="flex items-center gap-3">
-            <span><strong>Batch:</strong> <span class="font-mono-num font-bold text-slate-800">${tfEscapeHtml(order.batchNumber || 'MR-26/B-04')}</span></span>
+            <span><strong>Batch:</strong> <span class="font-mono-num font-bold text-slate-800">${tfEscapeHtml(order.batchNumber || '')}</span></span>
             <span><strong>Mfg:</strong> <span class="font-mono-num">${tfEscapeHtml(order.mfgDate || this.formatDate(order.date))}</span></span>
             <span><strong>Best Before:</strong> ${tfEscapeHtml(order.bestBefore || '12 Months from Packing')}</span>
           </div>
@@ -10034,7 +10296,7 @@ class TradeFlowApp {
                 <p>UPI ID: <strong class="font-mono-num text-amber-900 font-bold">${tfEscapeHtml(profile.upiId)}</strong></p>
               </div>
 
-              ${showQr ? `
+              ${showQr && upiQrUrl ? `
                 <div class="flex flex-col items-center justify-center text-center pl-2 border-l border-amber-200/80">
                   <img src="${tfEscapeHtml(tfSafeUrl(upiQrUrl))}" alt="UPI QR Code" class="rounded border border-amber-300 shadow-2xs bg-white p-0.5" style="width: ${tfEscapeHtml(qrSize)}; height: ${tfEscapeHtml(qrSize)};">
                   <span class="text-[8px] font-bold text-amber-900 mt-0.5 block leading-none">Scan to Pay UPI</span>
@@ -10051,16 +10313,16 @@ class TradeFlowApp {
             </div>
             ${order.gstType === 'intra' ? `
               <div class="flex justify-between py-0.5 text-slate-600">
-                <span>CGST (6%):</span>
+                <span>${tfEscapeHtml(this.gstLabels(order, false).cgst)}:</span>
                 <span class="font-mono-num">${tfEscapeHtml(this.formatCurrency(order.cgstAmount))}</span>
               </div>
               <div class="flex justify-between py-0.5 text-slate-600">
-                <span>SGST (6%):</span>
+                <span>${tfEscapeHtml(this.gstLabels(order, false).sgst)}:</span>
                 <span class="font-mono-num">${tfEscapeHtml(this.formatCurrency(order.sgstAmount))}</span>
               </div>
             ` : `
               <div class="flex justify-between py-0.5 text-slate-600">
-                <span>IGST (12%):</span>
+                <span>${tfEscapeHtml(this.gstLabels(order, true).igst)}:</span>
                 <span class="font-mono-num">${tfEscapeHtml(this.formatCurrency(order.igstAmount))}</span>
               </div>
             `}
@@ -10083,7 +10345,7 @@ class TradeFlowApp {
         <div class="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-slate-200 text-[8.5px]">
           <div>
             <span class="font-bold text-slate-800 uppercase tracking-wider text-[8px] block mb-0.5">Terms &amp; Conditions:</span>
-            <p class="text-slate-500 whitespace-pre-line text-[8px] leading-relaxed">${tfEscapeHtml(order.customNotes || profile.invoiceNotes)}</p>
+            <p class="text-slate-500 whitespace-pre-line text-[8px] leading-relaxed">${tfEscapeHtml(order.customNotes || this.defaultInvoiceNotes())}</p>
           </div>
           <div class="text-right flex flex-col justify-end items-end">
             <p class="font-bold text-slate-800 text-[9px]">For ${tfEscapeHtml(profile.legalName)}</p>
@@ -10252,7 +10514,7 @@ class TradeFlowApp {
 
     this.downloadStudioInvoicePDF(false);
 
-    const profile = this.data.businessProfile || { brandName: 'Magic Roots', legalName: 'Magic Roots Consumer Products LLP' };
+    const profile = this.data.businessProfile || {};
     const docType = this.studioActiveDocType || order.documentType || 'TAX INVOICE';
     let msg = `*${docType} - ${profile.brandName}*\n`;
     msg += `═══════════════════════════\n`;
@@ -10294,53 +10556,46 @@ class TradeFlowApp {
 
   calculateCompanyCommercialPulse() {
     const orders = (this.data.orders || []).filter(o => !o.isDeleted);
-    const lifetimeRevenue = orders.reduce((sum, o) => sum + (Number(o.totalInvoiceAmount) || 0), 0);
-    const lifetimeProfit = orders.reduce((sum, o) => {
-      const rev = Number(o.totalInvoiceAmount) || 0;
-      const profit = o.netProfit !== undefined ? Number(o.netProfit) : (rev - (Number(o.totalDirectCosts) || 0));
-      return sum + profit;
-    }, 0);
+    const num = value => Number(value) || 0;
+    const revenueOf = o => num(o.totalInvoiceAmount);                       // billed, GST included
+    const taxableOf = o => num(o.taxableSubtotal ?? o.totalInvoiceAmount);   // before GST: the base for margins
+    const profitOf = o => o.netProfit !== undefined && o.netProfit !== null ? num(o.netProfit) : taxableOf(o) - num(o.totalDirectCosts);
+    const blank = () => ({ revenue: 0, taxable: 0, profit: 0, count: 0 });
+    const add = (bucket, o) => { bucket.revenue += revenueOf(o); bucket.taxable += taxableOf(o); bucket.profit += profitOf(o); bucket.count++; return bucket; };
 
-    // Group orders by month to identify active months
+    // Calendar months, and the Indian financial year (April to March), taken from today's date.
+    const today = new Date();
+    const ym = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const latestMonthKey = ym(today);
+    const lastMonthKey = ym(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+    const fyStartYear = today.getMonth() >= 3 ? today.getFullYear() : today.getFullYear() - 1;
+    const fyStart = `${fyStartYear}-04-01`, fyEnd = `${fyStartYear + 1}-03-31`;
+
     const monthGroups = {};
+    const lifetime = blank(), year = blank();
     orders.forEach(o => {
-      const ym = o.date ? o.date.slice(0, 7) : '2026-10';
-      if (!monthGroups[ym]) {
-        monthGroups[ym] = { revenue: 0, profit: 0, count: 0, ym };
+      add(lifetime, o);
+      const date = String(o.date || '');
+      if (/^\d{4}-\d{2}/.test(date)) {
+        const key = date.slice(0, 7);
+        monthGroups[key] = add(monthGroups[key] || { ...blank(), ym: key }, o);
       }
-      const rev = Number(o.totalInvoiceAmount) || 0;
-      const profit = o.netProfit !== undefined ? Number(o.netProfit) : (rev - (Number(o.totalDirectCosts) || 0));
-      monthGroups[ym].revenue += rev;
-      monthGroups[ym].profit += profit;
-      monthGroups[ym].count++;
+      if (date >= fyStart && date <= fyEnd) add(year, o);
     });
+    const latestMonth = monthGroups[latestMonthKey] || blank();
+    const lastMonth = monthGroups[lastMonthKey] || blank();
 
-    const sortedMonths = Object.keys(monthGroups).sort().reverse();
-    const latestMonthKey = sortedMonths[0] || '2026-10';
-    const lastMonthKey = sortedMonths[1] || null;
-
-    const latestMonth = monthGroups[latestMonthKey] || { revenue: 0, profit: 0, count: 0 };
-    const lastMonth = lastMonthKey ? (monthGroups[lastMonthKey] || { revenue: 0, profit: 0, count: 0 }) : { revenue: 0, profit: 0, count: 0 };
-
-    const formatMonthLabel = (key) => {
-      if (!key) return 'Last Month';
-      const [y, m] = key.split('-');
-      const d = new Date(parseInt(y || '2026'), parseInt(m || '10') - 1, 1);
-      return `${d.toLocaleString('default', { month: 'short' })} ${y || '2026'}`;
+    const formatMonthLabel = key => {
+      const [y, m] = key.split('-').map(Number);
+      return `${new Date(y, m - 1, 1).toLocaleString('default', { month: 'short' })} ${y}`;
     };
-
-    const monthLabel = formatMonthLabel(latestMonthKey);
-    const lastMonthLabel = lastMonthKey ? formatMonthLabel(lastMonthKey) : 'Previous Month';
-
-    const fyRevenue = lifetimeRevenue;
-    const fyProfit = lifetimeProfit;
 
     let totalCollected = 0;
     let totalDue = 0;
     orders.forEach(o => {
-      const rev = Number(o.totalInvoiceAmount) || 0;
-      const adv = Number(o.customerAdvanceReceived) || 0;
-      const due = Number(o.customerBalanceDue) || Math.max(0, rev - adv);
+      const rev = revenueOf(o);
+      const adv = num(o.customerAdvanceReceived);
+      const due = o.customerBalanceDue !== undefined && o.customerBalanceDue !== null ? num(o.customerBalanceDue) : Math.max(0, rev - adv);
       if (o.status === 'settled') {
         totalCollected += rev;
       } else {
@@ -10350,20 +10605,24 @@ class TradeFlowApp {
     });
 
     return {
-      lifetimeRevenue,
-      lifetimeProfit,
+      lifetimeRevenue: lifetime.revenue,
+      lifetimeProfit: lifetime.profit,
+      lifetimeTaxable: lifetime.taxable,
       lifetimeCount: orders.length,
       monthRevenue: latestMonth.revenue,
       monthProfit: latestMonth.profit,
+      monthTaxable: latestMonth.taxable,
       monthCount: latestMonth.count,
-      monthLabel,
+      monthLabel: formatMonthLabel(latestMonthKey),
       lastMonthRevenue: lastMonth.revenue,
       lastMonthProfit: lastMonth.profit,
+      lastMonthTaxable: lastMonth.taxable,
       lastMonthCount: lastMonth.count,
-      lastMonthLabel,
-      yearRevenue: fyRevenue,
-      yearProfit: fyProfit,
-      yearLabel: `FY 2025-26`,
+      lastMonthLabel: formatMonthLabel(lastMonthKey),
+      yearRevenue: year.revenue,
+      yearProfit: year.profit,
+      yearTaxable: year.taxable,
+      yearLabel: `FY ${fyStartYear}-${String(fyStartYear + 1).slice(-2)}`,
       totalCollected,
       totalDue,
       monthGroups
@@ -10390,7 +10649,7 @@ class TradeFlowApp {
     }
     if (elMonthLabel) elMonthLabel.innerText = `${stats.monthLabel} P&L`;
     if (elMonthSub) {
-      const margin = stats.monthRevenue > 0 ? ((stats.monthProfit / stats.monthRevenue) * 100).toFixed(1) : '0.0';
+      const margin = stats.monthTaxable > 0 ? ((stats.monthProfit / stats.monthTaxable) * 100).toFixed(1) : '0.0';
       elMonthSub.innerText = `${margin}% net margin · ${stats.monthCount} batches`;
     }
 
@@ -10405,7 +10664,7 @@ class TradeFlowApp {
     }
     if (elYearLabel) elYearLabel.innerText = `${stats.yearLabel} P&L`;
     if (elYearSub) {
-      const margin = stats.yearRevenue > 0 ? ((stats.yearProfit / stats.yearRevenue) * 100).toFixed(1) : '0.0';
+      const margin = stats.yearTaxable > 0 ? ((stats.yearProfit / stats.yearTaxable) * 100).toFixed(1) : '0.0';
       elYearSub.innerText = `FY turnover · ${margin}% profit`;
     }
 
@@ -10430,7 +10689,7 @@ class TradeFlowApp {
       existingTab = {
         id: tabId,
         type: 'executive-hub',
-        title: 'Magic Roots Hub',
+        title: `${this.config().brand} Hub`,
         icon: 'building-2',
         closeable: true
       };
@@ -10474,7 +10733,7 @@ class TradeFlowApp {
             <div>
               <div class="flex items-center gap-2.5 flex-wrap">
                 <h2 id="hub-brand-header-title" class="text-xl sm:text-2xl font-black text-white tracking-tight">
-                  ${tfEscapeHtml(p.brandName || 'Magic Roots')} • ${tfEscapeHtml(p.legalName || 'Amrit Ras Consumer Products LLP')}
+                  ${tfEscapeHtml(p.brandName || this.config().brand)} • ${tfEscapeHtml(p.legalName || '')}
                 </h2>
                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-400 text-emerald-950 shadow-xs">
                   Executive Hub
@@ -10487,10 +10746,9 @@ class TradeFlowApp {
                 Master Company Identity, Statutory Registrations &amp; Live Commercial Analytics
               </p>
               <div class="flex items-center gap-2 mt-2 flex-wrap text-[11px] font-bold">
-                <span class="px-2 py-0.5 rounded bg-white/10 text-emerald-200 border border-white/15">RoC Mumbai LLP: AAB-9821</span>
-                <span class="px-2 py-0.5 rounded bg-white/10 text-teal-200 border border-white/15">GST Active • Regular</span>
-                <span class="px-2 py-0.5 rounded bg-white/10 text-amber-200 border border-white/15">FSSAI Central Compliant</span>
-                <span class="px-2 py-0.5 rounded bg-white/10 text-white border border-white/15">v3.0 Pro</span>
+                <span class="px-2 py-0.5 rounded bg-white/10 text-emerald-200 border border-white/15">${tfEscapeHtml(p.cin ? `CIN/LLPIN: ${p.cin}` : 'CIN/LLPIN not set')}</span>
+                ${p.gstin ? `<span class="px-2 py-0.5 rounded bg-white/10 text-teal-100 border border-white/15">GSTIN ${tfEscapeHtml(p.gstin)}</span>` : '<span class="px-2 py-0.5 rounded bg-white/10 text-amber-100 border border-white/15">GSTIN not set</span>'}
+                ${p.fssai ? `<span class="px-2 py-0.5 rounded bg-white/10 text-amber-100 border border-white/15">FSSAI ${tfEscapeHtml(p.fssai)}</span>` : ''}
               </div>
             </div>
           </div>
@@ -10554,8 +10812,8 @@ class TradeFlowApp {
             <div class="p-3.5 rounded-xl bg-gradient-to-br from-emerald-50/50 to-slate-50 dark:from-emerald-950/20 dark:to-slate-900 border border-emerald-500/30 flex items-start justify-between shadow-2xs group hover:border-emerald-500/60 transition-all">
               <div class="min-w-0 pr-2">
                 <span class="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block mb-1">GSTIN Number</span>
-                <span id="hub-view-gstin" class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">27AAACA9876Q1ZM</span>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">State: <strong>27 Maharashtra</strong> • Regular Taxpayer</p>
+                <span id="hub-view-gstin" class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">—</span>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">State: <strong>${tfEscapeHtml([p.stateCode, p.state].filter(Boolean).join(' ') || 'Not set')}</strong></p>
               </div>
               <button type="button" onclick="app.copyStudioValue('hub-view-gstin', 'GSTIN')" class="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition-colors shrink-0" title="Copy GSTIN">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
@@ -10566,8 +10824,8 @@ class TradeFlowApp {
             <div class="p-3.5 rounded-xl bg-gradient-to-br from-indigo-50/50 to-slate-50 dark:from-indigo-950/20 dark:to-slate-900 border border-indigo-500/30 flex items-start justify-between shadow-2xs group hover:border-indigo-500/60 transition-all">
               <div class="min-w-0 pr-2">
                 <span class="text-[10px] font-black uppercase tracking-wider text-indigo-800 dark:text-indigo-300 block mb-1">Income Tax PAN</span>
-                <span id="hub-view-pan" class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">AAACA9876Q</span>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Entity: <strong>LLP Company</strong> • IT Dept Verified</p>
+                <span id="hub-view-pan" class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">—</span>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Entity: <strong>${tfEscapeHtml(({ P: 'Individual / Proprietor', C: 'Company', H: 'HUF', F: 'Firm / LLP', A: 'Association of Persons', T: 'Trust', B: 'Body of Individuals', L: 'Local Authority', J: 'Artificial Juridical Person', G: 'Government' })[String(p.pan || '')[3]] || 'Not set')}</strong></p>
               </div>
               <button type="button" onclick="app.copyStudioValue('hub-view-pan', 'PAN')" class="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 transition-colors shrink-0" title="Copy PAN">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
@@ -10578,8 +10836,8 @@ class TradeFlowApp {
             <div class="p-3.5 rounded-xl bg-gradient-to-br from-amber-50/50 to-slate-50 dark:from-amber-950/20 dark:to-slate-900 border border-amber-500/30 flex items-start justify-between shadow-2xs group hover:border-amber-500/60 transition-all">
               <div class="min-w-0 pr-2">
                 <span class="text-[10px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 block mb-1">FSSAI Central License #</span>
-                <span id="hub-view-fssai" class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">11523998000421</span>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Food Safety &amp; Standards Authority • Pickles</p>
+                <span id="hub-view-fssai" class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">—</span>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Food Safety &amp; Standards Authority</p>
               </div>
               <button type="button" onclick="app.copyStudioValue('hub-view-fssai', 'FSSAI')" class="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 transition-colors shrink-0" title="Copy FSSAI">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
@@ -10590,10 +10848,10 @@ class TradeFlowApp {
             <div class="p-3.5 rounded-xl bg-gradient-to-br from-violet-50/50 to-slate-50 dark:from-violet-950/20 dark:to-slate-900 border border-violet-500/30 flex items-start justify-between shadow-2xs group hover:border-violet-500/60 transition-all">
               <div class="min-w-0 pr-2">
                 <span class="text-[10px] font-black uppercase tracking-wider text-violet-800 dark:text-violet-300 block mb-1">MSME / Udyam Registration</span>
-                <span class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">UDYAM-MH-18-0094821</span>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Micro &amp; Small Food Processing Enterprise</p>
+                <span class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">${tfEscapeHtml(p.udyam || 'Not set')}</span>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Udyam Registration Portal (MSME)</p>
               </div>
-              <button type="button" onclick="navigator.clipboard.writeText('UDYAM-MH-18-0094821'); app.showToast('📋 Copied MSME Udyam #')" class="p-1.5 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 text-violet-700 dark:text-violet-300 transition-colors shrink-0" title="Copy MSME">
+              <button type="button" onclick="app.copyToClipboard('${tfEscapeHtml(tfEscapeJs(p.udyam || ''))}', 'MSME Udyam number')" class="p-1.5 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 text-violet-700 dark:text-violet-300 transition-colors shrink-0" title="Copy MSME">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
               </button>
             </div>
@@ -10602,10 +10860,10 @@ class TradeFlowApp {
             <div class="p-3.5 rounded-xl bg-gradient-to-br from-sky-50/50 to-slate-50 dark:from-sky-950/20 dark:to-slate-900 border border-sky-500/30 flex items-start justify-between shadow-2xs group hover:border-sky-500/60 transition-all">
               <div class="min-w-0 pr-2">
                 <span class="text-[10px] font-black uppercase tracking-wider text-sky-800 dark:text-sky-300 block mb-1">Import Export Code (IEC)</span>
-                <span class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">0315088219</span>
+                <span class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">${tfEscapeHtml(p.iec || 'Not set')}</span>
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">DGFT Ministry of Commerce &amp; Industry</p>
               </div>
-              <button type="button" onclick="navigator.clipboard.writeText('0315088219'); app.showToast('📋 Copied IEC #')" class="p-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-700 dark:text-sky-300 transition-colors shrink-0" title="Copy IEC">
+              <button type="button" onclick="app.copyToClipboard('${tfEscapeHtml(tfEscapeJs(p.iec || ''))}', 'IEC')" class="p-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-700 dark:text-sky-300 transition-colors shrink-0" title="Copy IEC">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
               </button>
             </div>
@@ -10614,8 +10872,8 @@ class TradeFlowApp {
             <div class="p-3.5 rounded-xl bg-gradient-to-br from-teal-50/50 to-slate-50 dark:from-teal-950/20 dark:to-slate-900 border border-teal-500/30 flex items-start justify-between shadow-2xs group hover:border-teal-500/60 transition-all">
               <div class="min-w-0 pr-2">
                 <span class="text-[10px] font-black uppercase tracking-wider text-teal-800 dark:text-teal-300 block mb-1">Legal Constitution &amp; Form</span>
-                <span id="hub-view-legalName" class="font-black text-sm text-slate-900 dark:text-white block truncate">Amrit Ras Consumer Products LLP</span>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Trade Brand: <strong id="hub-view-brandName" class="text-emerald-600">Magic Roots</strong> • Mumbai RoC</p>
+                <span id="hub-view-legalName" class="font-black text-sm text-slate-900 dark:text-white block truncate">—</span>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Trade Brand: <strong id="hub-view-brandName" class="text-emerald-600">${tfEscapeHtml(this.config().brand)}</strong></p>
               </div>
               <button type="button" onclick="app.copyStudioValue('hub-view-legalName', 'Legal Name')" class="p-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 transition-colors shrink-0" title="Copy Legal Name">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
@@ -10640,7 +10898,7 @@ class TradeFlowApp {
               <div class="flex items-center justify-between">
                 <span class="text-[10px] font-black uppercase tracking-wider text-teal-800 dark:text-teal-300 flex items-center gap-1.5">
                   <i data-lucide="credit-card" class="w-3.5 h-3.5 text-teal-600"></i>
-                  <span>Primary Corporate Bank (HDFC)</span>
+                  <span>Primary Bank${p.bankName ? ` (${tfEscapeHtml(p.bankName)})` : ''}</span>
                 </span>
                 <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-700 dark:text-teal-300">Active Current A/C</span>
               </div>
@@ -10648,8 +10906,8 @@ class TradeFlowApp {
                 <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Bank &amp; Account Number:</span>
                 <div class="flex items-center justify-between mt-0.5">
                   <div>
-                    <span id="hub-view-bankName" class="font-extrabold text-xs text-slate-900 dark:text-white block">HDFC Bank Ltd</span>
-                    <span id="hub-view-accountNumber" class="font-mono-num font-black text-base text-teal-600 dark:text-teal-400 block tracking-wide">50200088991122</span>
+                    <span id="hub-view-bankName" class="font-extrabold text-xs text-slate-900 dark:text-white block">—</span>
+                    <span id="hub-view-accountNumber" class="font-mono-num font-black text-base text-teal-600 dark:text-teal-400 block tracking-wide">—</span>
                   </div>
                   <button type="button" onclick="app.copyStudioValue('hub-view-accountNumber', 'Account Number')" class="p-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 transition-colors" title="Copy Account #">
                     <i data-lucide="copy" class="w-3.5 h-3.5"></i>
@@ -10659,11 +10917,11 @@ class TradeFlowApp {
               <div class="pt-2 border-t border-teal-200/50 dark:border-teal-900/50 flex items-center justify-between text-xs">
                 <div>
                   <span class="text-[10px] text-slate-400 block">IFSC Code:</span>
-                  <span id="hub-view-ifsc" class="font-mono-num font-bold text-slate-900 dark:text-white">HDFC0000128</span>
+                  <span id="hub-view-ifsc" class="font-mono-num font-bold text-slate-900 dark:text-white">—</span>
                 </div>
                 <div class="text-right">
                   <span class="text-[10px] text-slate-400 block">Branch:</span>
-                  <span id="hub-view-branch" class="text-slate-700 dark:text-slate-300 font-medium">Kanjurmarg Branch, Mumbai</span>
+                  <span id="hub-view-branch" class="text-slate-700 dark:text-slate-300 font-medium">—</span>
                 </div>
               </div>
             </div>
@@ -10673,7 +10931,7 @@ class TradeFlowApp {
               <div class="flex items-center justify-between">
                 <span class="text-[10px] font-black uppercase tracking-wider text-violet-800 dark:text-violet-300 flex items-center gap-1.5">
                   <i data-lucide="landmark" class="w-3.5 h-3.5 text-violet-600"></i>
-                  <span>Secondary Reserve Bank (ICICI)</span>
+                  <span>Secondary Bank${p.secondaryBankName ? ` (${tfEscapeHtml(p.secondaryBankName)})` : ''}</span>
                 </span>
                 <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-700 dark:text-violet-300">Escrow Reserve</span>
               </div>
@@ -10681,10 +10939,10 @@ class TradeFlowApp {
                 <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Bank &amp; Account Number:</span>
                 <div class="flex items-center justify-between mt-0.5">
                   <div>
-                    <span class="font-extrabold text-xs text-slate-900 dark:text-white block">ICICI Bank Ltd</span>
-                    <span class="font-mono-num font-black text-base text-violet-600 dark:text-violet-400 block tracking-wide">039305004128</span>
+                    <span class="font-extrabold text-xs text-slate-900 dark:text-white block">${tfEscapeHtml(p.secondaryBankName || 'Not set')}</span>
+                    <span class="font-mono-num font-black text-base text-violet-600 dark:text-violet-400 block tracking-wide">${tfEscapeHtml(p.secondaryAccountNumber || 'Not set')}</span>
                   </div>
-                  <button type="button" onclick="navigator.clipboard.writeText('039305004128'); app.showToast('📋 Copied ICICI A/C #')" class="p-1.5 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 text-violet-700 dark:text-violet-300 transition-colors" title="Copy ICICI A/C">
+                  <button type="button" onclick="app.copyToClipboard('${tfEscapeHtml(tfEscapeJs(p.secondaryAccountNumber || ''))}', 'Secondary account number')" class="p-1.5 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 text-violet-700 dark:text-violet-300 transition-colors" title="Copy secondary account number">
                     <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                   </button>
                 </div>
@@ -10692,11 +10950,11 @@ class TradeFlowApp {
               <div class="pt-2 border-t border-violet-200/50 dark:border-violet-900/50 flex items-center justify-between text-xs">
                 <div>
                   <span class="text-[10px] text-slate-400 block">IFSC Code:</span>
-                  <span class="font-mono-num font-bold text-slate-900 dark:text-white">ICIC0000393</span>
+                  <span class="font-mono-num font-bold text-slate-900 dark:text-white">${tfEscapeHtml(p.secondaryIfsc || 'Not set')}</span>
                 </div>
                 <div class="text-right">
                   <span class="text-[10px] text-slate-400 block">Branch:</span>
-                  <span class="text-slate-700 dark:text-slate-300 font-medium">Powai Branch, Mumbai</span>
+                  <span class="text-slate-700 dark:text-slate-300 font-medium">${tfEscapeHtml(p.secondaryBranch || 'Not set')}</span>
                 </div>
               </div>
             </div>
@@ -10714,7 +10972,7 @@ class TradeFlowApp {
                 <div class="mt-2">
                   <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Merchant VPA Address:</span>
                   <div class="flex items-center justify-between mt-0.5">
-                    <span id="hub-view-upiId" class="font-mono-num font-black text-sm text-emerald-600 dark:text-emerald-400 block select-all tracking-wide">amritras@hdfcbank</span>
+                    <span id="hub-view-upiId" class="font-mono-num font-black text-sm text-emerald-600 dark:text-emerald-400 block select-all tracking-wide">—</span>
                     <button type="button" onclick="app.copyStudioValue('hub-view-upiId', 'UPI VPA')" class="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition-colors" title="Copy UPI VPA">
                       <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                     </button>
@@ -10752,7 +11010,7 @@ class TradeFlowApp {
                   </button>
                 </div>
                 <p id="hub-view-address" class="text-xs font-bold text-slate-800 dark:text-slate-200 leading-relaxed mt-2">
-                  Unit 14, Sunrise Industrial Estate, LBS Marg, Kanjurmarg West, Mumbai, Maharashtra - 400078
+                  ${tfEscapeHtml([p.address, p.city, p.state].filter(Boolean).join(', ') + (p.pincode ? ' - ' + p.pincode : '') || 'Not set')}
                 </p>
               </div>
               <p class="text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-amber-200/50 dark:border-amber-900/50">
@@ -10769,7 +11027,7 @@ class TradeFlowApp {
               <div>
                 <span class="text-[10px] text-slate-400 block">Commercial Billing Email:</span>
                 <div class="flex items-center justify-between mt-0.5">
-                  <span id="hub-view-email" class="font-bold text-xs text-slate-900 dark:text-white select-all">billing@amritrasfoods.in</span>
+                  <span id="hub-view-email" class="font-bold text-xs text-slate-900 dark:text-white select-all">—</span>
                   <button type="button" onclick="app.copyStudioValue('hub-view-email', 'Email')" class="p-1 rounded bg-sky-500/10 text-sky-700 dark:text-sky-300 hover:bg-sky-500/20" title="Copy Email">
                     <i data-lucide="copy" class="w-3 h-3"></i>
                   </button>
@@ -10778,7 +11036,7 @@ class TradeFlowApp {
               <div class="pt-2 border-t border-sky-200/50 dark:border-sky-900/50">
                 <span class="text-[10px] text-slate-400 block">Executive Contact Phone:</span>
                 <div class="flex items-center justify-between mt-0.5">
-                  <span id="hub-view-phone" class="font-mono-num font-black text-sm text-slate-900 dark:text-white select-all">+91 98201 44552</span>
+                  <span id="hub-view-phone" class="font-mono-num font-black text-sm text-slate-900 dark:text-white select-all">—</span>
                   <button type="button" onclick="app.copyStudioValue('hub-view-phone', 'Phone')" class="p-1 rounded bg-sky-500/10 text-sky-700 dark:text-sky-300 hover:bg-sky-500/20" title="Copy Phone">
                     <i data-lucide="copy" class="w-3 h-3"></i>
                   </button>
@@ -10794,7 +11052,7 @@ class TradeFlowApp {
               </span>
               <div>
                 <span class="text-[10px] text-slate-400 block">Factory Bilty &amp; Logistics Desk:</span>
-                <span class="font-bold text-xs text-slate-900 dark:text-white block mt-0.5">dispatch@amritrasfoods.in • +91 98201 44553</span>
+                <span class="font-bold text-xs text-slate-900 dark:text-white block mt-0.5">${tfEscapeHtml([this.data.businessProfile?.email, this.data.businessProfile?.phone].filter(Boolean).join(' • ') || 'Not set')}</span>
               </div>
               <div class="pt-2 border-t border-indigo-200/50 dark:border-indigo-900/50">
                 <span class="text-[10px] text-slate-400 block">Dispatch Operating Shifts:</span>
@@ -10833,7 +11091,7 @@ class TradeFlowApp {
                 </span>
               </div>
               <p id="hub-stat-cur-month-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 pt-1.5 border-t border-emerald-200/50 dark:border-emerald-900/50">
-                ${tfEscapeHtml(stats.monthRevenue > 0 ? ((stats.monthProfit / stats.monthRevenue) * 100).toFixed(1) : '0.0')}% net margin · ${tfEscapeHtml(stats.monthCount)} batches
+                ${tfEscapeHtml(stats.monthTaxable > 0 ? ((stats.monthProfit / stats.monthTaxable) * 100).toFixed(1) : '0.0')}% net margin · ${tfEscapeHtml(stats.monthCount)} batches
               </p>
             </div>
 
@@ -10855,7 +11113,7 @@ class TradeFlowApp {
                 </span>
               </div>
               <p id="hub-stat-last-month-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 pt-1.5 border-t border-sky-200/50 dark:border-sky-900/50">
-                ${tfEscapeHtml((stats.lastMonthRevenue || 0) > 0 ? (((stats.lastMonthProfit || 0) / stats.lastMonthRevenue) * 100).toFixed(1) : '0.0')}% net margin · ${tfEscapeHtml(stats.lastMonthCount || 0)} batches
+                ${tfEscapeHtml((stats.lastMonthTaxable || 0) > 0 ? (((stats.lastMonthProfit || 0) / stats.lastMonthTaxable) * 100).toFixed(1) : '0.0')}% net margin · ${tfEscapeHtml(stats.lastMonthCount || 0)} batches
               </p>
             </div>
 
@@ -10877,7 +11135,7 @@ class TradeFlowApp {
                 </span>
               </div>
               <p id="hub-stat-fy-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 pt-1.5 border-t border-indigo-200/50 dark:border-indigo-900/50">
-                FY turnover · ${tfEscapeHtml(stats.yearRevenue > 0 ? ((stats.yearProfit / stats.yearRevenue) * 100).toFixed(1) : '0.0')}% profit margin
+                FY turnover · ${tfEscapeHtml(stats.yearTaxable > 0 ? ((stats.yearProfit / stats.yearTaxable) * 100).toFixed(1) : '0.0')}% profit margin
               </p>
             </div>
 
@@ -10924,21 +11182,21 @@ class TradeFlowApp {
             <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
               <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-1">Legal Jurisdiction</span>
               <p id="hub-jurisdiction-text" class="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
-                Subject to Mumbai Jurisdiction. Goods once sold will not be taken back or exchanged without prior authorization.
+                ${tfEscapeHtml(this.jurisdictionLine() || 'Jurisdiction city not set (Settings > Business Profile > Business Defaults).')}
               </p>
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
               <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-1">Quality Mandate</span>
               <p class="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
-                Authentic slow-cured traditional pickles crafted with cold-pressed mustard oil. Verified batches with batch coding and food-grade induction seals.
+                ${tfEscapeHtml(this.data.businessProfile?.qualityStatement || 'Not set')}
               </p>
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
               <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-1">Registered Trademarks</span>
               <p class="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
-                Class 29 (Pickles, Preserves, Edible Oils) &amp; Class 30 (Spices &amp; Pastes) — Registered Magic Roots Trademark under Trade Marks Act 1999.
+                ${tfEscapeHtml(this.data.businessProfile?.trademarks || 'Not set')}
               </p>
             </div>
           </div>
@@ -11074,7 +11332,7 @@ class TradeFlowApp {
     // Header title
     const headerTitle = document.getElementById('hub-brand-header-title');
     if (headerTitle) {
-      headerTitle.textContent = p.legalName ? `${p.brandName || 'Magic Roots'} • ${p.legalName}` : (p.brandName || 'Magic Roots Enterprises');
+      headerTitle.textContent = p.legalName ? `${p.brandName || this.config().brand} • ${p.legalName}` : (p.brandName || this.config().brand);
     }
 
     // View Fields
@@ -11083,29 +11341,37 @@ class TradeFlowApp {
       if (el) el.textContent = val || fallback;
     };
 
-    setView('hub-view-legalName', p.legalName, 'Amrit Ras Consumer Products LLP');
-    setView('hub-view-brandName', p.brandName, 'Magic Roots');
-    setView('hub-view-gstin', p.gstin, '27AAACA9876Q1ZM');
-    setView('hub-view-pan', p.pan, 'AAACA9876Q');
-    setView('hub-view-fssai', p.fssai, '11523998000421');
-    setView('hub-view-address', p.address ? `${p.address}, ${p.city || ''} - ${p.pincode || ''}` : 'Unit 14, Sunrise Industrial Estate, Kanjurmarg West, Mumbai - 400078');
-    setView('hub-view-email', p.email, 'billing@amritrasfoods.in');
-    setView('hub-view-phone', p.phone, '+91 98201 44552');
-    setView('hub-view-bankName', p.bankName, 'HDFC Bank Ltd');
-    setView('hub-view-accountNumber', p.accountNumber, '50200034891122');
-    setView('hub-view-ifsc', p.ifsc, 'HDFC0000240');
-    setView('hub-view-branch', p.branch || 'Kanjurmarg Branch, Mumbai');
-    setView('hub-view-upiId', p.upiId, 'amritrasfoods@hdfcbank');
+    setView('hub-view-legalName', p.legalName, 'Not set');
+    setView('hub-view-brandName', p.brandName, 'Not set');
+    setView('hub-view-gstin', p.gstin, 'Not set');
+    setView('hub-view-pan', p.pan, 'Not set');
+    setView('hub-view-fssai', p.fssai, 'Not set');
+    setView('hub-view-address', p.address ? `${p.address}, ${p.city || ''} - ${p.pincode || ''}` : 'Not set');
+    setView('hub-view-email', p.email, 'Not set');
+    setView('hub-view-phone', p.phone, 'Not set');
+    setView('hub-view-bankName', p.bankName, 'Not set');
+    setView('hub-view-accountNumber', p.accountNumber, 'Not set');
+    setView('hub-view-ifsc', p.ifsc, 'Not set');
+    setView('hub-view-branch', p.branch, 'Not set');
+    setView('hub-view-upiId', p.upiId, 'Not set');
 
     // Terms & Directives
     if (p.paymentTerms) {
       const t = document.getElementById('hub-terms-text');
       if (t) t.textContent = p.paymentTerms;
     }
-    if (p.jurisdiction) {
-      const j = document.getElementById('hub-jurisdiction-text');
-      if (j) j.textContent = p.jurisdiction;
-    }
+    const j = document.getElementById('hub-jurisdiction-text');
+    if (j) j.textContent = this.jurisdictionLine() || 'Jurisdiction city not set';
+    const notes = document.getElementById('hub-notes-text');
+    if (notes) notes.textContent = p.qualityStatement || p.invoiceNotes || 'Not set';
+    this.applyBrandText();
+  }
+
+  // Fills every element marked data-tf-brand / data-tf-state from the business profile.
+  applyBrandText() {
+    const cfg = this.config();
+    document.querySelectorAll('[data-tf-brand]').forEach(el => { el.textContent = cfg.brand; });
+    document.querySelectorAll('[data-tf-state]').forEach(el => { el.textContent = cfg.stateCode ? `${cfg.stateCode}${cfg.state ? ` (${cfg.state})` : ''}` : '—'; });
   }
 
   toggleCompanyProfileEditMode(forceState) {
@@ -11124,22 +11390,22 @@ class TradeFlowApp {
         if (el) el.value = val || '';
       };
 
-      setVal('hub-input-legalName', p.legalName || 'Amrit Ras Consumer Products LLP');
-      setVal('hub-input-brandName', p.brandName || 'Magic Roots');
-      setVal('hub-input-gstin', p.gstin || '27AAACA9876Q1ZM');
-      setVal('hub-input-pan', p.pan || 'AAACA9876Q');
-      setVal('hub-input-fssai', p.fssai || '11523998000421');
-      setVal('hub-input-stateCode', p.stateCode || '27');
-      setVal('hub-input-address', p.address || 'Unit 14, Sunrise Industrial Estate, Kanjurmarg West');
-      setVal('hub-input-city', p.city || 'Mumbai');
-      setVal('hub-input-state', p.state || 'Maharashtra');
-      setVal('hub-input-pincode', p.pincode || '400078');
-      setVal('hub-input-email', p.email || 'billing@amritrasfoods.in');
-      setVal('hub-input-phone', p.phone || '+91 98201 44552');
-      setVal('hub-input-bankName', p.bankName || 'HDFC Bank Ltd');
-      setVal('hub-input-accountNumber', p.accountNumber || '50200034891122');
-      setVal('hub-input-ifsc', p.ifsc || 'HDFC0000240');
-      setVal('hub-input-upiId', p.upiId || 'amritrasfoods@hdfcbank');
+      setVal('hub-input-legalName', p.legalName || '');
+      setVal('hub-input-brandName', p.brandName || '');
+      setVal('hub-input-gstin', p.gstin || '');
+      setVal('hub-input-pan', p.pan || '');
+      setVal('hub-input-fssai', p.fssai || '');
+      setVal('hub-input-stateCode', p.stateCode || '');
+      setVal('hub-input-address', p.address || '');
+      setVal('hub-input-city', p.city || '');
+      setVal('hub-input-state', p.state || '');
+      setVal('hub-input-pincode', p.pincode || '');
+      setVal('hub-input-email', p.email || '');
+      setVal('hub-input-phone', p.phone || '');
+      setVal('hub-input-bankName', p.bankName || '');
+      setVal('hub-input-accountNumber', p.accountNumber || '');
+      setVal('hub-input-ifsc', p.ifsc || '');
+      setVal('hub-input-upiId', p.upiId || '');
 
       if (viewContainer) viewContainer.classList.add('hidden');
       if (editContainer) editContainer.classList.remove('hidden');
@@ -11184,7 +11450,7 @@ class TradeFlowApp {
     p.gstin = gstin;
     p.pan = getVal('hub-input-pan') || p.pan;
     p.fssai = getVal('hub-input-fssai') || p.fssai;
-    p.stateCode = getVal('hub-input-stateCode') || p.stateCode || '27';
+    p.stateCode = getVal('hub-input-stateCode') || p.stateCode || '';
     p.address = getVal('hub-input-address') || p.address;
     p.city = getVal('hub-input-city') || p.city;
     p.state = getVal('hub-input-state') || p.state;
@@ -11198,13 +11464,13 @@ class TradeFlowApp {
 
     // Update sidebar brand name if changed
     const sidebarBrand = document.getElementById('sidebar-brand-name');
-    if (sidebarBrand) sidebarBrand.textContent = p.brandName;
+    if (sidebarBrand) sidebarBrand.textContent = this.config().brand;
 
     // Save authoritative data
     this.saveData();
     this.renderCompanyExecutiveHubProfile();
     this.toggleCompanyProfileEditMode(false);
-    this.showToast(`✨ Magic Roots Company Profile updated & saved successfully!`);
+    this.showToast(`✨ ${this.config().brand} company profile saved.`);
   }
 
   renderExecutiveHubFinancials(providedStats) {
@@ -11223,7 +11489,7 @@ class TradeFlowApp {
       elCurProfit.className = stats.monthProfit >= 0 ? 'text-xs font-bold text-teal-600 dark:text-teal-400' : 'text-xs font-bold text-rose-600 dark:text-rose-400';
     }
     if (elCurSub) {
-      const margin = stats.monthRevenue > 0 ? ((stats.monthProfit / stats.monthRevenue) * 100).toFixed(1) : '0.0';
+      const margin = stats.monthTaxable > 0 ? ((stats.monthProfit / stats.monthTaxable) * 100).toFixed(1) : '0.0';
       elCurSub.textContent = `${margin}% net margin · ${stats.monthCount} batches`;
     }
 
@@ -11240,7 +11506,7 @@ class TradeFlowApp {
       elLastProfit.className = (stats.lastMonthProfit || 0) >= 0 ? 'text-xs font-bold text-blue-600 dark:text-blue-400' : 'text-xs font-bold text-rose-600 dark:text-rose-400';
     }
     if (elLastSub) {
-      const margin = (stats.lastMonthRevenue || 0) > 0 ? (((stats.lastMonthProfit || 0) / stats.lastMonthRevenue) * 100).toFixed(1) : '0.0';
+      const margin = (stats.lastMonthTaxable || 0) > 0 ? (((stats.lastMonthProfit || 0) / stats.lastMonthTaxable) * 100).toFixed(1) : '0.0';
       elLastSub.textContent = `${margin}% net margin · ${stats.lastMonthCount || 0} batches`;
     }
 
@@ -11256,7 +11522,7 @@ class TradeFlowApp {
       elFyProfit.textContent = `${sign}${this.formatCurrency(stats.yearProfit)} profit`;
     }
     if (elFySub) {
-      const margin = stats.yearRevenue > 0 ? ((stats.yearProfit / stats.yearRevenue) * 100).toFixed(1) : '0.0';
+      const margin = stats.yearTaxable > 0 ? ((stats.yearProfit / stats.yearTaxable) * 100).toFixed(1) : '0.0';
       elFySub.textContent = `FY turnover · ${margin}% profit margin`;
     }
 
@@ -11272,23 +11538,23 @@ class TradeFlowApp {
   copyCompanyHubProfileSummary() {
     const p = this.data.businessProfile || {};
     const text = `====================================================
-🌿 ${p.brandName || 'Magic Roots'} Executive Company Summary
+🌿 ${p.brandName || this.config().brand} Executive Company Summary
 ====================================================
-• Legal Entity: ${p.legalName || 'Amrit Ras Consumer Products LLP'}
-• Brand Trade Name: ${p.brandName || 'Magic Roots'}
-• GSTIN: ${p.gstin || '27AAACA9876Q1ZM'}
-• PAN: ${p.pan || 'AAACA9876Q'}
-• FSSAI: ${p.fssai || '11523998000421'}
+• Legal Entity: ${p.legalName || ''}
+• Brand Trade Name: ${p.brandName || this.config().brand}
+• GSTIN: ${p.gstin || ''}
+• PAN: ${p.pan || ''}
+• FSSAI: ${p.fssai || ''}
 • Registered Office: ${p.address || ''}, ${p.city || ''}, ${p.state || ''} - ${p.pincode || ''}
-• Billing Email: ${p.email || 'billing@amritrasfoods.in'}
-• Commercial Phone: ${p.phone || '+91 98201 44552'}
+• Billing Email: ${p.email || ''}
+• Commercial Phone: ${p.phone || ''}
 
 BANKING & PAYMENT COORDINATES:
-• Primary Bank: ${p.bankName || 'HDFC Bank Ltd'}
-• Account Number: ${p.accountNumber || '50200034891122'}
-• IFSC Code: ${p.ifsc || 'HDFC0000240'}
-• Branch: ${p.branch || 'Kanjurmarg Branch, Mumbai'}
-• UPI ID (VPA): ${p.upiId || 'amritrasfoods@hdfcbank'}
+• Primary Bank: ${p.bankName || ''}
+• Account Number: ${p.accountNumber || ''}
+• IFSC Code: ${p.ifsc || ''}
+• Branch: ${p.branch || ''}
+• UPI ID (VPA): ${p.upiId || ''}
 ====================================================`;
 
     this.copyToClipboard(text, 'Complete Company Profile Summary');
@@ -11561,12 +11827,12 @@ BANKING & PAYMENT COORDINATES:
         </div>
       `;
     } else if (tab === 'yearly') {
-      const marginPct = stats.yearRevenue > 0 ? ((stats.yearProfit / stats.yearRevenue) * 100).toFixed(1) : '0.0';
+      const marginPct = stats.yearTaxable > 0 ? ((stats.yearProfit / stats.yearTaxable) * 100).toFixed(1) : '0.0';
       container.innerHTML = `
         <div class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800">
-              <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider block">FY 2025-26 Annual Turnover</span>
+              <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider block">${tfEscapeHtml(stats.yearLabel)} Annual Turnover</span>
               <span class="text-xl font-black font-mono-num text-white mt-1 block">${tfEscapeHtml(this.formatCurrency(stats.yearRevenue))}</span>
               <span class="text-[10px] text-slate-400 mt-0.5 block">Total invoiced supply across all channels</span>
             </div>
@@ -11583,9 +11849,9 @@ BANKING & PAYMENT COORDINATES:
           </div>
 
           <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
-            <h4 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Company Commercial Standing (Magic Roots)</h4>
+            <h4 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Company Commercial Standing (${tfEscapeHtml(this.config().brand)})</h4>
             <p class="text-xs text-slate-400 leading-relaxed">
-              Magic Roots operates as a proprietary brand under Amrit Ras Consumer Products LLP. Financial figures reflect gross billed commercial invoices, manufacturer production costs, packaging and glass jar procurement, and transport logistics.
+              Figures reflect invoices billed, production and packaging costs, freight and commission recorded in TradeFlow.
             </p>
           </div>
         </div>
@@ -11665,7 +11931,7 @@ BANKING & PAYMENT COORDINATES:
 
   copyStudioCommercialSummary() {
     const stats = this.calculateCompanyCommercialPulse();
-    const marginPct = stats.lifetimeRevenue > 0 ? ((stats.lifetimeProfit / stats.lifetimeRevenue) * 100).toFixed(1) : '0.0';
+    const marginPct = stats.lifetimeTaxable > 0 ? ((stats.lifetimeProfit / stats.lifetimeTaxable) * 100).toFixed(1) : '0.0';
     const summary = `*MAGIC ROOTS - COMMERCIAL PERFORMANCE EXECUTIVE SUMMARY*\n` +
       `═══════════════════════════════════════\n` +
       `🏆 Lifetime Business Done: ${this.formatCurrency(stats.lifetimeRevenue)} (${stats.lifetimeCount} Batches)\n` +
@@ -11675,7 +11941,7 @@ BANKING & PAYMENT COORDINATES:
       `💳 Cash Collected in Hand: ${this.formatCurrency(stats.totalCollected)}\n` +
       `🚨 Outstanding Receivables: ${this.formatCurrency(stats.totalDue)}\n` +
       `═══════════════════════════════════════\n` +
-      `Official ERP Report · Magic Roots (Amrit Ras Consumer Products LLP)`;
+      `Official ERP Report · ${this.config().brand}${this.config().legalName && this.config().legalName !== this.config().brand ? ` (${this.config().legalName})` : ''}`;
 
     if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(summary).catch(() => {});
@@ -11707,13 +11973,7 @@ BANKING & PAYMENT COORDINATES:
     order = order || {};
     this.activeMessengerOrder = order;
 
-    const profile = this.data.businessProfile || {
-      brandName: "Magic Roots",
-      bankName: "HDFC Bank Ltd",
-      accountNumber: "50200088991122",
-      ifsc: "HDFC0000128",
-      upiId: "amritras@hdfcbank"
-    };
+    const profile = this.data.businessProfile || {};
 
     // Update 1-Column Snippet Previews
     const elSumPrev = document.getElementById('studio-snippet-summary-preview');
@@ -11728,7 +11988,7 @@ BANKING & PAYMENT COORDINATES:
 
     const elLogPrev = document.getElementById('studio-snippet-logistics-preview');
     if (elLogPrev) {
-      elLogPrev.innerText = `${order.transporterName || 'Western Logistics'} · LR: ${order.lrNumber || 'LR-8910'} · ${order.vehicleNumber || 'MH-04-GP-8842'}`;
+      elLogPrev.innerText = `${order.transporterName || ''} · LR: ${order.lrNumber || ''} · ${order.vehicleNumber || ''}`;
     }
 
     const elItemsPrev = document.getElementById('studio-snippet-items-preview');
@@ -11767,7 +12027,7 @@ BANKING & PAYMENT COORDINATES:
         id: 'order-counterparty',
         name: order.retailerName || 'Valued Partner',
         contactPerson: order.retailerName || '',
-        phone: rawOrderPhone || '+91 98205 77812',
+        phone: rawOrderPhone || '',
         role: 'retailer'
       };
     }
@@ -11836,9 +12096,9 @@ BANKING & PAYMENT COORDINATES:
                 ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
                 : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700')
             }"
-            title="${tfEscapeHtml(this.escapeHtml(c.name))} (${tfEscapeHtml(c.phone || '')})"
+            title="${tfEscapeHtml(c.name)} (${tfEscapeHtml(c.phone || '')})"
           >
-            ⚡ ${tfEscapeHtml(this.escapeHtml(shortName))}
+            ⚡ ${tfEscapeHtml(shortName)}
           </button>
         `;
       }).join('');
@@ -11867,7 +12127,7 @@ BANKING & PAYMENT COORDINATES:
       contactsListEl.innerHTML = `
         <div class="py-6 px-3 text-center text-slate-400 space-y-1">
           <i data-lucide="search-x" class="w-5 h-5 mx-auto opacity-50"></i>
-          <p class="text-xs font-semibold">No contacts match "${tfEscapeHtml(this.escapeHtml(filterQuery))}"</p>
+          <p class="text-xs font-semibold">No contacts match "${tfEscapeHtml(filterQuery)}"</p>
           <p class="text-[10px]">Type any mobile number directly into the recipient box above.</p>
         </div>
       `;
@@ -11910,18 +12170,18 @@ BANKING & PAYMENT COORDINATES:
             </div>
             <div class="min-w-0">
               <div class="text-xs font-bold text-slate-900 dark:text-slate-100 truncate flex items-center gap-1.5">
-                <span>${tfEscapeHtml(this.escapeHtml(c.name))}</span>
+                <span>${tfEscapeHtml(c.name)}</span>
               </div>
               <div class="text-[10.5px] text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
-                ${c.contactPerson && c.contactPerson !== c.name ? `<span>${tfEscapeHtml(this.escapeHtml(c.contactPerson))} · </span>` : ''}
-                <span class="font-mono text-emerald-600 dark:text-emerald-400 font-medium">${tfEscapeHtml(this.escapeHtml(c.phone || 'No phone'))}</span>
+                ${c.contactPerson && c.contactPerson !== c.name ? `<span>${tfEscapeHtml(c.contactPerson)} · </span>` : ''}
+                <span class="font-mono text-emerald-600 dark:text-emerald-400 font-medium">${tfEscapeHtml(c.phone || 'No phone')}</span>
               </div>
             </div>
           </div>
 
           <div class="shrink-0 flex items-center gap-1">
             <span class="text-[9.5px] font-black uppercase px-2 py-0.5 rounded-full border ${tfEscapeHtml(roleBadge)}">
-              ${tfEscapeHtml(this.escapeHtml(c.role || 'Partner'))}
+              ${tfEscapeHtml(c.role || 'Partner')}
             </span>
             ${isSelected ? '<i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 ml-1"></i>' : ''}
           </div>
@@ -12083,15 +12343,7 @@ BANKING & PAYMENT COORDINATES:
   /* Copy 1-Column Reusable Detail Snippet */
   copyStudioSnippet(type) {
     const order = this.studioDraftData || this.activeMessengerOrder || (this.data.orders && this.data.orders[0]) || {};
-    const profile = this.data.businessProfile || {
-      brandName: "Magic Roots",
-      legalName: "Amrit Ras Consumer Products LLP",
-      bankName: "HDFC Bank Ltd",
-      accountHolder: "Amrit Ras Consumer Products LLP",
-      accountNumber: "50200088991122",
-      ifsc: "HDFC0000128",
-      upiId: "amritras@hdfcbank"
-    };
+    const profile = this.data.businessProfile || {};
 
     let text = '';
     let label = '';
@@ -12126,12 +12378,12 @@ BANKING & PAYMENT COORDINATES:
       text = `*${profile.brandName} - DISPATCH & TRANSPORT*\n` +
         `══════════════════════════════════\n` +
         `📄 Invoice: ${order.invoiceNumber || 'INV-DRAFT'}\n` +
-        `🚚 Transporter: ${order.transporterName || 'Western Golden Logistics'}\n` +
-        `📦 LR Number: ${order.lrNumber || 'LR-WEST-8910'}\n` +
-        `🚛 Vehicle Number: ${order.vehicleNumber || 'MH-04-GP-8842'}\n` +
-        `📞 Driver: ${order.driverName || 'Ramesh Yadav'} (${order.driverPhone || '+91 98205 11223'})\n` +
-        `📋 E-Way Bill: ${order.ewayBillNumber || '281099238812'}\n` +
-        `📍 Delivery Godown: ${order.shippingAddress || order.billingAddress || 'Local Logistics Godown'}\n` +
+        `🚚 Transporter: ${order.transporterName || ''}\n` +
+        `📦 LR Number: ${order.lrNumber || ''}\n` +
+        `🚛 Vehicle Number: ${order.vehicleNumber || ''}\n` +
+        `📞 Driver: ${order.driverName || ''} (${order.driverPhone || ''})\n` +
+        `📋 E-Way Bill: ${order.ewayBillNumber || ''}\n` +
+        `📍 Delivery Godown: ${order.shippingAddress || order.billingAddress || ''}\n` +
         `══════════════════════════════════`;
     } else if (type === 'items') {
       label = 'Itemized Case Breakdown';
@@ -12171,14 +12423,7 @@ BANKING & PAYMENT COORDINATES:
     });
 
     const order = this.studioDraftData || this.activeMessengerOrder || (this.data.orders && this.data.orders[0]) || {};
-    const profile = this.data.businessProfile || {
-      brandName: "Magic Roots",
-      legalName: "Amrit Ras Consumer Products LLP",
-      bankName: "HDFC Bank Ltd",
-      accountNumber: "50200088991122",
-      ifsc: "HDFC0000128",
-      upiId: "amritras@hdfcbank"
-    };
+    const profile = this.data.businessProfile || {};
 
     // Dynamic greeting based on active contact
     const contact = this.activeMessengerContact || { name: order.retailerName || 'Valued Partner' };
@@ -12209,9 +12454,9 @@ BANKING & PAYMENT COORDINATES:
         `💵 *Advance Paid:* ${this.formatCurrency(order.customerAdvanceReceived || 0)}\n` +
         `🚨 *BALANCE DUE:* *${this.formatCurrency(order.customerBalanceDue || 0)}*\n\n` +
         `🚚 *Logistics Tracking:*\n` +
-        `• Transporter: ${order.transporterName || 'Western Golden Logistics'}\n` +
-        `• LR No: *${order.lrNumber || 'LR-WEST-8910'}*\n` +
-        `• Vehicle: ${order.vehicleNumber || 'MH-04-GP-8842'}\n\n` +
+        `• Transporter: ${order.transporterName || ''}\n` +
+        `• LR No: *${order.lrNumber || ''}*\n` +
+        `• Vehicle: ${order.vehicleNumber || ''}\n\n` +
         `*Settlement Coordinates:*\n` +
         `• Bank: ${profile.bankName} | A/C: ${profile.accountNumber}\n` +
         `• IFSC: ${profile.ifsc} | UPI: *${profile.upiId}*\n\n` +
@@ -12239,7 +12484,7 @@ BANKING & PAYMENT COORDINATES:
         `${greetingAdvance}\n\n` +
         `We acknowledge with thanks the receipt of your advance payment towards order *${order.invoiceNumber || 'INV-DRAFT'}*:\n\n` +
         `💰 *Advance Received:* *${this.formatCurrency(order.customerAdvanceReceived || order.amountReceived || 0)}*\n` +
-        `📄 *Voucher Ref:* ${order.utrNumber || 'UPI-REF-99214'}\n` +
+        `📄 *Voucher Ref:* ${order.utrNumber || ''}\n` +
         `📅 *Date:* ${this.formatDate(order.date)}\n` +
         `📦 *Order Value:* ${this.formatCurrency(order.totalInvoiceAmount || 0)}\n` +
         `🚨 *Remaining Balance:* ${this.formatCurrency(order.customerBalanceDue || 0)}\n\n` +
@@ -12304,15 +12549,13 @@ BANKING & PAYMENT COORDINATES:
   duplicateStudioDraftAsNewOrder() {
     if (!this.studioDraftData) return;
     const now = new Date();
-    const curYear = now.getFullYear();
-    const nextYearShort = String(curYear + 1).slice(-2);
-    const randNum = Math.floor(1000 + Math.random() * 9000);
+    const numbers = this.nextOrderNumbers();
 
     const newOrder = JSON.parse(JSON.stringify(this.studioDraftData));
-    newOrder.id = 'ORD-' + randNum;
-    newOrder.invoiceNumber = `MR/${curYear}-${nextYearShort}/${randNum}`;
+    newOrder.id = numbers.orderId;
+    newOrder.invoiceNumber = numbers.invoiceNumber;
     newOrder.date = now.toISOString().split('T')[0];
-    newOrder.dueDate = new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0];
+    newOrder.dueDate = this.dueDateFromTerms(newOrder.date, newOrder.paymentTerms);
     newOrder.status = 'action_needed';
     newOrder.isDeleted = false;
 
@@ -12363,6 +12606,8 @@ BANKING & PAYMENT COORDINATES:
     text.textContent = String(message);
     toast.appendChild(text);
     container.appendChild(toast);
+    // Keep at most three messages on screen so they never cover the form.
+    while (container.children.length > 3) container.firstElementChild.remove();
     setTimeout(() => {
       toast.classList.remove('translate-y-2', 'opacity-0');
     }, 10);
@@ -12425,7 +12670,7 @@ BANKING & PAYMENT COORDINATES:
     setVal('prof-inv-notes', p.invoiceNotes);
 
     const brandHeader = document.getElementById('sidebar-brand-name');
-    if (brandHeader) brandHeader.innerText = p.brandName || 'Magic Roots';
+    if (brandHeader) brandHeader.innerText = p.brandName || this.config().brand;
   }
 
   saveProfileSettings(formData) {
@@ -12473,7 +12718,7 @@ BANKING & PAYMENT COORDINATES:
     if (retailerSelect) {
       retailerSelect.innerHTML = '<option value="">Select Retailer / Customer...</option>' + 
         this.data.contacts.filter(c => c.role === 'retailer').map(c => 
-          `<option value="${tfEscapeHtml(c.id)}">${tfEscapeHtml(c.name)} (${tfEscapeHtml(c.state || 'MH')})</option>`
+          `<option value="${tfEscapeHtml(c.id)}">${tfEscapeHtml(c.name)}${c.state ? ` (${tfEscapeHtml(c.state)})` : ''}</option>`
         ).join('');
       retailerSelect.onchange = (e) => {
         this.checkRetailerCreditExposure(e.target.value);
@@ -12488,19 +12733,19 @@ BANKING & PAYMENT COORDINATES:
     }
 
     if (mfgSelect) {
-      mfgSelect.innerHTML = this.data.contacts.filter(c => c.role === 'manufacturer').map(c => 
-        `<option value="${tfEscapeHtml(c.id)}">${tfEscapeHtml(c.name)} (${tfEscapeHtml(c.state || 'GJ')})</option>`
+      mfgSelect.innerHTML = '<option value="">— Select manufacturer —</option>' + this.data.contacts.filter(c => c.role === 'manufacturer').map(c => 
+        `<option value="${tfEscapeHtml(c.id)}">${tfEscapeHtml(c.name)}${c.state ? ` (${tfEscapeHtml(c.state)})` : ''}</option>`
       ).join('');
     }
 
     if (pkgSelect) {
-      pkgSelect.innerHTML = this.data.contacts.filter(c => c.role === 'packaging').map(c => 
+      pkgSelect.innerHTML = '<option value="">— Select packaging supplier —</option>' + this.data.contacts.filter(c => c.role === 'packaging').map(c => 
         `<option value="${tfEscapeHtml(c.id)}">${tfEscapeHtml(c.name)}</option>`
       ).join('');
     }
 
     if (transporterSelect) {
-      transporterSelect.innerHTML = this.data.contacts.filter(c => c.role === 'transporter').map(c => 
+      transporterSelect.innerHTML = '<option value="">— Select transporter —</option>' + this.data.contacts.filter(c => c.role === 'transporter').map(c => 
         `<option value="${tfEscapeHtml(c.id)}">${tfEscapeHtml(c.name)}</option>`
       ).join('');
     }
@@ -12510,6 +12755,14 @@ BANKING & PAYMENT COORDINATES:
         this.data.contacts.filter(c => c.role === 'marketeer').map(c => 
           `<option value="${tfEscapeHtml(c.id)}">${tfEscapeHtml(c.name)}</option>`
         ).join('');
+    }
+
+    // Quick-add buttons: one per pack size in the catalogue, labelled with its units per case.
+    const quickSizes = document.getElementById('new-order-quick-sizes');
+    if (quickSizes) {
+      const sizes = [...new Map((this.data.products || []).filter(p => p.active !== false && (p.defaultPackSize || p.packSize))
+        .map(p => [p.defaultPackSize || p.packSize, Number(p.casePack) || this.casePackConfig[p.defaultPackSize || p.packSize] || this.config().defaultCasePack])).entries()].slice(0, 4);
+      quickSizes.innerHTML = sizes.map(([size, perCase]) => `<button type="button" onclick="app.quickAddSkuRow('${tfEscapeHtml(tfEscapeJs(size))}')" class="btn-tactile px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600 rounded-lg">+ ${tfEscapeHtml(size)} Row (${tfEscapeHtml(perCase)}/cs)</button>`).join('');
     }
   }
 
@@ -12528,32 +12781,25 @@ BANKING & PAYMENT COORDINATES:
 
     this.populateNewOrderSelects();
 
+    // A new order starts with no advance and the default payment terms (the buyer's own terms apply when chosen).
+    const advanceInput = document.getElementById('new-order-advance');
+    if (advanceInput) advanceInput.value = '';
+    const termsInput = document.getElementById('new-order-payment-terms');
+    if (termsInput) termsInput.value = this.config().defaultPaymentTerms;
+    const dateInput = document.getElementById('new-order-date');
+    if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
+
     // Sync carton packaging config inputs
     ['500g', '1kg', '5kg'].forEach(ps => {
       const el = document.getElementById(`master-pack-${ps}`);
-      if (el) el.value = this.casePackConfig[ps] || (ps === '1kg' ? 12 : (ps === '5kg' ? 4 : 24));
+      if (el) el.value = this.casePackConfig[ps] || this.config().defaultCasePack;
     });
 
-    // If no items are in the table yet, add a starter row
+    // If no items are in the table yet, add a starter row from the first active product.
     if (!this.orderSkuItems || this.orderSkuItems.length === 0) {
-      const defaultProd = this.data.products.find(p => p.shortName === 'MIX') || this.data.products[0];
-      const initialCasePack = this.casePackConfig['500g'] || 24;
-      this.orderSkuItems = [
-        {
-          productId: defaultProd.id,
-          name: defaultProd.name,
-          shortName: defaultProd.shortName || 'MIX',
-          variant: defaultProd.variant,
-          packSize: defaultProd.packSize || '500g',
-          casePack: initialCasePack,
-          cases: 4,
-          quantity: 4 * initialCasePack,
-          unitRate: defaultProd.standardSellingRate || 85.00,
-          totalAmount: 4 * initialCasePack * (defaultProd.standardSellingRate || 85.00),
-          baseCostPerUnit: defaultProd.baseMfgCost,
-          pkgCostPerUnit: defaultProd.packagingCost
-        }
-      ];
+      const defaultProd = (this.data.products || []).find(p => p.active !== false);
+      this.orderSkuItems = defaultProd ? [this.skuItemFromProduct(defaultProd, { cases: 1 })] : [];
+      if (!defaultProd) this.showToast('Add a product in the Products tab before creating an order.');
     }
 
     this.renderOrderSkuTable();
@@ -12610,31 +12856,15 @@ BANKING & PAYMENT COORDINATES:
   }
 
   // Load the exact WhatsApp order from the user's uploaded screenshot
+  // Sample WhatsApp message built from your own buyers and products, so it always parses.
   loadS3MDemoOrder() {
     const input = document.getElementById('whatsapp-order-input');
     if (!input) return;
-
-    input.value = 
-`S3m venture (order)
-Magic roots
-
-500gm
-MIX.        500gm. - 4case
-Mango.      500gm. - 5case
-MIRCH.      500gm - 4case
-CARROT      500gm - 4case
-GARLIC.     500gm- 4case
-KATHAL.     500gm 4case
-RED CHILLI  500gm - 4case
-DELLA.      500gm - 5case
-KARELA.     500gm - 2case.
-SWEET MANGO 500gm - 2case.
-SWEET LEMON 500gm - 2case.
-
-1kg
-Carrot 1kg - 2case
-Red chilli 1kg - 1case.
-Della 1kg - 1case.`;
+    const buyer = (this.data.contacts || []).find(c => c.role === 'retailer');
+    const products = (this.data.products || []).filter(p => p.active !== false).slice(0, 4);
+    if (!products.length) { this.showToast('Add products in the Products tab to load a sample order.'); return; }
+    input.value = [`${buyer ? buyer.name : 'Buyer name'} (order)`, '']
+      .concat(products.map((p, i) => `${p.shortName || p.name} ${p.defaultPackSize || p.packSize || ''} - ${i + 2}case`)).join('\n');
 
     this.parseWhatsAppOrderInput();
   }
@@ -12665,17 +12895,14 @@ Della 1kg - 1case.`;
 
     // 1. Detect Retailer / Brand
     const lowerText = rawText.toLowerCase();
-    let detectedRetailerId = null;
-
-    if (lowerText.includes('s3m') || lowerText.includes('magic root')) {
-      detectedRetailerId = 'CNT-08';
-    } else if (lowerText.includes('ganesh')) {
-      detectedRetailerId = 'CNT-01';
-    } else if (lowerText.includes('balaji')) {
-      detectedRetailerId = 'CNT-02';
-    } else if (lowerText.includes('royal')) {
-      detectedRetailerId = 'CNT-03';
-    }
+    // Match the message against your own retailers: full name first, else the distinctive words of the name.
+    const genericWords = /^(traders?|stores?|mart|super|market|foods?|enterprises?|private|limited|pvt|ltd|and|the|company|co)$/;
+    const bestRetailer = (this.data.contacts || []).filter(c => c.role === 'retailer' && c.name).map(c => {
+      const name = String(c.name).toLowerCase();
+      const words = name.split(/[^a-z0-9]+/).filter(w => w.length > 2 && !genericWords.test(w));
+      return { id: c.id, score: lowerText.includes(name) ? 100 : words.filter(w => new RegExp('\\b' + w + '\\b').test(lowerText)).length };
+    }).filter(r => r.score > 0).sort((x, y) => y.score - x.score)[0];
+    let detectedRetailerId = bestRetailer ? bestRetailer.id : null;
 
     if (detectedRetailerId) {
       const retailerSelect = document.getElementById('new-order-retailer');
@@ -12691,6 +12918,7 @@ Della 1kg - 1case.`;
     const lines = rawText.split('\n');
     let currentPackSize = '500g';
     const parsedItems = [];
+    const unmatchedLines = [];
 
     for (let rawLine of lines) {
       const line = rawLine.trim();
@@ -12712,7 +12940,7 @@ Della 1kg - 1case.`;
       }
 
       // Skip lines that are purely brand names or headers without cases
-      if ((lower.includes('s3m') || lower.includes('magic root') || lower === 'order') && !line.includes('case')) {
+      if (lower === 'order' && !line.includes('case')) {
         continue;
       }
 
@@ -12761,46 +12989,15 @@ Della 1kg - 1case.`;
         flavourKey = 'MIX';
       }
 
-      // Match product from catalog
-      let product = this.data.products.find(p => 
-        (p.shortName || '').toUpperCase() === flavourKey.toUpperCase() && 
-        (p.packSize === itemPackSize || p.variant.includes(itemPackSize))
-      );
-
-      // Fallback if specific size not found
-      if (!product) {
-        product = this.data.products.find(p => (p.shortName || '').toUpperCase() === flavourKey.toUpperCase()) || this.data.products[0];
-      }
-
-      const casePack = this.casePackConfig[itemPackSize] || (itemPackSize === '1kg' ? 12 : (itemPackSize === '5kg' ? 4 : 24));
-      const quantity = cases * casePack;
-      
-      // Determine pre-agreed contract price
-      let unitRate = product.standardSellingRate || 85.00;
-      if (currentRetailer && currentRetailer.agreedRates && currentRetailer.agreedRates[itemPackSize]) {
-        unitRate = currentRetailer.agreedRates[itemPackSize];
-      } else if (itemPackSize === '500g') {
-        unitRate = 85.00;
-      } else if (itemPackSize === '1kg') {
-        unitRate = 155.00;
-      } else if (itemPackSize === '5kg') {
-        unitRate = 590.00;
-      }
-
-      parsedItems.push({
-        productId: product.id,
-        name: product.name,
-        shortName: product.shortName || flavourKey,
-        variant: itemPackSize === '1kg' ? '1kg Glass Jar' : (itemPackSize === '5kg' ? '5kg Bulk Bucket' : '500g PET Jar'),
-        packSize: itemPackSize,
-        casePack: casePack,
-        cases: cases,
-        quantity: quantity,
-        unitRate: unitRate,
-        totalAmount: quantity * unitRate,
-        baseCostPerUnit: product.baseMfgCost,
-        pkgCostPerUnit: product.packagingCost
-      });
+      // Match a catalogue product named in the line (name or short name), preferring the same pack size;
+      // the keyword above is a fallback. Unknown products are reported, never swapped for another product.
+      const named = p => [p.name, p.shortName].filter(Boolean).some(n => lower.includes(String(n).toLowerCase()));
+      const sameSize = p => (p.defaultPackSize || p.packSize) === itemPackSize || (p.variant || '').includes(itemPackSize);
+      const byKey = p => flavourKey && (p.shortName || '').toUpperCase() === String(flavourKey).toUpperCase();
+      const product = this.data.products.find(p => named(p) && sameSize(p)) || this.data.products.find(p => byKey(p) && sameSize(p))
+        || this.data.products.find(named) || this.data.products.find(byKey);
+      if (!product) { unmatchedLines.push(line); continue; }
+      parsedItems.push(this.skuItemFromProduct(product, { packSize: itemPackSize, cases }));
     }
 
     if (parsedItems.length > 0) {
@@ -12815,7 +13012,7 @@ Della 1kg - 1case.`;
         status.innerHTML = `
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
           <span class="font-bold text-emerald-600 dark:text-emerald-400">
-            ✅ Parsed ${tfEscapeHtml(parsedItems.length)} SKUs (${tfEscapeHtml(totalCases)} Cases, ${tfEscapeHtml(totalJars.toLocaleString('en-IN'))} Jars). Pre-agreed rates auto-applied!
+            ✅ Parsed ${tfEscapeHtml(parsedItems.length)} SKUs (${tfEscapeHtml(totalCases)} Cases, ${tfEscapeHtml(totalJars.toLocaleString('en-IN'))} Units).${unmatchedLines.length ? ` ⚠️ Not in catalogue: ${tfEscapeHtml(unmatchedLines.join(' · '))}` : ''}
           </span>
         `;
       }
@@ -12892,14 +13089,14 @@ Della 1kg - 1case.`;
     if (mfgSelect) mfgSelect.value = order.manufacturerId || '';
     if (pkgSelect) pkgSelect.value = order.packagingVendorId || '';
     if (transporterSelect) transporterSelect.value = order.transporterId || '';
-    if (termsInput) termsInput.value = order.paymentTerms || 'Net 15 Days';
+    if (termsInput) termsInput.value = order.paymentTerms || this.config().defaultPaymentTerms;
     if (advanceInput && order.customerAdvanceReceived) advanceInput.value = order.customerAdvanceReceived;
 
     if (order.items && order.items.length > 0) {
       this.orderSkuItems = order.items.map(item => {
         const prod = this.data.products.find(p => p.id === item.productId) || this.data.products[0];
         const packSize = prod.packSize || (item.variant.includes('1kg') ? '1kg' : '500g');
-        const casePack = item.casePack || this.casePackConfig[packSize] || prod.casePack || (packSize === '1kg' ? 12 : 24);
+        const casePack = item.casePack || this.casePackConfig[packSize] || prod.casePack || this.config().defaultCasePack;
         const cases = item.cases || Math.ceil(item.quantity / casePack);
         return {
           productId: prod.id,
@@ -13094,22 +13291,27 @@ Della 1kg - 1case.`;
     this.recomputeOrderTotals();
   }
 
+  // One order line from a catalogue product: its own price (or the buyer's agreed rate), costs, GST and HSN.
+  skuItemFromProduct(prod, { packSize, cases = 1, unitRate } = {}) {
+    const size = packSize || prod.defaultPackSize || prod.packSize || '';
+    const casePack = (size === (prod.defaultPackSize || prod.packSize) && Number(prod.casePack)) || this.casePackConfig[size] || Number(prod.casePack) || this.config().defaultCasePack;
+    const retailerId = document.getElementById('new-order-retailer') ? document.getElementById('new-order-retailer').value : '';
+    const retailer = this.data.contacts.find(c => c.id === retailerId);
+    const agreed = retailer && retailer.agreedRates && retailer.agreedRates[size];
+    const rate = Number(unitRate ?? agreed ?? prod.defaultUnitRate ?? prod.standardSellingRate) || 0;
+    return {
+      productId: prod.id, name: prod.name, shortName: prod.shortName || prod.name, variant: prod.variant || size,
+      packSize: size, casePack, cases, quantity: cases * casePack, unitRate: rate, totalAmount: cases * casePack * rate,
+      baseCostPerUnit: prod.baseCostPerUnit ?? prod.baseMfgCost, pkgCostPerUnit: prod.pkgCostPerUnit ?? prod.pkgCost ?? prod.packagingCost,
+      gstRate: this.itemGstRate({ productId: prod.id }), hsn: prod.hsn
+    };
+  }
+
   updateSkuRowProduct(idx, productId) {
     const item = this.orderSkuItems[idx];
     const prod = this.data.products.find(p => p.id === productId);
     if (!item || !prod) return;
-
-    item.productId = prod.id;
-    item.name = prod.name;
-    item.shortName = prod.shortName || prod.name;
-    item.variant = prod.variant;
-    item.packSize = prod.packSize || (prod.variant.includes('1kg') ? '1kg' : '500g');
-    item.casePack = this.casePackConfig[item.packSize] || prod.casePack || (item.packSize === '1kg' ? 12 : 24);
-    item.baseCostPerUnit = prod.baseMfgCost;
-    item.pkgCostPerUnit = prod.packagingCost;
-    item.quantity = item.cases * item.casePack;
-    item.totalAmount = item.quantity * item.unitRate;
-
+    this.orderSkuItems[idx] = this.skuItemFromProduct(prod, { cases: item.cases || 1 });
     this.renderOrderSkuTable();
     this.recomputeOrderTotals();
   }
@@ -13117,99 +13319,36 @@ Della 1kg - 1case.`;
   updateSkuRowPackSize(idx, packSize) {
     const item = this.orderSkuItems[idx];
     if (!item) return;
-
-    item.packSize = packSize;
-    item.casePack = this.casePackConfig[packSize] || (packSize === '1kg' ? 12 : (packSize === '5kg' ? 4 : 24));
-    item.variant = packSize === '1kg' ? '1kg Glass Jar' : (packSize === '5kg' ? '5kg Bulk Bucket' : '500g PET Jar');
-    
-    // Check if retailer has agreed rate for this packSize
-    const retailer = this.data.contacts.find(c => c.id === (document.getElementById('new-order-retailer') ? document.getElementById('new-order-retailer').value : ''));
-    if (retailer && retailer.agreedRates && retailer.agreedRates[packSize]) {
-      item.unitRate = retailer.agreedRates[packSize];
-    } else {
-      item.unitRate = packSize === '1kg' ? 155.00 : (packSize === '5kg' ? 590.00 : 85.00);
-    }
-
-    item.quantity = item.cases * item.casePack;
-    item.totalAmount = item.quantity * item.unitRate;
-
+    // Prefer the catalogue product of the same name in that pack size; else keep the product and its price.
+    const sameLine = this.data.products.find(p => p.name === item.name && (p.defaultPackSize || p.packSize) === packSize);
+    const prod = sameLine || this.data.products.find(p => p.id === item.productId);
+    if (!prod) return;
+    this.orderSkuItems[idx] = this.skuItemFromProduct(prod, { packSize, cases: item.cases || 1, unitRate: sameLine ? undefined : item.unitRate });
     this.renderOrderSkuTable();
     this.recomputeOrderTotals();
   }
 
   addEmptySkuRow() {
-    const prod = this.data.products[0];
-    const packSize = prod.packSize || '500g';
-    const casePack = this.casePackConfig[packSize] || prod.casePack || 24;
-    const rate = prod.standardSellingRate || 85.00;
-    this.orderSkuItems.push({
-      productId: prod.id,
-      name: prod.name,
-      shortName: prod.shortName || 'Mango',
-      variant: prod.variant,
-      packSize: packSize,
-      casePack: casePack,
-      cases: 2,
-      quantity: 2 * casePack,
-      unitRate: rate,
-      totalAmount: 2 * casePack * rate,
-      baseCostPerUnit: prod.baseMfgCost,
-      pkgCostPerUnit: prod.packagingCost
-    });
-
+    const prod = (this.data.products || []).find(p => p.active !== false);
+    if (!prod) { this.showToast('Add a product in the Products tab first.'); return; }
+    this.orderSkuItems.push(this.skuItemFromProduct(prod, { cases: 1 }));
     this.renderOrderSkuTable();
     this.recomputeOrderTotals();
   }
 
   quickAddSkuRow(packSize) {
-    const prod = this.data.products.find(p => p.packSize === packSize) || this.data.products[0];
-    const casePack = this.casePackConfig[packSize] || (packSize === '1kg' ? 12 : (packSize === '5kg' ? 4 : 24));
-    const rate = packSize === '1kg' ? 155.00 : (packSize === '5kg' ? 590.00 : 85.00);
-
-    this.orderSkuItems.push({
-      productId: prod.id,
-      name: prod.name,
-      shortName: prod.shortName || prod.name,
-      variant: packSize === '1kg' ? '1kg Glass Jar' : (packSize === '5kg' ? '5kg Bulk Bucket' : '500g PET Jar'),
-      packSize: packSize,
-      casePack: casePack,
-      cases: 2,
-      quantity: 2 * casePack,
-      unitRate: rate,
-      totalAmount: 2 * casePack * rate,
-      baseCostPerUnit: prod.baseMfgCost,
-      pkgCostPerUnit: prod.packagingCost
-    });
-
+    const prod = (this.data.products || []).find(p => p.active !== false && (p.defaultPackSize || p.packSize) === packSize);
+    if (!prod) { this.showToast(`No product with pack size ${packSize} in the catalogue.`); return; }
+    this.orderSkuItems.push(this.skuItemFromProduct(prod, { packSize, cases: 1 }));
     this.renderOrderSkuTable();
     this.recomputeOrderTotals();
   }
 
   quickInsertFlavour(flavourKey, packSize, cases) {
-    const prod = this.data.products.find(p => 
-      (p.shortName || '').toUpperCase() === flavourKey.toUpperCase() && 
-      (p.packSize === packSize || p.variant.includes(packSize))
-    ) || this.data.products[0];
-
-    const casePack = this.casePackConfig[packSize] || (packSize === '1kg' ? 12 : (packSize === '5kg' ? 4 : 24));
-    const retailer = this.data.contacts.find(c => c.id === (document.getElementById('new-order-retailer') ? document.getElementById('new-order-retailer').value : ''));
-    const rate = (retailer && retailer.agreedRates && retailer.agreedRates[packSize]) || (packSize === '1kg' ? 155.00 : (packSize === '5kg' ? 590.00 : 85.00));
-
-    this.orderSkuItems.push({
-      productId: prod.id,
-      name: prod.name,
-      shortName: prod.shortName || flavourKey,
-      variant: packSize === '1kg' ? '1kg Glass Jar' : (packSize === '5kg' ? '5kg Bulk Bucket' : '500g PET Jar'),
-      packSize: packSize,
-      casePack: casePack,
-      cases: cases,
-      quantity: cases * casePack,
-      unitRate: rate,
-      totalAmount: cases * casePack * rate,
-      baseCostPerUnit: prod.baseMfgCost,
-      pkgCostPerUnit: prod.packagingCost
-    });
-
+    const prod = this.data.products.find(p => (p.shortName || '').toUpperCase() === String(flavourKey).toUpperCase() && ((p.defaultPackSize || p.packSize) === packSize || (p.variant || '').includes(packSize)))
+      || this.data.products.find(p => (p.shortName || '').toUpperCase() === String(flavourKey).toUpperCase());
+    if (!prod) { this.showToast(`No product "${flavourKey}" in the catalogue.`); return; }
+    this.orderSkuItems.push(this.skuItemFromProduct(prod, { packSize, cases }));
     this.renderOrderSkuTable();
     this.recomputeOrderTotals();
   }
@@ -13221,44 +13360,53 @@ Della 1kg - 1case.`;
   }
 
   // Real-Time Commercial Math & Profitability Engine
+  // Totals for a new order. Freight is not known yet, so it starts at 0 (entered later on the order).
+  newOrderFinancials(items, retailer, customerAdvance, marketeer) {
+    // State codes: the stored code, else the first two digits of the GSTIN.
+    const stateOf = party => party ? String(party.stateCode || (party.gstin ? String(party.gstin).slice(0, 2) : '')).padStart(party.stateCode || party.gstin ? 2 : 0, '0') : '';
+    const profileState = stateOf(this.data.businessProfile);
+    const buyerState = stateOf(retailer);
+    const isInterstate = Boolean(buyerState && profileState && buyerState !== profileState);
+    const gst = this.computeGst(items, isInterstate);
+    const costs = this.orderLineCosts(items);
+    const commissionRate = marketeer ? (Number.isFinite(Number(marketeer.commissionRate)) && marketeer.commissionRate !== '' && marketeer.commissionRate !== undefined && marketeer.commissionRate !== null ? Number(marketeer.commissionRate) : this.config().defaultCommissionRate) : 0;
+    const marketeerComm = gst.taxable * commissionRate / 100;
+    const totalTransport = 0;
+    const totalDirectCosts = costs.manufacturing + costs.packaging + totalTransport + marketeerComm;
+    const netProfit = gst.taxable - totalDirectCosts;
+    return {
+      isInterstate, gst, costs, commissionRate, marketeerComm, totalTransport, totalDirectCosts, netProfit,
+      balanceDue: Math.max(0, Math.round((gst.total - customerAdvance) * 100) / 100),
+      profitMargin: gst.taxable > 0 ? (netProfit / gst.taxable) * 100 : 0,
+      totalCases: (items || []).reduce((s, i) => s + (Number(i.cases) || 0), 0),
+      totalJars: (items || []).reduce((s, i) => s + (Number(i.quantity) || 0), 0)
+    };
+  }
+
+  // "Net 30 Days" / "30 days" / "Advance" -> due date counted from the order date.
+  dueDateFromTerms(orderDate, paymentTerms) {
+    const days = /(\d+)\s*day/i.exec(String(paymentTerms || ''));
+    const start = new Date((orderDate || new Date().toISOString().slice(0, 10)) + 'T00:00:00Z');
+    if (Number.isNaN(start.getTime())) return new Date().toISOString().slice(0, 10);
+    const defaultDays = /(\d+)\s*day/i.exec(this.config().defaultPaymentTerms);
+    start.setUTCDate(start.getUTCDate() + (days ? Number(days[1]) : (/advance|immediate|cash/i.test(String(paymentTerms || '')) ? 0 : (defaultDays ? Number(defaultDays[1]) : 15))));
+    return start.toISOString().slice(0, 10);
+  }
+
   recomputeOrderTotals() {
     const retailerId = document.getElementById('new-order-retailer') ? document.getElementById('new-order-retailer').value : '';
     const retailer = this.data.contacts.find(c => c.id === retailerId);
     const advanceInput = document.getElementById('new-order-advance');
     const customerAdvance = advanceInput ? (parseFloat(advanceInput.value) || 0) : 0;
 
-    let totalCases = 0;
-    let totalJars = 0;
-    let taxableSubtotal = 0;
-    let totalMfgCost = 0;
-    let totalPkgCost = 0;
-
-    (this.orderSkuItems || []).forEach(item => {
-      totalCases += (item.cases || 0);
-      totalJars += (item.quantity || 0);
-      taxableSubtotal += (item.totalAmount || 0);
-      totalMfgCost += (item.quantity || 0) * (item.baseCostPerUnit || 48);
-      totalPkgCost += (item.quantity || 0) * (item.pkgCostPerUnit || 11.5);
-    });
-
-    const isInterstate = retailer && retailer.stateCode && retailer.stateCode !== this.data.businessProfile.stateCode;
-    let cgstAmount = 0, sgstAmount = 0, igstAmount = 0;
-
-    if (isInterstate) {
-      igstAmount = taxableSubtotal * 0.12;
-    } else {
-      cgstAmount = taxableSubtotal * 0.06;
-      sgstAmount = taxableSubtotal * 0.06;
-    }
-
-    const grandTotal = taxableSubtotal + cgstAmount + sgstAmount + igstAmount;
-    const balanceDue = Math.max(0, grandTotal - customerAdvance);
-
-    const transportEst = 7000;
-    const marketeerComm = (document.getElementById('new-order-marketeer') && document.getElementById('new-order-marketeer').value) ? taxableSubtotal * 0.03 : 0;
-    const totalDirectCosts = totalMfgCost + totalPkgCost + transportEst + marketeerComm;
-    const netProfit = taxableSubtotal - totalDirectCosts;
-    const profitMargin = taxableSubtotal > 0 ? (netProfit / taxableSubtotal) * 100 : 0;
+    const marketeerId = document.getElementById('new-order-marketeer') ? document.getElementById('new-order-marketeer').value : '';
+    const marketeer = marketeerId ? this.data.contacts.find(c => c.id === marketeerId) : null;
+    const f = this.newOrderFinancials(this.orderSkuItems || [], retailer, customerAdvance, marketeer);
+    const { isInterstate, totalCases, totalJars, balanceDue, netProfit, profitMargin } = f;
+    const taxableSubtotal = f.gst.taxable;
+    const cgstAmount = f.gst.cgst, sgstAmount = f.gst.sgst, igstAmount = f.gst.igst;
+    const grandTotal = f.gst.total;
+    const labels = this.gstLabels({ gstRates: f.gst.rates }, isInterstate);
 
     // Update DOM summary elements
     const setEl = (id, val) => {
@@ -13270,7 +13418,7 @@ Della 1kg - 1case.`;
     setEl('summary-total-jars', totalJars.toLocaleString('en-IN'));
     setEl('summary-taxable-subtotal', this.formatCurrency(taxableSubtotal));
     setEl('summary-gst-amount', this.formatCurrency(cgstAmount + sgstAmount + igstAmount));
-    setEl('summary-gst-label', isInterstate ? 'IGST 12% (Inter-State)' : `CGST 6% (${this.formatCurrency(cgstAmount)}) + SGST 6% (${this.formatCurrency(sgstAmount)})`);
+    setEl('summary-gst-label', isInterstate ? `${labels.combined} (Inter-State)` : `${labels.cgst} ${this.formatCurrency(cgstAmount)} + ${labels.sgst} ${this.formatCurrency(sgstAmount)}`);
     setEl('summary-grand-total', this.formatCurrency(grandTotal));
     setEl('summary-balance-due', this.formatCurrency(balanceDue));
     setEl('summary-advance-chip', `Adv: ${this.formatCurrency(customerAdvance)}`);
@@ -13286,10 +13434,10 @@ Della 1kg - 1case.`;
     }
 
     const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
-    const rows = (order.items || []).map(item => `<tr><td>${tfEscapeHtml(escapeHtml(item.name))} ${tfEscapeHtml(escapeHtml(item.variant || ''))}</td><td>${tfEscapeHtml(escapeHtml(item.cases || 0))}</td><td>${tfEscapeHtml(escapeHtml(item.quantity || 0))}</td><td>₹${tfEscapeHtml(Number(item.unitRate || 0).toLocaleString('en-IN'))}</td><td>₹${tfEscapeHtml(Number(item.totalAmount || 0).toLocaleString('en-IN'))}</td></tr>`).join('');
+    const rows = (order.items || []).map(item => `<tr><td>${tfEscapeHtml(item.name)} ${tfEscapeHtml(item.variant || '')}</td><td>${tfEscapeHtml(item.cases || 0)}</td><td>${tfEscapeHtml(item.quantity || 0)}</td><td>₹${tfEscapeHtml(Number(item.unitRate || 0).toLocaleString('en-IN'))}</td><td>₹${tfEscapeHtml(Number(item.totalAmount || 0).toLocaleString('en-IN'))}</td></tr>`).join('');
     const wrapper = document.createElement('div');
     wrapper.style.cssText = 'position:fixed;left:-10000px;top:0;width:760px;background:#fff;color:#172033;padding:36px;font:14px Arial,sans-serif;';
-    wrapper.innerHTML = `<h1 style="margin:0 0 6px;font-size:24px">WhatsApp Order Record</h1><p style="margin:0 0 20px;color:#475569">Internal order record · not a tax invoice or bill</p><table style="width:100%;border-collapse:collapse;margin-bottom:20px"><tbody><tr><th style="text-align:left;padding:6px;border-bottom:1px solid #cbd5e1">Order</th><td style="padding:6px;border-bottom:1px solid #cbd5e1">${tfEscapeHtml(escapeHtml(order.id))}</td><th style="text-align:left;padding:6px;border-bottom:1px solid #cbd5e1">Date</th><td style="padding:6px;border-bottom:1px solid #cbd5e1">${tfEscapeHtml(escapeHtml(order.date))}</td></tr><tr><th style="text-align:left;padding:6px;border-bottom:1px solid #cbd5e1">Buyer</th><td colspan="3" style="padding:6px;border-bottom:1px solid #cbd5e1">${tfEscapeHtml(escapeHtml(order.retailerName))}</td></tr></tbody></table><table style="width:100%;border-collapse:collapse"><thead><tr>${['Product','Cases','Units','Rate','Line total'].map(x => `<th style="text-align:left;padding:8px;background:#f1f5f9;border:1px solid #cbd5e1">${tfEscapeHtml(x)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table><p style="text-align:right;font-weight:bold;margin:16px 0">Order total: ₹${tfEscapeHtml(Number(order.totalInvoiceAmount || 0).toLocaleString('en-IN'))}</p><h2 style="font-size:16px;margin:24px 0 8px">Original WhatsApp message</h2><pre style="white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;background:#f8fafc;border:1px solid #cbd5e1;font:12px/1.5 Arial,sans-serif">${tfEscapeHtml(escapeHtml(sourceText))}</pre>`;
+    wrapper.innerHTML = `<h1 style="margin:0 0 6px;font-size:24px">WhatsApp Order Record</h1><p style="margin:0 0 20px;color:#475569">Internal order record · not a tax invoice or bill</p><table style="width:100%;border-collapse:collapse;margin-bottom:20px"><tbody><tr><th style="text-align:left;padding:6px;border-bottom:1px solid #cbd5e1">Order</th><td style="padding:6px;border-bottom:1px solid #cbd5e1">${tfEscapeHtml(order.id)}</td><th style="text-align:left;padding:6px;border-bottom:1px solid #cbd5e1">Date</th><td style="padding:6px;border-bottom:1px solid #cbd5e1">${tfEscapeHtml(order.date)}</td></tr><tr><th style="text-align:left;padding:6px;border-bottom:1px solid #cbd5e1">Buyer</th><td colspan="3" style="padding:6px;border-bottom:1px solid #cbd5e1">${tfEscapeHtml(order.retailerName)}</td></tr></tbody></table><table style="width:100%;border-collapse:collapse"><thead><tr>${['Product','Cases','Units','Rate','Line total'].map(x => `<th style="text-align:left;padding:8px;background:#f1f5f9;border:1px solid #cbd5e1">${tfEscapeHtml(x)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table><p style="text-align:right;font-weight:bold;margin:16px 0">Order total: ₹${tfEscapeHtml(Number(order.totalInvoiceAmount || 0).toLocaleString('en-IN'))}</p><h2 style="font-size:16px;margin:24px 0 8px">Original WhatsApp message</h2><pre style="white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;background:#f8fafc;border:1px solid #cbd5e1;font:12px/1.5 Arial,sans-serif">${tfEscapeHtml(sourceText)}</pre>`;
     document.body.appendChild(wrapper);
     try {
       const blob = await window.html2pdf().set({ margin: 8, filename: `${order.id}_WhatsApp_Order_Record.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 1.5, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(wrapper).outputPdf('blob');
@@ -13323,38 +13471,27 @@ Della 1kg - 1case.`;
     }
 
     if (!this.orderSkuItems || this.orderSkuItems.length === 0) {
-      this.showToast('⚠️ Please add at least one Pickle Variety line.');
+      this.showToast('⚠️ Please add at least one product line.');
       return;
     }
 
     const marketeerId = document.getElementById('new-order-marketeer') ? document.getElementById('new-order-marketeer').value : '';
     const marketeer = marketeerId ? this.data.contacts.find(c => c.id === marketeerId) : null;
-    const mfgId = document.getElementById('new-order-mfg') ? document.getElementById('new-order-mfg').value : 'CNT-04';
-    const mfg = this.data.contacts.find(c => c.id === mfgId) || this.data.contacts.find(c => c.role === 'manufacturer');
-    const pkgId = document.getElementById('new-order-pkg') ? document.getElementById('new-order-pkg').value : 'CNT-05';
-    const pkg = this.data.contacts.find(c => c.id === pkgId) || this.data.contacts.find(c => c.role === 'packaging');
-    const transporterId = document.getElementById('new-order-transporter') ? document.getElementById('new-order-transporter').value : 'CNT-06';
-    const transporter = this.data.contacts.find(c => c.id === transporterId) || this.data.contacts.find(c => c.role === 'transporter');
+    const mfgId = document.getElementById('new-order-mfg') ? document.getElementById('new-order-mfg').value : '';
+    // Only partners actually chosen on the form; an empty choice stays empty.
+    const mfg = this.data.contacts.find(c => c.id === mfgId) || null;
+    const pkgId = document.getElementById('new-order-pkg') ? document.getElementById('new-order-pkg').value : '';
+    const pkg = this.data.contacts.find(c => c.id === pkgId) || null;
+    const transporterId = document.getElementById('new-order-transporter') ? document.getElementById('new-order-transporter').value : '';
+    const transporter = this.data.contacts.find(c => c.id === transporterId) || null;
 
-    const paymentTerms = (document.getElementById('new-order-payment-terms') ? document.getElementById('new-order-payment-terms').value : '') || 'Net 15 Days';
+    const paymentTerms = (document.getElementById('new-order-payment-terms') ? document.getElementById('new-order-payment-terms').value : '') || this.config().defaultPaymentTerms;
     const orderDate = (document.getElementById('new-order-date') ? document.getElementById('new-order-date').value : '') || new Date().toISOString().split('T')[0];
     const advanceInput = document.getElementById('new-order-advance');
     const customerAdvance = advanceInput ? (parseFloat(advanceInput.value) || 0) : 0;
     const advanceMode = (document.getElementById('new-order-advance-mode') ? document.getElementById('new-order-advance-mode').value : '') || 'NEFT / Bank Transfer';
 
-    let totalCases = 0;
-    let totalJars = 0;
-    let taxableSubtotal = 0;
-    let totalMfgCost = 0;
-    let totalPkgCost = 0;
-
     const orderItems = this.orderSkuItems.map(item => {
-      totalCases += (item.cases || 0);
-      totalJars += (item.quantity || 0);
-      taxableSubtotal += (item.totalAmount || 0);
-      totalMfgCost += (item.quantity || 0) * (item.baseCostPerUnit || 48);
-      totalPkgCost += (item.quantity || 0) * (item.pkgCostPerUnit || 11.5);
-
       return {
         productId: item.productId,
         name: item.name,
@@ -13367,38 +13504,30 @@ Della 1kg - 1case.`;
         unitRate: item.unitRate,
         totalAmount: item.totalAmount,
         baseCostPerUnit: item.baseCostPerUnit,
-        pkgCostPerUnit: item.pkgCostPerUnit
+        pkgCostPerUnit: item.pkgCostPerUnit,
+        gstRate: this.itemGstRate(item)
       };
     });
 
-    const isInterstate = retailer.stateCode !== this.data.businessProfile.stateCode;
-    let cgstRate = 0, sgstRate = 0, igstRate = 0;
-    let cgstAmount = 0, sgstAmount = 0, igstAmount = 0;
+    const f = this.newOrderFinancials(orderItems, retailer, customerAdvance, marketeer);
+    const { isInterstate, totalCases, totalJars, totalTransport, marketeerComm, totalDirectCosts, netProfit, profitMargin } = f;
+    const taxableSubtotal = f.gst.taxable;
+    const singleRate = f.gst.rates.length === 1 ? f.gst.rates[0] : null;
+    const cgstRate = !isInterstate && singleRate !== null ? singleRate / 2 : 0;
+    const sgstRate = cgstRate;
+    const igstRate = isInterstate && singleRate !== null ? singleRate : 0;
+    const cgstAmount = f.gst.cgst, sgstAmount = f.gst.sgst, igstAmount = f.gst.igst;
+    const totalInvoiceAmount = f.gst.total;
+    const customerBalanceDue = f.balanceDue;
+    const totalMfgCost = f.costs.manufacturing;
+    const totalPkgCost = f.costs.packaging;
+    const transportEst1 = 0;
+    const transportEst2 = 0;
 
-    if (isInterstate) {
-      igstRate = 12;
-      igstAmount = taxableSubtotal * 0.12;
-    } else {
-      cgstRate = 6;
-      sgstRate = 6;
-      cgstAmount = taxableSubtotal * 0.06;
-      sgstAmount = taxableSubtotal * 0.06;
-    }
-
-    const totalInvoiceAmount = taxableSubtotal + cgstAmount + sgstAmount + igstAmount;
-    const customerBalanceDue = Math.max(0, totalInvoiceAmount - customerAdvance);
-
-    const transportEst1 = 2000;
-    const transportEst2 = 5000;
-    const totalTransport = transportEst1 + transportEst2;
-    const marketeerComm = marketeer ? taxableSubtotal * 0.03 : 0;
-    const totalDirectCosts = totalMfgCost + totalPkgCost + totalTransport + marketeerComm;
-    const netProfit = taxableSubtotal - totalDirectCosts;
-    const profitMargin = taxableSubtotal > 0 ? (netProfit / taxableSubtotal) * 100 : 0;
-
-    const nextOrderNum = this.data.orders.length + 1001;
-    const orderId = `ORD-${nextOrderNum}`;
-    const invoiceNum = `INV-${nextOrderNum}`;
+    const numbers = this.nextOrderNumbers();
+    const nextOrderNum = numbers.n;
+    const orderId = numbers.orderId;
+    const invoiceNum = numbers.invoiceNumber;
 
     const status = customerAdvance > 0 ? 'action_needed' : 'in_production';
     const urgentAlert = customerAdvance > 0 ? `⚠️ Advance in Hand (${this.formatCurrency(customerAdvance)})! Place Manufacturer PO!` : null;
@@ -13411,11 +13540,11 @@ Della 1kg - 1case.`;
       retailerName: retailer.name,
       marketeerId: marketeer ? marketeer.id : null,
       marketeerName: marketeer ? marketeer.name : 'Direct',
-      marketeerCommissionRate: marketeer ? 3.0 : 0.0,
+      marketeerCommissionRate: f.commissionRate,
       status: status,
       urgentAlert: urgentAlert,
       paymentTerms: paymentTerms,
-      dueDate: new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0],
+      dueDate: this.dueDateFromTerms(orderDate, paymentTerms),
       items: orderItems,
       taxableSubtotal: taxableSubtotal,
       gstType: isInterstate ? 'inter' : 'intra',
@@ -13425,24 +13554,26 @@ Della 1kg - 1case.`;
       cgstAmount: cgstAmount,
       sgstAmount: sgstAmount,
       igstAmount: igstAmount,
+      gstRates: f.gst.rates,
       totalInvoiceAmount: totalInvoiceAmount,
+      costsIncomplete: f.costs.incomplete,
       customerAdvanceReceived: customerAdvance,
       customerAdvanceDate: orderDate,
       customerAdvanceMode: advanceMode,
       customerBalanceDue: customerBalanceDue,
       packagingVendorId: pkg ? pkg.id : '',
-      packagingVendorName: pkg ? pkg.name : 'Packaging Supplier',
+      packagingVendorName: pkg ? pkg.name : '',
       packagingCost: totalPkgCost,
       packagingAdvancePaid: 0.0,
       packagingStatus: 'po_draft',
       manufacturerId: mfg ? mfg.id : '',
-      manufacturerName: mfg ? mfg.name : 'Factory',
+      manufacturerName: mfg ? mfg.name : '',
       manufacturerTotalCost: totalMfgCost,
-      manufacturerAdvanceRequired: totalMfgCost * 0.3,
+      manufacturerAdvanceRequired: totalMfgCost * this.config().manufacturerAdvancePct / 100,
       manufacturerAdvancePaid: 0.0,
       manufacturerStatus: 'not_started',
       transporterId: transporter ? transporter.id : '',
-      transporterName: transporter ? transporter.name : 'Transporter',
+      transporterName: transporter ? transporter.name : '',
       transportLeg1Cost: transportEst1,
       transportLeg2Cost: transportEst2,
       totalTransportCost: totalTransport,
@@ -13503,7 +13634,10 @@ Della 1kg - 1case.`;
         existingOrder.retailerName = retailer.name;
         existingOrder.marketeerId = marketeer ? marketeer.id : null;
         existingOrder.marketeerName = marketeer ? marketeer.name : 'Direct';
-        existingOrder.marketeerCommissionRate = marketeer ? 3.0 : 0.0;
+        existingOrder.marketeerCommissionRate = f.commissionRate;
+        existingOrder.gstRates = f.gst.rates;
+        existingOrder.costsIncomplete = f.costs.incomplete;
+        existingOrder.dueDate = this.dueDateFromTerms(orderDate, paymentTerms);
         existingOrder.paymentTerms = paymentTerms;
         existingOrder.items = orderItems;
         existingOrder.taxableSubtotal = taxableSubtotal;
@@ -13519,17 +13653,19 @@ Della 1kg - 1case.`;
         existingOrder.customerAdvanceMode = advanceMode;
         existingOrder.customerBalanceDue = customerBalanceDue;
         existingOrder.packagingVendorId = pkg ? pkg.id : '';
-        existingOrder.packagingVendorName = pkg ? pkg.name : 'Packaging Supplier';
+        existingOrder.packagingVendorName = pkg ? pkg.name : '';
         existingOrder.packagingCost = totalPkgCost;
         existingOrder.manufacturerId = mfg ? mfg.id : '';
-        existingOrder.manufacturerName = mfg ? mfg.name : 'Factory';
+        existingOrder.manufacturerName = mfg ? mfg.name : '';
         existingOrder.manufacturerTotalCost = totalMfgCost;
         existingOrder.transporterId = transporter ? transporter.id : '';
-        existingOrder.transporterName = transporter ? transporter.name : 'Transporter';
+        existingOrder.transporterName = transporter ? transporter.name : '';
         existingOrder.marketeerCommissionAmount = marketeerComm;
-        existingOrder.totalDirectCosts = totalDirectCosts;
-        existingOrder.netProfit = netProfit;
-        existingOrder.profitMarginPercent = profitMargin;
+        // Keep freight already entered on the order; a new order starts with none.
+        const existingFreight = Number(existingOrder.totalTransportCost) || 0;
+        existingOrder.totalDirectCosts = totalDirectCosts + existingFreight;
+        existingOrder.netProfit = netProfit - existingFreight;
+        existingOrder.profitMarginPercent = taxableSubtotal > 0 ? (existingOrder.netProfit / taxableSubtotal) * 100 : 0;
 
         retailer.currentBalanceDue = (retailer.currentBalanceDue || 0) + customerBalanceDue;
 
@@ -13581,8 +13717,8 @@ Della 1kg - 1case.`;
       mfgId: mfg ? mfg.id : '',
       pkgId: pkg ? pkg.id : '',
       transporterId: transporter ? transporter.id : '',
-      lrNumber,
-      notes: notesInput?.value || ''
+      lrNumber: newOrder.lrNumber || '',
+      notes: newOrder.notes || ''
     };
 
     this.saveData();
@@ -13680,18 +13816,12 @@ Della 1kg - 1case.`;
     const container = document.getElementById('factory-po-content-container');
     if (!container) return;
 
-    const mfg = this.data.contacts.find(c => c.id === order.manufacturerId) || 
-                this.data.contacts.find(c => c.role === 'manufacturer') || {
-                  name: "Shri Saurashtra Agro & Food Processors",
-                  contactPerson: "Dhirajbhai Vithlani",
-                  phone: "+91 98250 88301",
-                  billingAddress: "Survey No. 142/2, Gondal Road, Rajkot, Gujarat",
-                  gstin: "24AAJCS4412L1ZK"
-                };
+    // Only the manufacturer chosen on this order; never substitute another factory.
+    const mfg = this.data.contacts.find(c => c.id === order.manufacturerId) || { name: order.manufacturerName || 'Manufacturer not set', contactPerson: '', phone: '', billingAddress: '', gstin: '' };
 
     const retailer = this.data.contacts.find(c => c.id === order.retailerId) || {
       name: order.retailerName,
-      brandName: "Magic Roots"
+      brandName: order.retailerName || ''
     };
 
     const brandLabel = retailer.brandName || retailer.name;
@@ -13704,7 +13834,7 @@ Della 1kg - 1case.`;
 
     const itemsRows = (order.items || []).map((item, idx) => {
       const cases = item.cases || Math.ceil(item.quantity / (item.casePack || 24));
-      const casePack = item.casePack || ((item.variant || '').includes('1kg') ? 12 : 24);
+      const casePack = item.casePack || this.casePackConfig[item.packSize] || this.config().defaultCasePack;
       const jars = item.quantity;
       const weightPerUnit = (item.variant || '').includes('1kg') ? 1.0 : ((item.variant || '').includes('5kg') ? 5.0 : 0.5);
       const lineWeight = jars * weightPerUnit;
@@ -13759,7 +13889,7 @@ Della 1kg - 1case.`;
           <div>
             <span class="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Manufacturing Unit (Processor):</span>
             <h4 class="text-sm font-bold text-slate-900">${tfEscapeHtml(mfg.name)}</h4>
-            <p class="text-xs text-slate-700 mt-0.5">Attn: <span class="font-bold">${tfEscapeHtml(mfg.contactPerson || 'Factory Manager')}</span> (${tfEscapeHtml(mfg.phone)})</p>
+            <p class="text-xs text-slate-700 mt-0.5">Attn: <span class="font-bold">${tfEscapeHtml(mfg.contactPerson || '')}</span> (${tfEscapeHtml(mfg.phone)})</p>
             <p class="text-xs text-slate-600 mt-0.5">${tfEscapeHtml(mfg.billingAddress)}</p>
             <p class="text-xs font-mono-num text-slate-700 mt-0.5">GSTIN: <strong>${tfEscapeHtml(mfg.gstin)}</strong></p>
           </div>
@@ -13778,7 +13908,7 @@ Della 1kg - 1case.`;
             <thead>
               <tr class="bg-slate-900 text-white font-bold uppercase tracking-wider text-[11px]">
                 <th class="py-2.5 px-3 text-center w-10">#</th>
-                <th class="py-2.5 px-3 min-w-[180px]">Pickle Variety / Recipe</th>
+                <th class="py-2.5 px-3 min-w-[180px]">Product</th>
                 <th class="py-2.5 px-3 w-28">Pack Spec</th>
                 <th class="py-2.5 px-3 text-right w-24">Cases</th>
                 <th class="py-2.5 px-3 text-center w-20">Pack</th>
@@ -13864,15 +13994,11 @@ Della 1kg - 1case.`;
       return;
     }
 
-    const mfg = this.data.contacts.find(c => c.id === order.manufacturerId) || 
-                this.data.contacts.find(c => c.role === 'manufacturer') || {
-                  name: "Dhirajbhai Vithlani",
-                  phone: "+91 98250 88301"
-                };
+    const mfg = this.data.contacts.find(c => c.id === order.manufacturerId) || { name: order.manufacturerName || 'Manufacturer not set', phone: '' };
 
     const retailer = this.data.contacts.find(c => c.id === order.retailerId) || {
       name: order.retailerName,
-      brandName: "Magic Roots"
+      brandName: order.retailerName || ''
     };
 
     const brandLabel = retailer.brandName || retailer.name;
@@ -13890,11 +14016,11 @@ Della 1kg - 1case.`;
     }).join('\n');
 
     let msg = `*JOB WORK PRODUCTION ORDER (PO)*\n`;
-    msg += `To: ${mfg.contactPerson || 'Dhirajbhai'} (${mfg.name})\n`;
+    msg += `To: ${mfg.contactPerson || mfg.name || 'Sir/Madam'} (${mfg.name})\n`;
     msg += `From: ${this.data.businessProfile.brandName} (${this.data.businessProfile.legalName})\n`;
     msg += `PO Ref: *${poNumber}* | Date: ${order.date}\n`;
     msg += `Brand / Label: *${brandLabel}*\n\n`;
-    msg += `Dear ${mfg.contactPerson || 'Dhirajbhai'}, please schedule bottling for the following pickle batch:\n\n`;
+    msg += `Dear ${mfg.contactPerson || mfg.name || 'Sir/Madam'}, please schedule bottling for the following production batch:\n\n`;
     msg += `*VARIETY & CASE BREAKDOWN:*\n`;
     msg += `${itemsText}\n\n`;
     msg += `*TOTAL BATCH:* *${totalCases} Master Cases* | *${totalJars.toLocaleString('en-IN')} Jars*\n`;
@@ -13906,7 +14032,7 @@ Della 1kg - 1case.`;
     msg += `4. Target Dispatch: Ready within 7-10 days.\n\n`;
     msg += `Kindly confirm batch acceptance. Advance processing payment initiated via NEFT.`;
 
-    const cleanPhone = (mfg.phone || '+91 98250 88301').replace(/[^0-9]/g, '');
+    const cleanPhone = (mfg.phone || '').replace(/[^0-9]/g, '');
     const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
   }
@@ -13917,25 +14043,30 @@ Della 1kg - 1case.`;
 
     const retailer = this.data.contacts.find(c => c.id === order.retailerId) || {
       name: order.retailerName,
-      brandName: "Magic Roots"
+      brandName: order.retailerName || ''
     };
     const brandLabel = retailer.brandName || retailer.name;
 
-    const petQty = (order.items || []).filter(i => (i.packSize || '').includes('500g')).reduce((s, i) => s + i.quantity, 0);
-    const glassQty = (order.items || []).filter(i => (i.packSize || '').includes('1kg')).reduce((s, i) => s + i.quantity, 0);
-
+    // Addressed to this order's packaging vendor, delivering to this order's manufacturer.
+    const vendor = this.data.contacts.find(c => c.id === order.packagingVendorId) || { name: order.packagingVendorName || '', contactPerson: '', phone: '' };
+    const factory = this.data.contacts.find(c => c.id === order.manufacturerId) || { name: order.manufacturerName || '', billingAddress: '' };
+    const phone = String(vendor.phone || '').replace(/\D/g, '').replace(/^0/, '');
+    if (!vendor.name || !phone) {
+      this.showToast('Add a packaging vendor with a phone number to this order first.');
+      return;
+    }
     let msg = `*PACKAGING SUPPLY ORDER*\n`;
-    msg += `To: Siddharth Jain (Apex Polymer & Flexo-Pack Ltd)\n`;
-    msg += `From: ${this.data.businessProfile.brandName}\n`;
+    msg += `To: ${[vendor.contactPerson, vendor.name].filter(Boolean).join(' – ')}\n`;
+    msg += `From: ${this.config().brand}\n`;
     msg += `For Brand: *${brandLabel}*\n\n`;
-    msg += `Please dispatch the following packaging materials directly to Shri Saurashtra Agro (Rajkot):\n\n`;
-    if (petQty > 0) msg += `• 500g PET Jars (Round): *${petQty.toLocaleString('en-IN')} pcs* + Gold Caps + Induction Wads\n`;
-    if (glassQty > 0) msg += `• 1kg Heavy Flint Glass Bottles: *${glassQty.toLocaleString('en-IN')} pcs* + Lug Closures\n`;
-    msg += `• Printed '${brandLabel}' Front & Back Labels: Required quantity for both sizes.\n\n`;
-    msg += `Dispatch Destination: Shri Saurashtra Agro, Gondal Road, Rajkot, Gujarat.\n`;
-    msg += `Kindly share LR copy as soon as loaded.`;
+    msg += `Please dispatch packaging for the following to ${factory.name || 'our manufacturer'}:\n\n`;
+    (order.items || []).forEach(item => {
+      msg += `• ${item.name}${item.packSize || item.variant ? ` (${item.packSize || item.variant})` : ''}: *${Number(item.quantity || 0).toLocaleString('en-IN')} units* with closures and labels\n`;
+    });
+    if (factory.billingAddress || factory.shippingAddress) msg += `\nDispatch to: ${factory.name}, ${factory.shippingAddress || factory.billingAddress}.\n`;
+    msg += `Kindly share the LR copy once loaded.`;
 
-    const url = `https://wa.me/919811054321?text=${encodeURIComponent(msg)}`;
+    const url = `https://wa.me/${phone.length === 10 ? '91' + phone : phone}?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
   }
 
@@ -13961,7 +14092,7 @@ Della 1kg - 1case.`;
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Pickle Factory Production PO & Job Work Slip</title>
+        <title>Manufacturer Production PO & Job Work Slip</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <script src="https://cdn.tailwindcss.com"></script>
@@ -14551,7 +14682,7 @@ Della 1kg - 1case.`;
       } else {
         const categoryLabels = {
           retailer: 'Buyer / Retailer',
-          manufacturer: 'Pickle Factory',
+          manufacturer: 'Manufacturer',
           packaging: 'Packaging',
           transporter: 'Transporter',
           other: 'Other'
@@ -14971,7 +15102,7 @@ Della 1kg - 1case.`;
           if (direction === 'paid') {
             if (catSelect) catSelect.value = 'manufacturer';
             this.onPaymentCategoryChanged('manufacturer');
-            const mfgTotal = order.manufacturerTotalCost || 100000;
+            const mfgTotal = Number(order.manufacturerTotalCost) || 0;
             const mfgPaid = order.manufacturerAdvancePaid || 0;
             const mfgRem = Math.max(0, mfgTotal - mfgPaid);
             if (amountInput && mfgRem > 0) amountInput.value = mfgRem;
@@ -15043,6 +15174,7 @@ Della 1kg - 1case.`;
       const utr = document.getElementById('pay-input-utr')?.value?.trim();
       const fileData = document.getElementById('pay-hidden-filedata')?.value;
       const fileType = document.getElementById('pay-hidden-filetype')?.value;
+      const fileName = document.getElementById('pay-hidden-filename')?.value || '';
       if ((party || amount || fileData) && !localStorage.getItem('tradeflow_pending_intake_draft')) {
         try {
           const isPdf = fileType === 'application/pdf' || (fileName || '').toLowerCase().endsWith('.pdf') || (typeof fileData === 'string' && fileData.startsWith('data:application/pdf'));
@@ -15181,7 +15313,7 @@ Della 1kg - 1case.`;
         const catSelect = document.getElementById('pay-select-category');
         if (direction === 'paid') {
           if (partyInput && (!partyInput.value || partyInput.value === order.retailerName)) {
-            partyInput.value = order.manufacturerName || 'NID Karnal Medicine';
+            partyInput.value = order.manufacturerName || '';
             this.setFieldHighlight('pay-input-party', 'pay-tag-party', true);
           }
           if (catSelect) {
@@ -15245,7 +15377,7 @@ Della 1kg - 1case.`;
     let autoFilledCount = 1; // order itself
 
     if (currentDirection === 'paid') {
-      const targetParty = order.manufacturerName || 'NID Karnal Medicine';
+      const targetParty = order.manufacturerName || '';
       if (partyInput) {
         partyInput.value = targetParty;
         this.setFieldHighlight('pay-input-party', 'pay-tag-party', true);
@@ -15261,7 +15393,7 @@ Della 1kg - 1case.`;
 
       // Suggest manufacturer advance or balance if blank
       if (amountInput && (!amountInput.value || Number(amountInput.value) === 0)) {
-        const mfgAmt = order.manufacturerAdvancePaid > 0 ? order.manufacturerAdvancePaid : (order.manufacturerTotalCost || 100000);
+        const mfgAmt = order.manufacturerAdvancePaid > 0 ? order.manufacturerAdvancePaid : (Number(order.manufacturerTotalCost) || 0);
         if (mfgAmt > 0) {
           amountInput.value = mfgAmt;
           this.setFieldHighlight('pay-input-amount', 'pay-tag-amount', true);
@@ -15786,6 +15918,8 @@ Della 1kg - 1case.`;
 
   /* ---------- LIVE BALANCE CALCULATION PILL ---------- */
   recalcPaymentLiveBalance() {
+    // Amount in words follows the amount however it was filled (typed, preset, order balance, auto-fill).
+    this.updatePaymentAmountWords(this.parseAmount(document.getElementById('pay-input-amount')?.value));
     const pill = document.getElementById('payment-live-balance-pill');
     if (!pill) return;
 
@@ -15802,7 +15936,7 @@ Della 1kg - 1case.`;
     }
 
     const direction = this.paymentsState.paymentFormDirection || 'received';
-    const thisAmount = parseFloat(document.getElementById('pay-input-amount')?.value) || 0;
+    const thisAmount = Math.max(0, this.parseAmount(document.getElementById('pay-input-amount')?.value));
 
     let total = 0;
     let paid = 0;
@@ -15818,12 +15952,12 @@ Della 1kg - 1case.`;
       const category = document.getElementById('pay-select-category')?.value || 'manufacturer';
       if (category === 'packaging') {
         title = `Packaging Vendor PO: ${order.packagingVendor || 'Vendor'} (${order.invoiceNumber || order.id})`;
-        total = order.packagingTotalCost || 25000;
+        total = Number(order.packagingTotalCost ?? order.packagingCost) || 0;
         paid = order.packagingAdvancePaid || 0;
         rem = Math.max(0, total - (paid + thisAmount));
       } else {
         title = `Manufacturer Advance: ${order.manufacturerName || 'Factory'} (${order.invoiceNumber || order.id})`;
-        total = order.manufacturerTotalCost || 100000;
+        total = Number(order.manufacturerTotalCost) || 0;
         paid = order.manufacturerAdvancePaid || 0;
         rem = Math.max(0, total - (paid + thisAmount));
       }
@@ -16109,7 +16243,7 @@ Della 1kg - 1case.`;
           </div>
           <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Manufacturer / Supplier</span>
-            <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-1">${tfEscapeHtml(order.manufacturerName || 'Anil Jaiswal Sonipat')}</h4>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-1">${tfEscapeHtml(order.manufacturerName || 'Manufacturer not set')}</h4>
             <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Supplier: ${tfEscapeHtml(order.manufacturerId || '—')}</p>
           </div>
           <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
@@ -16387,28 +16521,6 @@ Della 1kg - 1case.`;
     this.showToast('⚠️ Proceeding with separate transaction under manual override.');
   }
 
-  sendPaymentWhatsApp(payment) {
-    if (!payment) return;
-    const contact = (this.data.contacts || []).find(c => 
-      c.name.toLowerCase() === payment.partyName.toLowerCase() ||
-      c.name.toLowerCase().includes(payment.partyName.toLowerCase()) ||
-      payment.partyName.toLowerCase().includes(c.name.toLowerCase())
-    );
-    const phone = contact?.phone || contact?.whatsappPhone || '919876543210';
-    const cleanPhone = phone.replace(/[^0-9]/g, '');
-    const isPaid = payment.direction === 'paid';
-    const msg = `*TradeFlow Payment ${isPaid ? 'Disbursement' : 'Receipt'} Confirmation*\n\n` +
-      `*Party:* ${payment.partyName}\n` +
-      `*Order:* ${payment.orderRef || 'Settlement'}\n` +
-      `*Amount:* ${this.formatCurrency(payment.amount)}\n` +
-      `*Date:* ${this.formatDate(payment.date)}\n` +
-      `*Mode:* ${payment.mode || 'Bank Transfer'}\n` +
-      (payment.utr ? `*UTR / Ref:* ${payment.utr}\n` : '') +
-      (payment.notes ? `*Remarks:* ${payment.notes}\n` : '') +
-      `\n_Recorded and archived in TradeFlow Document Vault._`;
-    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-  }
-
   async submitPaymentCockpit() {
     const dateInput = document.getElementById('pay-input-date');
     const amountInput = document.getElementById('pay-input-amount');
@@ -16417,7 +16529,7 @@ Della 1kg - 1case.`;
     const orderErr = document.getElementById('pay-order-error');
 
     const date = dateInput?.value;
-    const amount = parseFloat(amountInput?.value) || 0;
+    const amount = this.parseAmount(amountInput?.value);
     const partyName = partyInput?.value?.trim();
     const partyType = document.getElementById('pay-select-category')?.value || 'other';
     const mode = document.getElementById('pay-select-mode')?.value || 'NEFT';
@@ -16471,6 +16583,25 @@ Della 1kg - 1case.`;
       return;
     }
 
+    // 5. Possible duplicate: same UTR, or same party, amount, date and direction, already in the ledger.
+    const sameUtr = utr.length >= 6 ? (this.data.payments || []).find(p => !p.isDeleted && p.id !== editId && String(p.utr || '').trim().toUpperCase() === utr) : null;
+    const sameEntry = (this.data.payments || []).find(p => !p.isDeleted && p.id !== editId && p.direction === direction && Number(p.amount) === amount && p.date === date && String(p.partyName || '').trim().toLowerCase() === partyName.toLowerCase());
+    const duplicate = sameUtr || sameEntry;
+    if (duplicate && !this._paymentDuplicateConfirmed) {
+      const recordAnyway = await this.showModalConfirm({
+        title: 'Possible Duplicate Payment',
+        subtitle: sameUtr ? 'Same UTR / reference' : 'Same party, amount and date',
+        message: `This looks like payment <b>${tfEscapeHtml(duplicate.id)}</b>: ${tfEscapeHtml(this.formatCurrency(duplicate.amount))} · ${tfEscapeHtml(duplicate.partyName || '')} · ${tfEscapeHtml(duplicate.date || '')}${duplicate.utr ? ` · UTR ${tfEscapeHtml(duplicate.utr)}` : ''}.<br><br>Recording it again would count the money twice.`,
+        confirmText: 'Record anyway',
+        confirmClass: 'bg-amber-600 hover:bg-amber-500',
+        icon: 'alert-triangle'
+      });
+      if (!recordAnyway) {
+        this.showToast('Not recorded: possible duplicate payment.');
+        return;
+      }
+    }
+
     // Smart file renaming
     const cleanParty = partyName.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30);
     const prefix = direction === 'paid' ? 'PaidTo' : 'RecvFrom';
@@ -16507,7 +16638,7 @@ Della 1kg - 1case.`;
         if (archResp.ok) {
           const archData = await archResp.json();
           if (archData && archData.success) {
-            savedDocUrl = archData.url || archData.path;
+            savedDocUrl = archData.fileUrl || archData.url || savedDocUrl; // web link, not the server's disk path
             isSavedToServer = true;
           }
         } else {
@@ -16550,27 +16681,12 @@ Della 1kg - 1case.`;
       }
     }
 
-    // Update order balances if attached to an order
-    if (orderRef) {
-      const order = this.findOrder(orderRef);
-      if (order) {
-        if (direction === 'received') {
-          order.customerAdvanceReceived = (order.customerAdvanceReceived || 0) + amount;
-          order.customerBalanceDue = Math.max(0, order.totalInvoiceAmount - order.customerAdvanceReceived);
-          if (order.customerBalanceDue === 0 && order.status === 'delivered_overdue') {
-            order.status = 'settled';
-          }
-        } else if (partyType === 'manufacturer') {
-          order.manufacturerAdvancePaid = (order.manufacturerAdvancePaid || 0) + amount;
-          if (order.status === 'action_needed') {
-            order.status = 'in_production';
-            order.urgentAlert = null;
-          }
-        } else if (partyType === 'packaging') {
-          order.packagingAdvancePaid = (order.packagingAdvancePaid || 0) + amount;
-        }
-      }
+    // Update order balances: when editing, first reverse the payment as it was saved, then apply the new values.
+    if (editId) {
+      const previous = (this.data.payments || []).find(p => p.id === editId);
+      if (previous && !previous.isDeleted) this.applyPaymentToOrder(previous, -1);
     }
+    this.applyPaymentToOrder({ orderRef, amount, direction, partyType }, 1);
 
     if (!this.data.payments) this.data.payments = [];
 
@@ -16595,7 +16711,7 @@ Della 1kg - 1case.`;
           direction,
           hasProof: !!(fileData || this.data.payments[idx].pd),
           pd: savedDocUrl || this.data.payments[idx].pd,
-          dataUrl: fileData || this.data.payments[idx].dataUrl,
+          dataUrl: isSavedToServer ? undefined : (fileData || this.data.payments[idx].dataUrl),
           pn: renamedFileName || this.data.payments[idx].pn,
           pt: fileType || this.data.payments[idx].pt,
           orderFolder: safeOrderFolder,
@@ -16622,7 +16738,7 @@ Della 1kg - 1case.`;
         direction,
         hasProof: !!fileData,
         pd: savedDocUrl,
-        dataUrl: fileData,
+        dataUrl: isSavedToServer ? undefined : fileData, // keep the file inline only if it could not be saved to disk
         pn: renamedFileName,
         pt: fileType,
         orderFolder: safeOrderFolder,
@@ -16662,22 +16778,7 @@ Della 1kg - 1case.`;
           this.data.payments.splice(idx, 1);
 
           // Revert order balance updates if attached
-          if (orderRef) {
-            const order = this.findOrder(orderRef);
-            if (order) {
-              if (direction === 'received') {
-                order.customerAdvanceReceived = Math.max(0, (order.customerAdvanceReceived || 0) - amount);
-                order.customerBalanceDue = Math.max(0, order.totalInvoiceAmount - order.customerAdvanceReceived);
-                if (order.status === 'settled' && order.customerBalanceDue > 0) {
-                  order.status = 'delivered_overdue';
-                }
-              } else if (partyType === 'manufacturer') {
-                order.manufacturerAdvancePaid = Math.max(0, (order.manufacturerAdvancePaid || 0) - amount);
-              } else if (partyType === 'packaging') {
-                order.packagingAdvancePaid = Math.max(0, (order.packagingAdvancePaid || 0) - amount);
-              }
-            }
-          }
+          this.applyPaymentToOrder({ orderRef, amount, direction, partyType }, -1);
 
           // Restore mobile snap to pending queue if it came from one
           if (paymentSnapshot.pendingMobileSnap) {
@@ -16872,7 +16973,7 @@ Della 1kg - 1case.`;
             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800/60">
               <td class="p-3 text-center font-mono-num text-slate-400 text-xs">${tfEscapeHtml(idx + 1)}</td>
               <td class="p-3">
-                <div class="font-bold text-slate-900 dark:text-white text-xs">${tfEscapeHtml(item.name || 'Pickle / Oil Product')}</div>
+                <div class="font-bold text-slate-900 dark:text-white text-xs">${tfEscapeHtml(item.name || 'Product')}</div>
                 <div class="text-[10px] text-slate-400 font-mono">${tfEscapeHtml(item.sku || item.productId || 'SKU')} · ${tfEscapeHtml(item.variant || item.packSize || '')}</div>
               </td>
               <td class="p-3 font-mono text-xs text-slate-600 dark:text-slate-300">${tfEscapeHtml(item.packSize || '—')}</td>
@@ -16885,17 +16986,18 @@ Della 1kg - 1case.`;
         }).join('');
       }
 
-      const mfgCost = order?.costing?.mfgCost || order?.manufacturerTotalCost || order?.mfgCost || 124800;
-      const pkgCost = order?.costing?.packagingCost || order?.packagingCost || 28560;
-      const transportCost = order?.costing?.transportCost || order?.totalTransportCost || 9500;
+      const mfgCost = Number(order?.costing?.mfgCost || order?.manufacturerTotalCost || order?.mfgCost) || 0;
+      const pkgCost = Number(order?.costing?.packagingCost || order?.packagingCost) || 0;
+      const transportCost = Number(order?.costing?.transportCost || order?.totalTransportCost) || 0;
       const totalCOGS = mfgCost + pkgCost + transportCost;
-      const taxableSubtotal = order?.taxableSubtotal || order?.subtotal || itemsSubtotal || 234400;
-      const cgst = order?.cgstAmount || (order?.gstAmount ? order.gstAmount / 2 : (taxableSubtotal * 0.06));
-      const sgst = order?.sgstAmount || (order?.gstAmount ? order.gstAmount / 2 : (taxableSubtotal * 0.06));
-      const totalGst = cgst + sgst + (order?.igstAmount || 0);
+      const taxableSubtotal = Number(order?.taxableSubtotal || order?.subtotal || itemsSubtotal) || 0;
+      const derivedGst = this.computeGst(order?.items || [], order?.gstType !== 'intra');
+      const cgst = order?.cgstAmount ?? (order?.gstAmount ? order.gstAmount / 2 : derivedGst.cgst);
+      const sgst = order?.sgstAmount ?? (order?.gstAmount ? order.gstAmount / 2 : derivedGst.sgst);
+      const totalGst = cgst + sgst + (order?.igstAmount ?? (order?.gstAmount ? 0 : derivedGst.igst));
       const totalInvoice = order?.totalInvoiceAmount || (taxableSubtotal + totalGst);
-      const profitMargin = Math.max(0, taxableSubtotal - totalCOGS);
-      const profitMarginPct = taxableSubtotal > 0 ? ((profitMargin / taxableSubtotal) * 100).toFixed(1) : '22.5';
+      const profitMargin = taxableSubtotal - totalCOGS;
+      const profitMarginPct = taxableSubtotal > 0 ? ((profitMargin / taxableSubtotal) * 100).toFixed(1) : '0.0';
 
       bodyEl.innerHTML = `
         <!-- SECTION 1: TOP 3 FINANCIAL & TRANSACTION TILES -->
@@ -16972,7 +17074,7 @@ Della 1kg - 1case.`;
               </div>
               <div class="flex justify-between">
                 <span class="text-slate-400">Location:</span>
-                <span class="truncate max-w-[160px] text-right">${tfEscapeHtml(contact?.state || order?.deliveryAddress || 'North India')}</span>
+                <span class="truncate max-w-[160px] text-right">${tfEscapeHtml(contact?.state || order?.deliveryAddress || '')}</span>
               </div>
               ${p.notes ? `
                 <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/60">
@@ -17044,7 +17146,7 @@ Della 1kg - 1case.`;
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order ? order.retailerId : (contact ? contact.id : 'CNT-01')))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-amber-500 dark:border-slate-800/80 dark:hover:border-amber-500/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Buyer account & order history">
+            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order ? order.retailerId : (contact ? contact.id : '')))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-amber-500 dark:border-slate-800/80 dark:hover:border-amber-500/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Buyer account & order history">
               <div>
                 <div class="flex items-center justify-between text-slate-400 mb-1">
                   <span class="text-[10px] uppercase font-bold">Buyer / Retailer</span>
@@ -17052,9 +17154,9 @@ Della 1kg - 1case.`;
                 </div>
                 <div class="font-extrabold text-slate-900 dark:text-white text-sm truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order?.retailerName || p.partyName)}</div>
                 <div class="text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 text-[11px]">
-                  <div>Contact: ${tfEscapeHtml(order?.retailerContact || contact?.contactPerson || 'Saurabh Sharma')}</div>
-                  <div>Phone: ${tfEscapeHtml(order?.retailerPhone || contact?.phone || '+91 98231 44512')}</div>
-                  <div class="truncate">Address: ${tfEscapeHtml(order?.deliveryAddress || 'Godown 4, S3M Logistics Park, Karnal')}</div>
+                  <div>Contact: ${tfEscapeHtml(order?.retailerContact || contact?.contactPerson || '')}</div>
+                  <div>Phone: ${tfEscapeHtml(order?.retailerPhone || contact?.phone || '')}</div>
+                  <div class="truncate">Address: ${tfEscapeHtml(order?.deliveryAddress || order?.shippingAddress || 'Not set')}</div>
                 </div>
               </div>
               <div class="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[11px] text-amber-600 dark:text-amber-400 font-bold group-hover:underline">
@@ -17063,16 +17165,15 @@ Della 1kg - 1case.`;
               </div>
             </div>
 
-            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order ? order.manufacturerId : 'CNT-04'))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-amber-500 dark:border-slate-800/80 dark:hover:border-amber-500/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Factory profile & active batches">
+            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order ? order.manufacturerId : ''))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-amber-500 dark:border-slate-800/80 dark:hover:border-amber-500/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Factory profile & active batches">
               <div>
                 <div class="flex items-center justify-between text-slate-400 mb-1">
-                  <span class="text-[10px] uppercase font-bold">Pickle Factory</span>
+                  <span class="text-[10px] uppercase font-bold">Manufacturer</span>
                   <i data-lucide="factory" class="w-3.5 h-3.5 text-blue-500"></i>
                 </div>
-                <div class="font-extrabold text-slate-900 dark:text-white text-sm truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order?.manufacturerName || 'NID Karnal Medicine')}</div>
+                <div class="font-extrabold text-slate-900 dark:text-white text-sm truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order?.manufacturerName || 'Manufacturer not set')}</div>
                 <div class="text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 text-[11px]">
-                  <div>Plant: Plot 12-14, HSIIDC Ind Area, Karnal</div>
-                  <div>Advance Paid: <strong class="text-emerald-600 dark:text-emerald-400">${tfEscapeHtml(this.formatCurrency(order?.manufacturerAdvancePaid || 100000))}</strong></div>
+                  <div>Advance Paid: <strong class="text-emerald-600 dark:text-emerald-400">${tfEscapeHtml(this.formatCurrency(order?.manufacturerAdvancePaid || 0))}</strong></div>
                   <div>Production: ${tfEscapeHtml((order?.manufacturerStatus || 'In Production').toUpperCase())}</div>
                 </div>
               </div>
@@ -17082,13 +17183,13 @@ Della 1kg - 1case.`;
               </div>
             </div>
 
-            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order ? order.packagingVendorId : 'CNT-05'))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-amber-500 dark:border-slate-800/80 dark:hover:border-amber-500/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Packaging Vendor & supply balance">
+            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order ? order.packagingVendorId : ''))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-amber-500 dark:border-slate-800/80 dark:hover:border-amber-500/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Packaging Vendor & supply balance">
               <div>
                 <div class="flex items-center justify-between text-slate-400 mb-1">
                   <span class="text-[10px] uppercase font-bold">Packaging Supplier</span>
                   <i data-lucide="package" class="w-3.5 h-3.5 text-sky-500"></i>
                 </div>
-                <div class="font-extrabold text-slate-900 dark:text-white text-sm truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order?.packagingVendorName || 'Apex Polymer & Flexo-Pack Ltd')}</div>
+                <div class="font-extrabold text-slate-900 dark:text-white text-sm truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order?.packagingVendorName || '')}</div>
                 <div class="text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 text-[11px]">
                   <div>Total Cost: ${tfEscapeHtml(this.formatCurrency(order?.packagingCost || 28560))}</div>
                   <div>Advance Paid: ${tfEscapeHtml(this.formatCurrency(order?.packagingAdvancePaid || 15000))}</div>
@@ -17101,17 +17202,17 @@ Della 1kg - 1case.`;
               </div>
             </div>
 
-            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order?.marketeerId || order?.transporterId || 'CNT-03'))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-amber-500 dark:border-slate-800/80 dark:hover:border-amber-500/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Marketeer or Transporter profile">
+            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order?.marketeerId || order?.transporterId || ''))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-amber-500 dark:border-slate-800/80 dark:hover:border-amber-500/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Marketeer or Transporter profile">
               <div>
                 <div class="flex items-center justify-between text-slate-400 mb-1">
                   <span class="text-[10px] uppercase font-bold">Marketeer &amp; Logistics</span>
                   <i data-lucide="truck" class="w-3.5 h-3.5 text-purple-500"></i>
                 </div>
-                <div class="font-extrabold text-slate-900 dark:text-white text-sm truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order?.marketeerName || 'Kailash Sharma (3% cut)')}</div>
+                <div class="font-extrabold text-slate-900 dark:text-white text-sm truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order?.marketeerName || 'Direct (no marketeer)')}</div>
                 <div class="text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 text-[11px]">
-                  <div>Transporter: ${tfEscapeHtml(order?.transporterName || 'Western Golden Logistics')}</div>
-                  <div>Freight Cost: ${tfEscapeHtml(this.formatCurrency(order?.totalTransportCost || 9500))}</div>
-                  <div>Vehicle: ${tfEscapeHtml(order?.vehicleNumber || 'HR-05-BG-7712')}</div>
+                  <div>Transporter: ${tfEscapeHtml(order?.transporterName || 'Not assigned')}</div>
+                  <div>Freight Cost: ${tfEscapeHtml(this.formatCurrency(order?.totalTransportCost || 0))}</div>
+                  <div>Vehicle: ${tfEscapeHtml(order?.vehicleNumber || 'Not entered')}</div>
                 </div>
               </div>
               <div class="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[11px] text-amber-600 dark:text-amber-400 font-bold group-hover:underline">
@@ -17155,32 +17256,7 @@ Della 1kg - 1case.`;
                 </tr>
               </thead>
               <tbody>
-                ${itemsHtml || `
-                  <tr class="border-b border-slate-100 dark:border-slate-800/60">
-                    <td class="p-3 text-center font-mono-num text-slate-400">1</td>
-                    <td class="p-3">
-                      <div class="font-bold text-slate-900 dark:text-white">Traditional Mango Pickle (Kairi)</div>
-                      <div class="text-[10px] text-slate-400 font-mono">PKL-MGO-500P · 500g PET Jar</div>
-                    </td>
-                    <td class="p-3 font-mono">500g</td>
-                    <td class="p-3 text-center font-mono font-bold">60</td>
-                    <td class="p-3 text-center font-mono font-bold">1,440</td>
-                    <td class="p-3 text-right font-mono">₹85.00</td>
-                    <td class="p-3 text-right font-mono font-bold">₹1,22,400.00</td>
-                  </tr>
-                  <tr class="border-b border-slate-100 dark:border-slate-800/60">
-                    <td class="p-3 text-center font-mono-num text-slate-400">2</td>
-                    <td class="p-3">
-                      <div class="font-bold text-slate-900 dark:text-white">Root &amp; Onion Special Herbal Oil</div>
-                      <div class="text-[10px] text-slate-400 font-mono">OIL-RO-200G · 200ml Glass Bottle</div>
-                    </td>
-                    <td class="p-3 font-mono">200ml</td>
-                    <td class="p-3 text-center font-mono font-bold">40</td>
-                    <td class="p-3 text-center font-mono font-bold">800</td>
-                    <td class="p-3 text-right font-mono">₹140.00</td>
-                    <td class="p-3 text-right font-mono font-bold">₹1,12,000.00</td>
-                  </tr>
-                `}
+                ${itemsHtml || `<tr><td colspan="7" class="p-4 text-center text-xs text-slate-400">No items on this order yet.</td></tr>`}
               </tbody>
               <tfoot>
                 <tr class="bg-slate-50/80 dark:bg-slate-900/90 font-bold text-xs border-t border-slate-200 dark:border-slate-800">
@@ -17242,7 +17318,7 @@ Della 1kg - 1case.`;
                   <span class="font-mono-num font-bold text-slate-900 dark:text-white">${tfEscapeHtml(this.formatCurrency(taxableSubtotal))}</span>
                 </div>
                 <div class="flex justify-between items-center py-1 pt-2">
-                  <span class="text-slate-600 dark:text-slate-300 font-medium">GST Breakdown (CGST 6% + SGST 6%)</span>
+                  <span class="text-slate-600 dark:text-slate-300 font-medium">GST Breakdown (${tfEscapeHtml(this.gstLabels(order || {}).combined)})</span>
                   <span class="font-mono-num font-bold text-slate-700 dark:text-slate-300">${tfEscapeHtml(this.formatCurrency(totalGst))}</span>
                 </div>
                 <div class="flex justify-between items-center py-1 pt-2">
@@ -17734,10 +17810,11 @@ Della 1kg - 1case.`;
     });
     if (!confirmed) return;
 
-    // Soft Delete
+    // Soft Delete: the payment stops counting towards its order's balances.
     p.isDeleted = true;
     p.deletedAt = new Date().toISOString();
     p.deletedBy = 'Operator';
+    this.applyPaymentToOrder(p, -1);
 
     this.saveData();
     this.closePaymentDetailDrawer();
@@ -17748,9 +17825,11 @@ Della 1kg - 1case.`;
 
     // Trigger 10-Second Undo Toast
     this.showUndoToast(`🗑️ Payment of ${this.formatCurrency(p.amount)} moved to Recycle Bin.`, () => {
+      if (!p.isDeleted) return;
       p.isDeleted = false;
       delete p.deletedAt;
       delete p.deletedBy;
+      this.applyPaymentToOrder(p, 1);
       this.saveData();
       this.renderPaymentsLedger();
       this.updateSidebarUI();
@@ -17998,6 +18077,12 @@ Della 1kg - 1case.`;
             } else if (ev.source === 'excel_changes_available') {
               this.showToast('📋 External Excel edit detected! Click "Excel Synced" to preview changes.');
               this.updateExcelSyncPill('pending');
+            } else if (ev.source === 'data_saved') {
+              if (ev.details?.originTabId === this.tabId) return;
+              // Wait for this window's own pending save before pulling the other window's changes.
+              await (this._saveChain || Promise.resolve());
+              await this.syncAuthoritativeDataFromServer();
+              this.render();
             } else if (ev.source === 'excel_import' || ev.source === 'backup_restored' || ev.source === 'record_rollback' || ev.source === 'order_saved') {
               this.showToast('🟢 Data update received. Refreshing live view...');
               await this.syncAuthoritativeDataFromServer();
@@ -19007,7 +19092,7 @@ Della 1kg - 1case.`;
             ${matchingOrders.map(order => {
               const totalCases = (order.items || []).reduce((sum, i) => sum + (i.cases || 0), 0);
               const totalJars = (order.items || []).reduce((sum, i) => sum + (i.quantity || 0), 0);
-              const firstItem = order.items && order.items[0] ? order.items[0].name : 'Pickles';
+              const firstItem = order.items && order.items[0] ? order.items[0].name : 'products';
               const skuSnippet = order.items && order.items.length > 1 
                 ? `${order.items[0].name} + ${order.items.length - 1} more varieties` 
                 : firstItem;
@@ -19066,7 +19151,7 @@ Della 1kg - 1case.`;
             ${matchingContacts.map(c => {
               const roleLabels = {
                 retailer: 'Retailer / Buyer',
-                manufacturer: 'Pickle Factory',
+                manufacturer: 'Manufacturer',
                 packaging: 'Packaging Supplier',
                 marketeer: 'Sales Marketeer',
                 transporter: 'Freight / Logistics'
@@ -19162,7 +19247,7 @@ Della 1kg - 1case.`;
 
     const cleanName = (item) => {
       if (item.shortName) return item.shortName;
-      if (!item.name) return 'Pickle';
+      if (!item.name) return 'Product';
       return item.name.split('(')[0].trim();
     };
 
@@ -19310,7 +19395,7 @@ Della 1kg - 1case.`;
                     </div>
                     <div class="font-bold text-xs text-slate-800 dark:text-slate-200 mt-1">
                       <span onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.retailerId))}'); app.closeKpiBreakdownModal();" class="hover:underline hover:text-amber-500 cursor-pointer" title="View Buyer Hub">${tfEscapeHtml(order.retailerName)}</span>
-                      <span class="font-normal text-slate-400">• Factory: <span onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.manufacturerId))}'); app.closeKpiBreakdownModal();" class="hover:underline hover:text-blue-400 cursor-pointer" title="View Factory Hub">${tfEscapeHtml(mfg ? mfg.name : 'Shri Saurashtra Agro')}</span></span>
+                      <span class="font-normal text-slate-400">• Factory: <span onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.manufacturerId))}'); app.closeKpiBreakdownModal();" class="hover:underline hover:text-blue-400 cursor-pointer" title="View Factory Hub">${tfEscapeHtml(mfg ? mfg.name : 'Manufacturer not set')}</span></span>
                     </div>
                   </div>
                   <div class="text-right">
@@ -19375,7 +19460,7 @@ Della 1kg - 1case.`;
                     <h4 class="font-bold text-sm text-slate-900 dark:text-white mt-1">
                       <span onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.retailerId))}'); app.closeKpiBreakdownModal();" class="hover:underline hover:text-amber-500 cursor-pointer">${tfEscapeHtml(order.retailerName)}</span>
                     </h4>
-                    <p class="text-xs text-slate-400 mt-0.5">Target Pickle Factory: <strong>${tfEscapeHtml(mfg ? mfg.name : 'Shri Saurashtra Agro (Dhirajbhai)')}</strong></p>
+                    <p class="text-xs text-slate-400 mt-0.5">Target Manufacturer: <strong>${tfEscapeHtml(mfg ? mfg.name : 'Manufacturer not set')}</strong></p>
                   </div>
                   <div class="text-right">
                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Advance In Hand</span>
@@ -19452,7 +19537,7 @@ Della 1kg - 1case.`;
                       <span class="font-mono-num font-black text-sm text-slate-900 dark:text-white group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order.invoiceNumber)}</span>
                       ${isOverdue 
                         ? `<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-rose-500/15 text-rose-500 border border-rose-500/30 font-mono-num">⚠️ ${tfEscapeHtml(daysOverdue)} Days Overdue</span>`
-                        : `<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/30">Due in ${tfEscapeHtml(order.paymentTerms || 'Net 15 Days')}</span>`
+                        : `<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/30">Due in ${tfEscapeHtml(order.paymentTerms || this.config().defaultPaymentTerms)}</span>`
                       }
                       <span class="text-xs text-slate-400">• Due Date: <strong>${tfEscapeHtml(this.formatDate(order.dueDate))}</strong></span>
                     </div>
@@ -19514,7 +19599,7 @@ Della 1kg - 1case.`;
             <span class="text-[10px] text-slate-400">All External Suppliers</span>
           </div>
           <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-500 block">Pickle Factory Dues</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-500 block">Manufacturer Dues</span>
             <span class="text-lg font-black font-mono-num text-blue-500 mt-0.5 block">${tfEscapeHtml(this.formatCurrency(totalMfgDue))}</span>
             <span class="text-[10px] text-slate-400">${tfEscapeHtml(mfgs.length)} Contract Manufacturers</span>
           </div>
@@ -19528,7 +19613,7 @@ Della 1kg - 1case.`;
         <div class="space-y-2 pt-3">
           <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 px-1">
             <i data-lucide="factory" class="w-3.5 h-3.5 text-blue-500"></i>
-            <span>Pickle Factories (Contract Bottling Job-Work)</span>
+            <span>Manufacturers (Contract Job-Work)</span>
           </h4>
           ${mfgs.map(mfg => {
             const mfgOrders = orders.filter(o => o.manufacturerId === mfg.id);
@@ -19543,7 +19628,7 @@ Della 1kg - 1case.`;
                     <h5 class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-blue-500 transition-colors">${tfEscapeHtml(mfg.name)}</h5>
                     <span class="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-500">Factory</span>
                   </div>
-                  <p class="text-[11px] text-slate-400 mt-0.5">${tfEscapeHtml(mfg.contactPerson)} • Phone: <span class="font-mono-num">${tfEscapeHtml(mfg.phone)}</span> • Location: ${tfEscapeHtml(mfg.city || 'Gondal, Gujarat')}</p>
+                  <p class="text-[11px] text-slate-400 mt-0.5">${tfEscapeHtml(mfg.contactPerson)} • Phone: <span class="font-mono-num">${tfEscapeHtml(mfg.phone)}</span> • Location: ${tfEscapeHtml(mfg.city || '')}</p>
                 </div>
                 <div class="flex items-center gap-4">
                   <div class="text-right">
@@ -19723,7 +19808,7 @@ Della 1kg - 1case.`;
         <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
           <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Invoice</span>
           <span class="text-base font-black font-mono-num text-slate-900 dark:text-white mt-0.5 block">${tfEscapeHtml(this.formatCurrency(order.totalInvoiceAmount))}</span>
-          <span class="text-[10px] text-slate-400 font-mono-num">${tfEscapeHtml(order.gstType === 'intra' ? 'Intrastate (12% GST)' : 'Interstate (12% IGST)')}</span>
+          <span class="text-[10px] text-slate-400 font-mono-num">${tfEscapeHtml((order.gstType === 'intra' ? 'Intrastate (' : 'Interstate (') + this.gstLabels(order).combined + ')')}</span>
         </div>
         <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
           <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Advance In Hand</span>
@@ -19785,11 +19870,11 @@ Della 1kg - 1case.`;
           <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order.manufacturerId))}', 'kpi-breakdown-modal', '${tfEscapeHtml(tfEscapeJs(order.id))}')" class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-500/70 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between" title="Click to view Factory profile & active batches">
             <div class="space-y-2">
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pickle Factory</span>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Manufacturer</span>
                 <i data-lucide="factory" class="w-3.5 h-3.5 text-blue-500"></i>
               </div>
               <div>
-                <h5 class="font-bold text-xs text-slate-900 dark:text-white truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(mfg ? mfg.name : 'Pickle Factory')}</h5>
+                <h5 class="font-bold text-xs text-slate-900 dark:text-white truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(mfg ? mfg.name : 'Manufacturer')}</h5>
                 <p class="text-[11px] text-slate-400 mt-0.5">${tfEscapeHtml(mfg ? mfg.contactPerson : 'Factory Manager')} • ${tfEscapeHtml(mfg ? mfg.city || 'Gondal' : 'Gujarat')}</p>
                 <div class="flex items-center justify-between text-[11px] font-mono-num font-bold text-slate-800 dark:text-slate-200 mt-1">
                   <a href="tel:${tfEscapeHtml(mfg && mfg.phone ? mfg.phone.replace(/[^0-9+]/g, '') : '')}" onclick="event.stopPropagation();" class="flex items-center gap-1 text-blue-500 dark:text-blue-400 hover:underline" title="Call Factory">
@@ -19871,7 +19956,7 @@ Della 1kg - 1case.`;
             <h4 class="text-xs font-bold text-slate-900 dark:text-white">SKU & Bottling Line Items</h4>
             <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-500/10 text-amber-500 font-mono-num">${tfEscapeHtml((order.items || []).length)} SKUs</span>
           </div>
-          <span class="text-[11px] text-slate-400">HSN: 20019000 • 12% GST</span>
+          <span class="text-[11px] text-slate-400">HSN: ${tfEscapeHtml([...new Set((order.items || []).map(i => this.itemHsn(i)))].join(', ') || '—')} • ${tfEscapeHtml(this.gstLabels(order).total)}</span>
         </div>
 
         <div class="overflow-x-auto">
@@ -19879,7 +19964,7 @@ Della 1kg - 1case.`;
             <thead>
               <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 <th class="py-2.5 px-3 w-8 text-center">#</th>
-                <th class="py-2.5 px-3 min-w-[160px]">Pickle Variety</th>
+                <th class="py-2.5 px-3 min-w-[160px]">Product</th>
                 <th class="py-2.5 px-3 w-20">Pack Size</th>
                 <th class="py-2.5 px-3 w-20 text-right">Cases</th>
                 <th class="py-2.5 px-3 w-24 text-center">Pack Math</th>
@@ -20012,7 +20097,7 @@ Della 1kg - 1case.`;
     const retailer = this.data.contacts.find(c => c.id === order.retailerId);
     const phone = retailer && retailer.phone ? retailer.phone.replace(/[^0-9]/g, '') : '';
     
-    const msg = `Namaste *${order.retailerName}*,\n\nThis is a gentle payment reminder from *TradeFlow Operations* regarding GST Tax Invoice *${order.invoiceNumber}* (Dated: ${this.formatDate(order.date)}).\n\n• *Invoice Total:* ${this.formatCurrency(order.totalInvoiceAmount)}\n• *Advance Received:* ${this.formatCurrency(order.customerAdvanceReceived)}\n• *Outstanding Balance Due:* *${this.formatCurrency(order.customerBalanceDue)}*\n• *Due Date:* ${this.formatDate(order.dueDate)}\n\nPlease arrange balance disbursement to our company bank account:\n• *Bank:* HDFC Bank\n• *A/C:* 50200084729103\n• *IFSC:* HDFC0001234\n\nKindly share the transaction UTR once processed. Thank you!`;
+    const msg = `Namaste *${order.retailerName}*,\n\nThis is a gentle payment reminder from *${this.config().brand}* regarding GST Tax Invoice *${order.invoiceNumber}* (Dated: ${this.formatDate(order.date)}).\n\n• *Invoice Total:* ${this.formatCurrency(order.totalInvoiceAmount)}\n• *Advance Received:* ${this.formatCurrency(order.customerAdvanceReceived)}\n• *Outstanding Balance Due:* *${this.formatCurrency(order.customerBalanceDue)}*\n• *Due Date:* ${this.formatDate(order.dueDate)}\n\nPlease arrange balance disbursement to our company bank account:\n• *Bank:* ${this.data.businessProfile?.bankName || 'Not set'}\n• *A/C:* ${this.data.businessProfile?.accountNumber || 'Not set'}\n• *IFSC:* ${this.data.businessProfile?.ifsc || 'Not set'}\n\nKindly share the transaction UTR once processed. Thank you!`;
 
     const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
@@ -20024,7 +20109,7 @@ Della 1kg - 1case.`;
     if (!modal) return;
 
     const roleLabels = {
-      manufacturer: 'Pickle Factory (Contract Manufacturing)',
+      manufacturer: 'Manufacturer (Contract Manufacturing)',
       packaging: 'Packaging & Labels Supplier',
       transporter: 'Freight & Logistics Partner',
       retailer: 'Retailer / Buyer Account',
@@ -20053,8 +20138,7 @@ Della 1kg - 1case.`;
     this.currentProfileContactId = contact ? contact.id : null;
 
     if (isNew) {
-      const nextNum = (this.data.contacts || []).length + 1;
-      const newId = `CNT-${String(nextNum).padStart(2, '0')}`;
+      const newId = this.nextContactId();
       setVal('edit-contact-id', newId);
       if (idDisp) idDisp.innerText = newId;
 
@@ -20270,7 +20354,7 @@ Della 1kg - 1case.`;
 
     if (logoSrc && String(logoSrc).trim()) {
       const cleanSrc = String(logoSrc).trim();
-      previewEl.innerHTML = `<img src="${tfEscapeHtml(tfSafeUrl(cleanSrc))}" alt="Logo" class="w-full h-full object-contain bg-white dark:bg-slate-900 p-1 rounded-2xl" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'font-black text-xl text-amber-500\\'>${tfEscapeHtml(tfEscapeJs((name||'CO').substring(0,2).toUpperCase()))}</span>';">`;
+      previewEl.innerHTML = `<img src="${tfEscapeHtml(tfSafeUrl(cleanSrc))}" alt="Logo" class="w-full h-full object-contain bg-white dark:bg-slate-900 p-1 rounded-2xl" onerror="this.onerror=null; if (this.parentElement) this.parentElement.innerHTML='<span class=\\'font-black text-xl text-amber-500\\'>${tfEscapeHtml(tfEscapeJs((name||'CO').substring(0,2).toUpperCase()))}</span>';">`;
       if (dataInput) dataInput.value = cleanSrc;
       if (urlInput && !cleanSrc.startsWith('data:')) urlInput.value = cleanSrc;
     } else {
@@ -20325,7 +20409,7 @@ Della 1kg - 1case.`;
     const roleBadge = document.getElementById('edit-contact-role-badge');
     if (!roleBadge) return;
     const roleLabels = {
-      manufacturer: 'Pickle Factory (Contract Manufacturing)',
+      manufacturer: 'Manufacturer (Contract Manufacturing)',
       packaging: 'Packaging & Labels Supplier',
       transporter: 'Freight & Logistics Partner',
       retailer: 'Retailer / Buyer Account',
@@ -20564,7 +20648,7 @@ Payment Terms: Net 15 Days`;
           try {
             const base64Data = dataUrl.split(',')[1];
             const mimeType = file.type || 'image/jpeg';
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
             const prompt = `Extract all commercial business information from this visiting card, invoice header, or WhatsApp screenshot.
 Return valid raw JSON only (no markdown, no quotes around json block) with keys:
 {
@@ -20595,7 +20679,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
 }`;
             const gResp = await fetch(apiUrl, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
               body: JSON.stringify({
                 contents: [{
                   parts: [
@@ -21123,7 +21207,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
 
     if (isNew) {
       contact = {
-        id: contactId || `CNT-${String(this.data.contacts.length + 1).padStart(2, '0')}`,
+        id: contactId || this.nextContactId(),
         role: selectedRole,
         currentBalanceDue: 0,
         totalOrders: 0
@@ -21179,6 +21263,8 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     }
     mergeField('city', newCity);
     mergeField('state', newState);
+    // GST state code follows the GSTIN (it decides CGST+SGST versus IGST on invoices).
+    if (/^[0-9]{2}/.test(contact.gstin || '')) contact.stateCode = String(contact.gstin).slice(0, 2);
     mergeField('pincode', newPincode);
     mergeField('landmark', newLandmark);
 
@@ -21245,13 +21331,16 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
   }
 
   /* ---------- SKU MASTER & PRICING CONTROLS ---------- */
+  // Edit a product, or add a new one when no id is given.
   openSkuEditModal(skuId) {
-    const product = (this.data.products || []).find(p => p.id === skuId) || (this.data.products || [])[0];
-    if (!product) {
+    const existing = skuId ? (this.data.products || []).find(p => p.id === skuId) : null;
+    if (skuId && !existing) {
       this.showToast('⚠️ SKU not found.');
       return;
     }
-
+    const cfg = this.config();
+    const product = existing || { id: '', name: '', variant: '', casePack: cfg.defaultCasePack, hsn: cfg.defaultHsn, gstRate: cfg.defaultGstRate };
+    this.editingSkuIsNew = !existing;
     const modal = document.getElementById('sku-edit-modal');
     if (!modal) return;
 
@@ -21263,14 +21352,14 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
 
     setVal('sku-edit-id', product.id);
     setVal('sku-edit-name', product.name);
-    setVal('sku-edit-variant', product.variant || '500g PET Jar');
-    setVal('sku-edit-casepack', product.casePack || 24);
-    setVal('sku-edit-hsn', product.hsn || '20019000');
-    setVal('sku-edit-gst', product.gst || 12);
-    setVal('sku-edit-mfgcost', product.baseCostPerUnit || product.baseMfgCost || 48);
-    setVal('sku-edit-pkgcost', product.pkgCostPerUnit || product.packagingCost || 11.5);
-    setVal('sku-edit-price', product.defaultUnitRate || product.standardSellingRate || 85);
-    setVal('sku-edit-mrp', product.mrp || 120);
+    setVal('sku-edit-variant', product.variant || '');
+    setVal('sku-edit-casepack', product.casePack || cfg.defaultCasePack);
+    setVal('sku-edit-hsn', product.hsn || this.config().defaultHsn);
+    setVal('sku-edit-gst', this.itemGstRate({ productId: product.id, gstRate: product.gstRate ?? product.gst }));
+    setVal('sku-edit-mfgcost', product.baseCostPerUnit ?? product.baseMfgCost ?? '');
+    setVal('sku-edit-pkgcost', product.pkgCostPerUnit ?? product.pkgCost ?? product.packagingCost ?? '');
+    setVal('sku-edit-price', product.defaultUnitRate ?? product.standardSellingRate ?? '');
+    setVal('sku-edit-mrp', product.mrp ?? '');
 
     this.updateSkuEditPreview();
 
@@ -21291,7 +21380,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     const pkgCost = parseFloat(document.getElementById('sku-edit-pkgcost')?.value) || 0;
     const price = parseFloat(document.getElementById('sku-edit-price')?.value) || 0;
     const mrp = parseFloat(document.getElementById('sku-edit-mrp')?.value) || 0;
-    const casePack = parseInt(document.getElementById('sku-edit-casepack')?.value) || 24;
+    const casePack = parseInt(document.getElementById('sku-edit-casepack')?.value) || this.config().defaultCasePack;
 
     const unitCogs = mfgCost + pkgCost;
     const profit = price - unitCogs;
@@ -21328,17 +21417,18 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
   handleSaveSku(event) {
     if (event) event.preventDefault();
     const id = document.getElementById('sku-edit-id')?.value;
-    const product = (this.data.products || []).find(p => p.id === id);
-    if (!product) {
+    let product = id ? (this.data.products || []).find(p => p.id === id) : null;
+    if (id && !product) {
       this.showToast('⚠️ SKU not found to update.');
       return;
     }
 
     const name = (document.getElementById('sku-edit-name')?.value || '').trim();
     const variant = (document.getElementById('sku-edit-variant')?.value || '').trim();
-    const casePack = parseInt(document.getElementById('sku-edit-casepack')?.value) || 24;
-    const hsn = (document.getElementById('sku-edit-hsn')?.value || '20019000').trim();
-    const gst = parseFloat(document.getElementById('sku-edit-gst')?.value) || 12;
+    const casePack = parseInt(document.getElementById('sku-edit-casepack')?.value) || this.config().defaultCasePack;
+    const hsn = (document.getElementById('sku-edit-hsn')?.value || this.config().defaultHsn || '').trim();
+    const gstInput = document.getElementById('sku-edit-gst')?.value;
+    const gst = gstInput === '' || gstInput === undefined || !Number.isFinite(Number(gstInput)) ? this.config().defaultGstRate : Number(gstInput);
     const mfgCost = parseFloat(document.getElementById('sku-edit-mfgcost')?.value) || 0;
     const pkgCost = parseFloat(document.getElementById('sku-edit-pkgcost')?.value) || 0;
     const price = parseFloat(document.getElementById('sku-edit-price')?.value) || 0;
@@ -21349,11 +21439,23 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
       return;
     }
 
+    const isNew = !product;
+    const duplicate = (this.data.products || []).find(p => p !== product && String(p.name || '').trim().toLowerCase() === name.toLowerCase() && String(p.variant || '').trim().toLowerCase() === variant.toLowerCase());
+    if (duplicate) {
+      this.showToast(`⚠️ "${name}${variant ? ' – ' + variant : ''}" already exists (${duplicate.id}). Edit that product instead.`);
+      return;
+    }
+    if (isNew) {
+      product = { id: `PRD-${String(this.nextSequenceNumber('product', ['PRD'], this.data.products || [])).padStart(2, '0')}`, active: true, createdAt: new Date().toISOString() };
+      this.data.products = this.data.products || [];
+      this.data.products.push(product);
+    }
     product.name = name;
     product.variant = variant;
     product.casePack = casePack;
     product.hsn = hsn;
-    product.gst = gst;
+    product.gstRate = gst;
+    delete product.gst; // older records stored the rate here; invoices read gstRate
     product.baseMfgCost = mfgCost;
     product.baseCostPerUnit = mfgCost;
     product.packagingCost = pkgCost;
@@ -21365,71 +21467,42 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     this.saveData();
     this.closeSkuEditModal();
     this.renderProductsGrid();
-    this.showToast(`✅ SKU "${name}" updated successfully! Standard Selling Rate: ${this.formatCurrency(price)}.`);
+    this.showToast(isNew ? `✅ Product "${name}" added (${product.id}).` : `✅ SKU "${name}" updated successfully! Standard Selling Rate: ${this.formatCurrency(price)}.`);
   }
 
   /* ---------- TRADE MARGIN & ORDER PROFIT CALCULATOR ENGINE ---------- */
-  getInitialSimpleCalc() {
+  // One calculator row built from a catalogue product and the Business Defaults percentages.
+  calcRowFromProduct(product, index = 0) {
+    const cfg = this.config();
+    const p = product || {};
+    const packSize = p.defaultPackSize || p.packSize || '';
     return {
-      name: 'Cold Cream (15ML)',
-      packSize: '15ml',
-      casePack: 72,
-      cases: 100,
-      mfgPrice: 4.50,
-      gstRate: 18,
-      transportPct: 5.0,
-      labelCost: 0.00,
-      profitPct: 20.0,
-      marketeerPct: 30.0,
-      mrp: 15.00
+      id: `adv-prod-${index + 1}`,
+      name: p.name || `Product ${index + 1}`,
+      packSize,
+      casePack: Number(p.casePack) || this.casePackConfig[packSize] || cfg.defaultCasePack,
+      cases: Number(p.defaultCases) || 1,
+      mfgPrice: Number(p.baseCostPerUnit ?? p.baseMfgCost) || 0,
+      gstRate: this.itemGstRate({ productId: p.id }),
+      transportPct: cfg.calcTransportPct,
+      labelCost: Number(p.labelCost) || 0,
+      profitPct: cfg.calcProfitPct,
+      marketeerPct: cfg.calcMarketeerPct,
+      mrp: Number(p.mrp) || 0
     };
   }
 
+  // Calculator presets come from your active products; with no products the rows start blank.
+  getInitialSimpleCalc() {
+    const products = ((this.data && this.data.products) || []).filter(p => p.active !== false);
+    const row = this.calcRowFromProduct(products[0], 0);
+    delete row.id;
+    return row;
+  }
+
   getInitialAdvancedCalc() {
-    return [
-      {
-        id: 'adv-prod-1',
-        name: 'Pickle Jar (500g)',
-        packSize: '500g',
-        casePack: 24,
-        cases: 40,
-        mfgPrice: 48.00,
-        gstRate: 12,
-        transportPct: 5.0,
-        labelCost: 0.00,
-        profitPct: 20.0,
-        marketeerPct: 30.0,
-        mrp: 120.00
-      },
-      {
-        id: 'adv-prod-2',
-        name: 'Pickle Jar (1KG)',
-        packSize: '1kg',
-        casePack: 8, // User rule: in case of 1KG they are only 8
-        cases: 25,
-        mfgPrice: 85.00,
-        gstRate: 12,
-        transportPct: 5.0,
-        labelCost: 0.00,
-        profitPct: 20.0,
-        marketeerPct: 30.0,
-        mrp: 210.00
-      },
-      {
-        id: 'adv-prod-3',
-        name: 'Cold Cream (15ML)',
-        packSize: '15ml',
-        casePack: 72,
-        cases: 50,
-        mfgPrice: 4.50,
-        gstRate: 18,
-        transportPct: 5.0,
-        labelCost: 0.00,
-        profitPct: 20.0,
-        marketeerPct: 30.0,
-        mrp: 15.00
-      }
-    ];
+    const products = ((this.data && this.data.products) || []).filter(p => p.active !== false).slice(0, 3);
+    return (products.length ? products : [null]).map((product, index) => this.calcRowFromProduct(product, index));
   }
 
   openProfitCalculatorModal(skuId) {
@@ -21458,27 +21531,23 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
       }
     }
 
+    // Presets made before the data loaded are rebuilt from the catalogue on first open.
+    if (!this._calcPresetsFromCatalog && this.data && (this.data.products || []).length) {
+      this.simpleCalcData = this.getInitialSimpleCalc();
+      this.advancedCalcProducts = this.getInitialAdvancedCalc();
+      this._calcPresetsFromCatalog = true;
+    }
+
     if (skuId) {
       const product = (this.data.products || []).find(p => p.id === skuId);
       if (product) {
-        const packSize = (product.variant && product.variant.includes('1kg')) ? '1kg' : ((product.variant && product.variant.includes('5kg')) ? '5kg' : ((product.variant && product.variant.includes('15ml')) ? '15ml' : '500g'));
-        const casePack = packSize === '1kg' ? 8 : (packSize === '5kg' ? 4 : (packSize === '15ml' ? 72 : (product.casePack || 24)));
-        this.simpleCalcData = {
-          name: product.name,
-          packSize: packSize,
-          casePack: casePack,
-          cases: 100,
-          mfgPrice: product.baseCostPerUnit || product.baseMfgCost || 48.0,
-          gstRate: product.gstRate || 12,
-          transportPct: 5.0,
-          labelCost: 0.00,
-          profitPct: 20.0,
-          marketeerPct: 30.0,
-          mrp: product.mrp || 120.0
-        };
+        const row = this.calcRowFromProduct(product, 0);
+        delete row.id;
+        this.simpleCalcData = row;
       }
     }
 
+    this.renderCalcPresetButtons();
     this.setCalcMode(this.calcMode || 'simple');
     modal.classList.remove('hidden');
     if (window.lucide) window.lucide.createIcons();
@@ -21537,64 +21606,33 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     if (window.lucide) window.lucide.createIcons();
   }
 
-  loadSimplePreset(key) {
-    if (key === 'coldcream') {
-      this.simpleCalcData = {
-        name: 'Cold Cream (15ML)',
-        packSize: '15ml',
-        casePack: 72,
-        cases: 100,
-        mfgPrice: 4.50,
-        gstRate: 18,
-        transportPct: 5.0,
-        labelCost: 0.00,
-        profitPct: 20.0,
-        marketeerPct: 30.0,
-        mrp: 15.00
-      };
-    } else if (key === 'pickle500g') {
-      this.simpleCalcData = {
-        name: 'Pickle Jar (500g)',
-        packSize: '500g',
-        casePack: 24,
-        cases: 100,
-        mfgPrice: 48.00,
-        gstRate: 12,
-        transportPct: 5.0,
-        labelCost: 0.00,
-        profitPct: 20.0,
-        marketeerPct: 30.0,
-        mrp: 120.00
-      };
-    } else if (key === 'pickle1kg') {
-      this.simpleCalcData = {
-        name: 'Pickle Jar (1KG)',
-        packSize: '1kg',
-        casePack: 8, // 8 for 1kg
-        cases: 100,
-        mfgPrice: 85.00,
-        gstRate: 12,
-        transportPct: 5.0,
-        labelCost: 0.00,
-        profitPct: 20.0,
-        marketeerPct: 30.0,
-        mrp: 210.00
-      };
-    } else {
-      this.simpleCalcData = {
-        name: 'Custom Product',
-        packSize: '500g',
-        casePack: 24,
-        cases: 100,
-        mfgPrice: 0.00,
-        gstRate: 18,
-        transportPct: 5.0,
-        labelCost: 0.00,
-        profitPct: 20.0,
-        marketeerPct: 30.0,
-        mrp: 0.00
-      };
+  // Preset buttons and pack sizes come from the product catalogue.
+  renderCalcPresetButtons() {
+    const products = (this.data.products || []).filter(p => p.active !== false).slice(0, 8);
+    const button = (onclick, label, title) => `<button type="button" onclick="${tfEscapeHtml(onclick)}" title="${tfEscapeHtml(title)}" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">${tfEscapeHtml(label)}</button>`;
+    const label = p => `${p.shortName || p.name}${p.defaultPackSize || p.packSize ? ` (${p.defaultPackSize || p.packSize})` : ''}`;
+    const simple = document.getElementById('calc-simple-presets');
+    if (simple) simple.innerHTML = products.map(p => button(`app.loadSimplePreset('${tfEscapeJs(p.id)}')`, label(p), `Load ${p.name}`)).join('') || '<span class="text-[11px] text-slate-400">Add products in the Products tab to get presets</span>';
+    const advanced = document.getElementById('calc-adv-presets');
+    if (advanced) advanced.innerHTML = products.map(p => button(`app.addAdvancedProduct('${tfEscapeJs(p.id)}')`, '+ ' + label(p), `Add ${p.name}`)).join('');
+    const packSelect = document.getElementById('calc-simple-pack-size');
+    if (packSelect) {
+      const sizes = [...new Set([...products.map(p => p.defaultPackSize || p.packSize), ...Object.keys(this.casePackConfig), this.simpleCalcData && this.simpleCalcData.packSize].filter(Boolean))];
+      packSelect.innerHTML = sizes.map(size => `<option value="${tfEscapeHtml(size)}">${tfEscapeHtml(size)}</option>`).join('') + '<option value="custom">Custom</option>';
+      packSelect.value = (this.simpleCalcData && this.simpleCalcData.packSize) || 'custom';
     }
+  }
+
+  loadSimplePreset(key) {
+    const product = (this.data.products || []).find(p => p.id === key);
+    if (product) {
+      this.simpleCalcData = this.calcRowFromProduct(product, 0);
+      delete this.simpleCalcData.id;
+    } else {
+      this.simpleCalcData = { ...this.calcRowFromProduct(null, 0), name: 'Custom Product', cases: 1 };
+      delete this.simpleCalcData.id;
+    }
+    this.renderCalcPresetButtons();
     this.syncSimpleInputs();
     this.updateProfitCalculator();
     this.showToast(`✨ Loaded preset: ${this.simpleCalcData.name}`);
@@ -21603,15 +21641,9 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
   handleSimplePackSizeChange(size) {
     if (!this.simpleCalcData) this.simpleCalcData = this.getInitialSimpleCalc();
     this.simpleCalcData.packSize = size;
-    if (size === '15ml') {
-      this.simpleCalcData.casePack = 72;
-    } else if (size === '500g' || size === '500ml') {
-      this.simpleCalcData.casePack = 24;
-    } else if (size === '1kg') {
-      this.simpleCalcData.casePack = 8; // User rule: in case of 1KG they are only 8
-    } else if (size === '5kg') {
-      this.simpleCalcData.casePack = 4;
-    }
+    const product = (this.data.products || []).find(p => (p.defaultPackSize || p.packSize) === size && p.casePack);
+    const casePack = this.casePackConfig[size] || (product && Number(product.casePack));
+    if (casePack) this.simpleCalcData.casePack = casePack;
     const cpEl = document.getElementById('calc-simple-case-pack');
     if (cpEl) cpEl.value = this.simpleCalcData.casePack;
     this.updateProfitCalculator();
@@ -21779,68 +21811,9 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
   }
 
   addAdvancedProduct(preset) {
-    let newProd;
-    if (preset === 'pickle500g') {
-      newProd = {
-        id: 'adv-prod-' + Date.now(),
-        name: 'Pickle Jar (500g)',
-        packSize: '500g',
-        casePack: 24,
-        cases: 50,
-        mfgPrice: 48.00,
-        gstRate: 12,
-        transportPct: 5.0,
-        labelCost: 0.00,
-        profitPct: 20.0,
-        marketeerPct: 30.0,
-        mrp: 120.00
-      };
-    } else if (preset === 'pickle1kg') {
-      newProd = {
-        id: 'adv-prod-' + Date.now(),
-        name: 'Pickle Jar (1KG)',
-        packSize: '1kg',
-        casePack: 8, // 8 for 1kg
-        cases: 30,
-        mfgPrice: 85.00,
-        gstRate: 12,
-        transportPct: 5.0,
-        labelCost: 0.00,
-        profitPct: 20.0,
-        marketeerPct: 30.0,
-        mrp: 210.00
-      };
-    } else if (preset === 'coldcream') {
-      newProd = {
-        id: 'adv-prod-' + Date.now(),
-        name: 'Cold Cream (15ML)',
-        packSize: '15ml',
-        casePack: 72,
-        cases: 50,
-        mfgPrice: 4.50,
-        gstRate: 18,
-        transportPct: 5.0,
-        labelCost: 0.00,
-        profitPct: 20.0,
-        marketeerPct: 30.0,
-        mrp: 15.00
-      };
-    } else {
-      newProd = {
-        id: 'adv-prod-' + Date.now(),
-        name: `Product ${this.advancedCalcProducts.length + 1}`,
-        packSize: '500g',
-        casePack: 24,
-        cases: 20,
-        mfgPrice: 50.00,
-        gstRate: 12,
-        transportPct: 5.0,
-        labelCost: 0.00,
-        profitPct: 20.0,
-        marketeerPct: 30.0,
-        mrp: 130.00
-      };
-    }
+    const product = (this.data.products || []).find(p => p.id === preset);
+    const newProd = { ...this.calcRowFromProduct(product, this.advancedCalcProducts.length), id: 'adv-prod-' + Date.now() };
+    if (!product) newProd.name = `Product ${this.advancedCalcProducts.length + 1}`;
     this.advancedCalcProducts.push(newProd);
     this.renderAdvancedRows();
     this.updateProfitCalculator();
@@ -21887,6 +21860,17 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     this.updateProfitCalculator();
   }
 
+  // Per-unit pricing chain: GST and freight on the factory price give the landed cost; our margin and
+  // the marketeer's cut are percentages of the landed cost; their sum is the price to the super stockist.
+  calcUnitPricing({ mfg, gst, trans, labelCost, profit, mkt }) {
+    const gstAmt = mfg * (gst / 100);
+    const transAmt = (mfg + gstAmt) * (trans / 100);
+    const landed = mfg + gstAmt + transAmt + labelCost;
+    const ourCut = landed * (profit / 100);
+    const mktCut = landed * (mkt / 100);
+    return { gstAmt, transAmt, landed, ourCut, mktCut, ssPrice: landed + ourCut + mktCut };
+  }
+
   updateProfitCalculator() {
     const setTxt = (id, txt) => {
       const el = document.getElementById(id);
@@ -21911,27 +21895,18 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
       const cp = parseInt(d.casePack) || 1;
       const totalUnits = cases * cp;
 
-      // 1. BASE LANDED COST (TOTAL OUTFLOW TO PAY FROM POCKET)
-      const gstAmt = parseFloat((mfg * (gst / 100)).toFixed(2));
-      const transAmt = parseFloat(((mfg + gstAmt) * (trans / 100)).toFixed(2));
-      const landed = parseFloat((mfg + gstAmt + transAmt + labelCost).toFixed(2));
-
-      // 2. PROFIT CUTS ON LANDED COST (User Rule: Marketeer profit is on the landed cost!)
-      const ourCut = parseFloat((landed * (profit / 100)).toFixed(3));
-      const mktCut = parseFloat((landed * (mkt / 100)).toFixed(3));
-
-      // 3. TRADE VALUE & BILLING PRICE TO SUPER STOCKIST
-      const trade = parseFloat((landed + ourCut).toFixed(2));
-      const ssPrice = parseFloat((landed + ourCut + mktCut).toFixed(2));
+      // Same maths as advanced mode; values are rounded only when displayed, never before multiplying.
+      const pricing = this.calcUnitPricing({ mfg, gst, trans, labelCost, profit, mkt });
+      const { gstAmt, transAmt, landed, ourCut, mktCut, ssPrice } = pricing;
       const spread = mrp > 0 ? (mrp - ssPrice) : 0;
       const spreadPct = mrp > 0 ? ((spread / mrp) * 100).toFixed(1) : '0';
 
-      // 4. BATCH ROLLUPS
-      const batchNetProfit = parseFloat((totalUnits * ourCut).toFixed(2));  // OUR PROFIT (INTO MY POCKET)
-      const batchLanded = parseFloat((totalUnits * landed).toFixed(2));      // TOTAL OUTFLOW (PAY FROM MY POCKET)
-      const batchMkt = parseFloat((totalUnits * mktCut).toFixed(2));        // MARKETEER COMMISSION
-      const batchSsInvoice = parseFloat((totalUnits * ssPrice).toFixed(2));  // INVOICED TO SUPER STOCKIST
-      const batchMrp = parseFloat((totalUnits * mrp).toFixed(2));           // RETAIL MRP TOTAL
+      // BATCH ROLLUPS
+      const batchNetProfit = totalUnits * ourCut;    // OUR PROFIT (INTO MY POCKET)
+      const batchLanded = totalUnits * landed;       // TOTAL OUTFLOW (PAY FROM MY POCKET)
+      const batchMkt = totalUnits * mktCut;          // MARKETEER COMMISSION
+      const batchSsInvoice = totalUnits * ssPrice;   // INVOICED TO SUPER STOCKIST
+      const batchMrp = totalUnits * mrp;             // RETAIL MRP TOTAL
 
       setTxt('calc-simple-units-badge', `${totalUnits.toLocaleString('en-IN')} pcs`);
 
@@ -21995,7 +21970,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
             <div class="flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5 w-full min-w-0 px-0.5">
               <div class="flex items-center gap-0.5 shrink-0">
                 <span class="text-xs shrink-0">🌿</span>
-                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-tight text-emerald-700 dark:text-emerald-300 truncate" title="Magic Roots (${tfEscapeHtml(profit)}%)">Magic Roots</span>
+                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-tight text-emerald-700 dark:text-emerald-300 truncate" title="${tfEscapeHtml(this.config().brand)} (${tfEscapeHtml(profit)}%)">${tfEscapeHtml(this.config().brand)}</span>
               </div>
               <span class="text-[8.5px] sm:text-[9.5px] font-black font-mono-num px-1 py-0.2 rounded bg-emerald-200/60 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 shrink-0">(${tfEscapeHtml(profit)}%)</span>
             </div>
@@ -22065,6 +22040,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
       let totalCombinedMkt = 0;
       let totalCombinedSs = 0;
       let totalCombinedMrp = 0;
+      const mktRates = new Set();
 
       this.advancedCalcProducts.forEach(p => {
         const mfg = parseFloat(p.mfgPrice) || 0;
@@ -22073,17 +22049,13 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
         const labelCost = parseFloat(p.labelCost) || 0;
         const profit = parseFloat(p.profitPct) || 0;
         const mkt = parseFloat(p.marketeerPct) || 0;
-        const mrp = parseFloat(p.mrp) || (mfg * 2.2);
+        const mrp = parseFloat(p.mrp) || 0;
         const cases = parseInt(p.cases) || 0;
         const cp = parseInt(p.casePack) || 1;
         const totalUnits = cases * cp;
 
-        const gstAmt = mfg * (gst / 100);
-        const transAmt = (mfg + gstAmt) * (trans / 100);
-        const landed = mfg + gstAmt + transAmt + labelCost;
-        const ourCut = landed * (profit / 100);
-        const mktCut = landed * (mkt / 100); // 30% on landed cost!
-        const ssPrice = landed + ourCut + mktCut;
+        const { landed, ourCut, mktCut, ssPrice } = this.calcUnitPricing({ mfg, gst, trans, labelCost, profit, mkt });
+        mktRates.add(mkt);
 
         totalCombinedUnits += totalUnits;
         totalCombinedCases += cases;
@@ -22114,7 +22086,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
       setTxt('big-tile-ss-rate', `Avg ₹${avgSsRate.toFixed(2)}/pc`);
 
       setTxt('big-tile-marketeer-cut', `₹${totalCombinedMkt.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
-      setTxt('big-tile-marketeer-rate', `30.0% on Landed Outflows`);
+      setTxt('big-tile-marketeer-rate', mktRates.size === 1 ? `${[...mktRates][0].toFixed(1)}% on Landed Outflows` : 'Mixed % on Landed Outflows');
 
       setTxt('big-tile-mrp-total', `₹${totalCombinedMrp.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
       setTxt('big-tile-spread-pct', `${spreadPct}%`);
@@ -22168,7 +22140,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
         `------------------------------------------------`,
         `   TOTAL LANDED COST (OUTFLOW): ₹${landed.toFixed(2)} / unit`,
         `------------------------------------------------`,
-        `5. Magic Roots Margin (${profit}% on Landed): +₹${ourCut.toFixed(2)}`,
+        `5. ${this.config().brand} Margin (${profit}% on Landed): +₹${ourCut.toFixed(2)}`,
         `6. Marketeer Margin (${mkt}% on Landed):   +₹${mktCut.toFixed(2)}`,
         `================================================`,
         `   PRICE TO SUPER STOCKIST:    ₹${ssPrice.toFixed(2)} / unit`,
@@ -22899,6 +22871,50 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     }
   }
 
+  // Buttons in the backup, data and company-hub panels call these names.
+  openFolderByTarget(target = 'root') {
+    return this.openNativeFolder(target);
+  }
+
+  revealDataFolder() {
+    return this.openNativeFolder('root');
+  }
+
+  openStudioMetricsDrilldownModal(tab = 'all_time') {
+    return this.openStudioMetricsDrilldown(tab);
+  }
+
+  async copyToClipboard(text, label = 'Text') {
+    const value = String(text ?? '').trim();
+    if (!value || value === '—' || value === 'Not set') {
+      this.showToast(`${label} is not set yet.`);
+      return false;
+    }
+    try {
+      if (navigator.clipboard && window.isSecureContext !== false) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const area = document.createElement('textarea');
+        area.value = value;
+        area.style.cssText = 'position:fixed;left:-9999px;top:0';
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        area.remove();
+      }
+      this.showToast(`📋 ${label} copied`);
+      return true;
+    } catch (err) {
+      this.showToast(`Could not copy ${label}: ${err.message}`);
+      return false;
+    }
+  }
+
+  copyStudioValue(elementId, label = 'Value') {
+    const el = document.getElementById(elementId);
+    return this.copyToClipboard(el ? (el.value ?? el.textContent) : '', label);
+  }
+
   async reindexVaultFiles() {
     this.showToast('🔄 Scanning directories for newly dropped files...');
     try {
@@ -23586,7 +23602,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     const phone = (trn && (trn.whatsappPhone || trn.phone)) || '';
     let msg = `Namaste ${order.transporterName || 'Logistics'},\n\n`;
     msg += `Transport Dispatch Instructions for Order *${order.invoiceNumber}*:\n`;
-    msg += `• Destination: ${order.destination || order.shippingAddress || 'Retailer Depot'}\n`;
+    msg += `• Destination: ${order.destination || order.shippingAddress || ''}\n`;
     msg += `• Consignment: ${(order.items || []).reduce((s, i) => s + (i.cases || 0), 0)} Cases for ${order.retailerName}\n`;
     msg += `• LR Number: ${order.lrNumber || 'PENDING'}\n`;
     msg += `• Vehicle No: ${order.vehicleNumber || 'PENDING'}\n`;
@@ -23726,14 +23742,14 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
           try {
             const base64Data = dataUrl.split(',')[1];
             const mimeType = imageFile.type || 'image/jpeg';
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
             const prompt = `Extract all FMCG pickle order details from this screenshot (cases, variants, jars, rates, retailer name).
 Format as plain text line by line like:
 [Retailer Name]
 [Variant] [Cases] cases, [Rate] rs`;
             const resp = await fetch(apiUrl, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
               body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64Data } }] }]
               })
@@ -23865,59 +23881,11 @@ Format as plain text line by line like:
 
   /* ================= SUGGESTION 1: AMOUNT-IN-WORDS & MATH & ZERO ALERT ================= */
   convertNumberToIndianWords(amount) {
-    const num = Math.abs(parseFloat(amount) || 0);
-    if (num === 0) {
-      return { english: 'Zero Rupees Only', hindi: '' };
-    }
-
-    const onesEn = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
-      'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-    const tensEn = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-
-    function twoDigitsEn(n) {
-      if (n < 20) return onesEn[n];
-      return tensEn[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + onesEn[n % 10] : '');
-    }
-
-    const whole = Math.floor(num);
-    const paise = Math.round((num - whole) * 100);
-
-    const crore = Math.floor(whole / 10000000);
-    let rem = whole % 10000000;
-    const lakh = Math.floor(rem / 100000);
-    rem = rem % 100000;
-    const thousand = Math.floor(rem / 1000);
-    rem = rem % 1000;
-    const hundred = Math.floor(rem / 100);
-    const rest = rem % 100;
-
-    let partsEn = [];
-
-    if (crore > 0) {
-      partsEn.push(twoDigitsEn(crore) + ' Crore');
-    }
-    if (lakh > 0) {
-      partsEn.push(twoDigitsEn(lakh) + ' Lakh');
-    }
-    if (thousand > 0) {
-      partsEn.push(twoDigitsEn(thousand) + ' Thousand');
-    }
-    if (hundred > 0) {
-      partsEn.push(twoDigitsEn(hundred) + ' Hundred');
-    }
-    if (rest > 0) {
-      partsEn.push(twoDigitsEn(rest));
-    }
-
-    let enStr = (partsEn.join(' ') || 'Zero') + ' Rupees';
-
-    if (paise > 0) {
-      enStr += ' and ' + twoDigitsEn(paise) + ' Paise';
-    }
-
-    enStr += ' Only';
-
-    return { english: enStr, hindi: '' };
+    const { rupees, paise, negative } = this.splitRupeesPaise(parseFloat(amount) || 0);
+    if (rupees === 0 && paise === 0) return { english: 'Zero Rupees Only', hindi: '' };
+    let enStr = (negative ? 'Minus ' : '') + (this.indianIntegerWords(rupees) || 'Zero') + ' Rupees';
+    if (paise > 0) enStr += ' and ' + this.indianIntegerWords(paise) + ' Paise';
+    return { english: enStr + ' Only', hindi: '' };
   }
 
   onPaymentAmountInput(val) {
@@ -23931,7 +23899,7 @@ Format as plain text line by line like:
       return;
     }
 
-    const num = parseFloat(rawVal.replace(/[^0-9.]/g, '')) || 0;
+    const num = this.parseAmount(rawVal);
     this.updatePaymentAmountWords(num);
     this.checkFatFingerZeroWarning(num);
     this.recalcPaymentLiveBalance();
@@ -23941,6 +23909,20 @@ Format as plain text line by line like:
     const words = this.convertNumberToIndianWords(amount);
     const enEl = document.getElementById('pay-words-en');
     if (enEl) enEl.innerText = words.english;
+  }
+
+  // Reads an amount typed as "1,25,000", "₹ 2500.50" or "1000+250"; returns 0 when it is not a number.
+  parseAmount(value) {
+    const clean = String(value ?? '').replace(/[₹,\s]/g, '');
+    if (!clean) return 0;
+    if (/^[0-9.+\-*\/()]+$/.test(clean) && /[+*\/]|\d-/.test(clean)) {
+      try {
+        const result = Function(`'use strict'; return (${clean})`)();
+        return Number.isFinite(result) ? Math.round(result * 100) / 100 : 0;
+      } catch (_) { return 0; }
+    }
+    const n = Number(clean);
+    return Number.isFinite(n) ? n : 0;
   }
 
   evaluateAmountMath(inputEl) {
@@ -23995,7 +23977,7 @@ Format as plain text line by line like:
     if (orderSelect && orderSelect.value) {
       const ord = this.findOrder(orderSelect.value);
       if (ord) {
-        referenceAmount = ord.customerBalanceDue || ord.totalInvoiceAmount || 100000;
+        referenceAmount = ord.customerBalanceDue || ord.totalInvoiceAmount || referenceAmount;
       }
     }
 
@@ -24112,8 +24094,42 @@ Format as plain text line by line like:
     if (toast) toast.classList.remove('show');
   }
 
+  // Deleted orders live in their own list so no total, ledger or report counts them.
+  deletedOrdersList() {
+    return [...(this.data.deletedOrders || []), ...(this.data.orders || []).filter(o => o.isDeleted)];
+  }
+
+  async deleteOrder(orderId) {
+    const index = (this.data.orders || []).findIndex(o => o.id === orderId);
+    if (index === -1) return;
+    const order = this.data.orders[index];
+    const linkedPayments = (this.data.payments || []).filter(p => !p.isDeleted && p.orderRef && this.findOrder(p.orderRef) === order);
+    const confirmed = await this.showModalConfirm({
+      title: 'Delete Order',
+      subtitle: 'Move to Recycle Bin',
+      message: `Move order <b>${tfEscapeHtml(order.invoiceNumber || order.id)}</b> (${tfEscapeHtml(order.retailerName || '')}) to the Recycle Bin?` +
+        (linkedPayments.length ? `<br><br><span class="text-xs text-amber-600 font-bold">${tfEscapeHtml(linkedPayments.length)} payment(s) recorded against it stay in the payments ledger.</span>` : '') +
+        '<br><br><span class="text-xs text-slate-500">You can restore it from the Recycle Bin.</span>',
+      confirmText: 'Move to Recycle Bin',
+      confirmClass: 'bg-rose-600 hover:bg-rose-500',
+      icon: 'trash-2'
+    });
+    if (!confirmed) return;
+    this.data.orders.splice(index, 1);
+    Object.assign(order, { isDeleted: true, deletedAt: new Date().toISOString(), deletedBy: 'Operator' });
+    this.data.deletedOrders = this.data.deletedOrders || [];
+    this.data.deletedOrders.unshift(order);
+    this.saveData();
+    // Leave the deleted order's page and close any tab showing it.
+    (this.openTabs || []).filter(t => t.orderId === order.id || t.refId === order.id || String(t.id || '').includes(order.id)).forEach(t => this.closeWorkspaceTab(t.id));
+    if (this.activeOrderId === order.id || this.activeTab === 'order-detail') { this.activeOrderId = null; this.activeTab = 'orders'; }
+    this.render();
+    this.updateRecycleBinBadge();
+    this.showUndoToast(`🗑️ Order ${order.invoiceNumber || order.id} moved to Recycle Bin.`, () => this.restoreDeletedOrder(order.id));
+  }
+
   updateRecycleBinBadge() {
-    const deletedOrders = (this.data.orders || []).filter(o => o.isDeleted).length;
+    const deletedOrders = this.deletedOrdersList().length;
     const deletedPayments = (this.data.payments || []).filter(p => p.isDeleted).length;
     const total = deletedOrders + deletedPayments;
     const badge = document.getElementById('recycle-bin-badge');
@@ -24137,7 +24153,7 @@ Format as plain text line by line like:
     const listWrap = document.getElementById('recycle-bin-items-list');
     if (!listWrap) return;
 
-    const deletedOrders = (this.data.orders || []).filter(o => o.isDeleted);
+    const deletedOrders = this.deletedOrdersList();
     const deletedPayments = (this.data.payments || []).filter(p => p.isDeleted);
 
     if (deletedOrders.length === 0 && deletedPayments.length === 0) {
@@ -24210,10 +24226,11 @@ Format as plain text line by line like:
 
   restoreDeletedPayment(id) {
     const p = (this.data.payments || []).find(x => x.id === id);
-    if (!p) return;
+    if (!p || !p.isDeleted) return;
     p.isDeleted = false;
     delete p.deletedAt;
     delete p.deletedBy;
+    this.applyPaymentToOrder(p, 1);
     this.saveData();
     this.renderPaymentsLedger();
     this.renderRecycleBinList();
@@ -24241,7 +24258,15 @@ Format as plain text line by line like:
   }
 
   restoreDeletedOrder(id) {
-    const o = (this.data.orders || []).find(x => x.id === id);
+    const binIndex = (this.data.deletedOrders || []).findIndex(x => x.id === id);
+    let o;
+    if (binIndex !== -1) {
+      o = this.data.deletedOrders.splice(binIndex, 1)[0];
+      if ((this.data.orders || []).some(x => x.id === o.id)) { this.showToast(`An order with id ${o.id} already exists.`); this.data.deletedOrders.splice(binIndex, 0, o); return; }
+      this.data.orders.unshift(o);
+    } else {
+      o = (this.data.orders || []).find(x => x.id === id);
+    }
     if (!o) return;
     o.isDeleted = false;
     delete o.deletedAt;
@@ -24263,7 +24288,8 @@ Format as plain text line by line like:
       icon: 'trash-2'
     });
     if (!confirmed) return;
-    this.data.orders = (this.data.orders || []).filter(o => o.id !== id);
+    this.data.orders = (this.data.orders || []).filter(o => !(o.id === id && o.isDeleted));
+    this.data.deletedOrders = (this.data.deletedOrders || []).filter(o => o.id !== id);
     this.saveData();
     this.renderRecycleBinList();
     this.updateRecycleBinBadge();
@@ -24271,7 +24297,7 @@ Format as plain text line by line like:
   }
 
   async emptyRecycleBin() {
-    const count = ((this.data.orders || []).filter(o => o.isDeleted).length) +
+    const count = this.deletedOrdersList().length +
                   ((this.data.payments || []).filter(p => p.isDeleted).length);
     if (count === 0) {
       this.showToast('Recycle Bin is already empty.');
@@ -24287,6 +24313,7 @@ Format as plain text line by line like:
     });
     if (!confirmed) return;
     this.data.orders = (this.data.orders || []).filter(o => !o.isDeleted);
+    this.data.deletedOrders = [];
     this.data.payments = (this.data.payments || []).filter(p => !p.isDeleted);
     this.saveData();
     this.renderRecycleBinList();
@@ -24383,6 +24410,26 @@ Format as plain text line by line like:
     }).catch(() => {
       this.showToast('Link: ' + this.currentMobileSnapUrl);
     });
+  }
+
+  async revokeMobileSnapDevices() {
+    const confirmed = await this.showModalConfirm({
+      title: 'Unpair Saved Phones',
+      subtitle: 'Phone access',
+      message: 'Every phone that saved the permanent link will stop working. A new permanent QR code is created; scan it again on phones you still use.',
+      confirmText: 'Unpair phones',
+      confirmClass: 'bg-rose-600 hover:bg-rose-500',
+      icon: 'smartphone'
+    });
+    if (!confirmed) return;
+    try {
+      const resp = await fetch('/api/mobile-snap/revoke', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      if (!resp.ok) throw new Error('Server refused the request');
+      this.showToast('Saved phones unpaired. Scan the new QR code to pair again.');
+      await this.openMobileSnapModal(this.mobileSnapTarget || 'payment');
+    } catch (err) {
+      this.showToast('Could not unpair phones: ' + err.message);
+    }
   }
 
   copyMobileSnapPermanentLink() {
@@ -24676,7 +24723,7 @@ Format as plain text line by line like:
     const phoneInput = document.getElementById('wa-phone-number');
 
     if (partyInput) partyInput.value = config.partyName || '';
-    if (phoneInput) phoneInput.value = config.phone || '+91 98765 43210';
+    if (phoneInput) phoneInput.value = config.phone || '';
 
     this.switchWhatsAppTemplate(config.type || 'receipt');
     modal.classList.remove('hidden');
@@ -24708,15 +24755,15 @@ Format as plain text line by line like:
 
     let msg = '';
     if (type === 'receipt') {
-      const amt = d.amount || 60000;
+      const amt = Number(d.amount) || 0;
       const words = this.convertNumberToIndianWords(amt);
       msg = `*PAID PAYMENT RECEIPT*\n` +
-            `🏢 *TradeFlow Business Hub*\n` +
+            `🏢 *${this.data.businessProfile?.brandName || this.data.businessProfile?.legalName || 'TradeFlow'}*\n` +
             `----------------------------------------\n` +
             `👤 *Party*: ${partyName}\n` +
             `💰 *Amount*: ${this.formatCurrency(amt)} (${words.english})\n` +
             `💳 *Payment Mode*: ${d.mode || 'Bank Transfer / NEFT'}\n` +
-            `🔢 *Ref / UTR*: ${d.utr || 'HDFCN2409180012'}\n` +
+            `🔢 *Ref / UTR*: ${d.utr || '—'}\n` +
             `📅 *Date*: ${this.formatDate(d.date || new Date())}\n` +
             `📦 *Order Ref*: ${d.orderRef || 'Consignment Account'}\n` +
             `----------------------------------------\n` +
@@ -24724,27 +24771,29 @@ Format as plain text line by line like:
             `_Thank you for your business!_`;
     } else if (type === 'dispatch') {
       msg = `*CONSIGNMENT DISPATCH NOTICE*\n` +
-            `🏢 *TradeFlow Business Hub*\n` +
+            `🏢 *${this.data.businessProfile?.brandName || this.data.businessProfile?.legalName || 'TradeFlow'}*\n` +
             `----------------------------------------\n` +
-            `📦 *Order No*: ${d.orderId || 'ORD-1009'}\n` +
+            `📦 *Order No*: ${d.orderId || '—'}\n` +
             `👤 *Buyer*: ${partyName}\n` +
-            `🚚 *Vehicle No*: ${d.vehicleNo || 'HR-10-AB-4592'}\n` +
-            `👨‍✈️ *Driver*: ${d.driverName || 'Rajesh Kumar'} (+91 98765 43210)\n` +
-            `📄 *Bilty / LR No*: ${d.lrNumber || 'VRL-774920'}\n` +
-            `📦 *Consignment*: ${d.items || '50 Bags Pickles & Herbal Concentrates'}\n` +
+            `🚚 *Vehicle No*: ${d.vehicleNo || ''}\n` +
+            `👨‍✈️ *Driver*: ${[d.driverName, d.driverPhone].filter(Boolean).join(' · ') || '—'}\n` +
+            `📄 *Bilty / LR No*: ${d.lrNumber || ''}\n` +
+            `📦 *Consignment*: ${d.items || '—'}\n` +
             `----------------------------------------\n` +
             `_Consignment in transit. Please arrange unloading upon arrival._`;
     } else if (type === 'reminder') {
-      const bal = d.balance || 140000;
+      const bal = Number(d.balance) || 0;
+      const bp = this.data.businessProfile || {};
       msg = `*PAYMENT STATEMENT REMINDER*\n` +
-            `🏢 *TradeFlow Business Hub*\n` +
+            `🏢 *${this.data.businessProfile?.brandName || this.data.businessProfile?.legalName || 'TradeFlow'}*\n` +
             `----------------------------------------\n` +
             `👤 *Party*: ${partyName}\n` +
             `⚖️ *Pending Balance*: ${this.formatCurrency(bal)} (${this.convertNumberToIndianWords(bal).english})\n` +
             `📅 *As of*: ${this.formatDate(new Date())}\n` +
             `🏦 *Bank Account for Transfer*:\n` +
-            `   A/c: 50200012345678 (HDFC Bank)\n` +
-            `   IFSC: HDFC0001234\n` +
+            `   A/c: ${bp.accountNumber || 'Not set in Business Profile'}${bp.bankName ? ` (${bp.bankName})` : ''}\n` +
+            `   IFSC: ${bp.ifsc || 'Not set'}\n` +
+            (bp.upiId ? `   UPI: ${bp.upiId}\n` : '') +
             `----------------------------------------\n` +
             `_Kindly arrange the remittance at your earliest convenience._`;
     }
@@ -24781,11 +24830,18 @@ Format as plain text line by line like:
     });
   }
 
+  // Payment receipt/disbursement message to the partner's own WhatsApp number (matched by id, else exact name).
+  findPaymentContact(payment) {
+    const name = String(payment.partyName || '').trim().toLowerCase();
+    return (this.data.contacts || []).find(c => (payment.partyId && c.id === payment.partyId) || (name && String(c.name || '').trim().toLowerCase() === name)) || null;
+  }
+
   sendPaymentWhatsApp(payment) {
     if (!payment) return;
+    const contact = this.findPaymentContact(payment);
     this.openWhatsAppDispatchModal({
       partyName: payment.partyName,
-      phone: '+91 98765 43210',
+      phone: (contact && (contact.whatsappPhone || contact.phone)) || '',
       type: 'receipt',
       data: {
         amount: payment.amount,
@@ -25273,7 +25329,7 @@ _Automated evening closing report - TradeFlow_
             <div class="flex items-center justify-end gap-2">
               <button type="button" onclick="app.sendDailyDiaryToOwnerWhatsApp()" class="btn-tactile w-full py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg flex items-center justify-center gap-1.5 shadow-sm">
                 <i data-lucide="send" class="w-3.5 h-3.5"></i>
-                <span>Dispatch Summary to Sethji / Owner</span>
+                <span>Dispatch Summary to Owner</span>
               </button>
             </div>
           </div>
@@ -25308,8 +25364,8 @@ _Automated evening closing report - TradeFlow_
       `_Business accounts closed successfully._`;
 
     this.openWhatsAppDispatchModal({
-      partyName: 'Sethji / Owner',
-      phone: '+91 98220 11984',
+      partyName: 'Owner',
+      phone: this.data.businessProfile?.ownerPhone || this.data.businessProfile?.phone || '',
       type: 'custom',
       data: {}
     });
@@ -25320,7 +25376,7 @@ _Automated evening closing report - TradeFlow_
 
   initRoleMode() {
     const saved = localStorage.getItem('tradeflow_role_mode') || 'operator';
-    this.setRoleMode(saved);
+    this.setRoleMode(saved, { silent: true }); // no toast on every page load
   }
 
   toggleUserRoleMode() {
@@ -25329,7 +25385,7 @@ _Automated evening closing report - TradeFlow_
     this.setRoleMode(next);
   }
 
-  setRoleMode(mode) {
+  setRoleMode(mode, { silent = false } = {}) {
     this.currentRoleMode = mode;
     localStorage.setItem('tradeflow_role_mode', mode);
 
@@ -25339,11 +25395,11 @@ _Automated evening closing report - TradeFlow_
     if (mode === 'operator') {
       document.body.classList.add('operator-mode');
       if (label) label.innerText = 'Operator Mode';
-      this.showToast('👤 Operator Mode: Trade margins & sensitive figures hidden from screen.');
+      if (!silent) this.showToast('👤 Operator Mode: Trade margins & sensitive figures hidden from screen.');
     } else {
       document.body.classList.remove('operator-mode');
-      if (label) label.innerText = 'Owner Mode (Sethji)';
-      this.showToast('👑 Owner Mode (Sethji): Full trade financial visibility unlocked.');
+      if (label) label.innerText = 'Owner Mode';
+      if (!silent) this.showToast('👑 Owner Mode: Full trade financial visibility unlocked.');
     }
     if (window.lucide) window.lucide.createIcons();
   }
