@@ -10,6 +10,19 @@ const PORT = Number(process.env.PORT || 3000);
 if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) throw new Error('PORT must be an integer from 1 to 65535');
 const PUBLIC_DIR = __dirname;
 const DATA_DIR = path.join(PUBLIC_DIR, 'data');
+// Excel export runs once, a few seconds after the last save (quick edits do not rewrite the workbook each time).
+const EXCEL_EXPORT_DELAY_MS = Number(process.env.TRADEFLOW_EXCEL_DELAY_MS || 3000);
+let excelExportTimer = null;
+function scheduleExcelExport() {
+  if (excelExportTimer) clearTimeout(excelExportTimer);
+  excelExportTimer = setTimeout(flushExcelExport, EXCEL_EXPORT_DELAY_MS);
+  return { success: true, scheduled: true, inMs: EXCEL_EXPORT_DELAY_MS };
+}
+function flushExcelExport() {
+  if (excelExportTimer) { clearTimeout(excelExportTimer); excelExportTimer = null; }
+  try { if (typeof syncManager !== 'undefined' && syncManager) return syncManager.exportToExcel(); } catch (err) { console.error('[Excel] Export failed:', err.message); }
+  return null;
+}
 const VAULT_DIR = path.join(DATA_DIR, 'vault');
 if (!fs.existsSync(VAULT_DIR)) fs.mkdirSync(VAULT_DIR, { recursive: true });
 const AI_ONLY = process.env.TRADEFLOW_AI_ONLY === 'true';
@@ -336,8 +349,8 @@ const requestHandler = (req, res) => {
           originTabId: typeof payload.tabId === 'string' ? payload.tabId.slice(0, 64) : null
         });
 
-        // Attempt export to Excel (from the database when newer records were kept)
-        const excelRes = syncManager.exportToExcel(saveResult.conflicts.length ? undefined : payload.data);
+        // Excel is refreshed from the database a few seconds after the last save, not on every save.
+        const excelRes = scheduleExcelExport();
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({
@@ -599,6 +612,61 @@ const requestHandler = (req, res) => {
   }
 
   // --- API: POST /api/documents/upload ---
+  // ---- Partner photos, logos and business cards: stored as files, the data keeps only a link ----
+  if (pathname === '/api/partners/image' && req.method === 'POST') {
+    let body = '';
+    let tooBig = false;
+    req.on('data', chunk => {
+      if (tooBig) return;
+      body += chunk;
+      if (body.length > 12 * 1024 * 1024) { tooBig = true; res.writeHead(413, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'Image is larger than 8 MB' })); req.destroy(); }
+    });
+    req.on('end', () => {
+      if (tooBig) return;
+      try {
+        const payload = JSON.parse(body || '{}');
+        const contactId = String(payload.contactId || '');
+        const slot = String(payload.slot || '');
+        if (!/^[A-Za-z0-9_-]{1,64}$/.test(contactId)) throw Object.assign(new Error('Invalid partner id'), { status: 400 });
+        if (!/^(logo|card-front|card-back|person-[A-Za-z0-9_-]{1,40})$/.test(slot)) throw Object.assign(new Error('Invalid image slot'), { status: 400 });
+        const dir = path.join(DATA_DIR, 'partners', contactId);
+        assertWithin(DATA_DIR, dir);
+        fs.mkdirSync(dir, { recursive: true });
+        // Remove earlier images in this slot (also used to delete an image when no data is sent).
+        for (const name of fs.readdirSync(dir)) if (name.startsWith(slot + '-')) fs.unlinkSync(assertWithin(DATA_DIR, path.join(dir, name)));
+        if (!payload.dataUrl) { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ success: true, url: '' })); }
+        const match = /^data:image\/[a-z0-9.+-]+;base64,([A-Za-z0-9+/=\s]+)$/i.exec(String(payload.dataUrl));
+        if (!match) throw Object.assign(new Error('Send the image as a base64 data URL'), { status: 400 });
+        const buffer = Buffer.from(match[1], 'base64');
+        const ext = ['.jpg', '.png', '.webp'].find(e => contentMatchesExtension(buffer, e));
+        if (!ext) throw Object.assign(new Error('Only JPG, PNG or WEBP images are accepted'), { status: 415 });
+        if (buffer.length > 8 * 1024 * 1024) throw Object.assign(new Error('Image is larger than 8 MB'), { status: 413 });
+        const fileName = `${slot}-${Date.now()}${ext}`;
+        fs.writeFileSync(assertWithin(DATA_DIR, path.join(dir, fileName)), buffer);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, url: `/api/partners/image/${encodeURIComponent(contactId)}/${encodeURIComponent(fileName)}` }));
+      } catch (err) {
+        res.writeHead(err.status || 500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.status ? err.message : 'Could not save the image' }));
+      }
+    });
+    return;
+  }
+
+  if (pathname.startsWith('/api/partners/image/') && req.method === 'GET') {
+    try {
+      const [contactId, fileName] = pathname.slice('/api/partners/image/'.length).split('/').map(decodeURIComponent);
+      if (!/^[A-Za-z0-9_-]{1,64}$/.test(contactId || '') || !/^[A-Za-z0-9_-]{1,60}\.(jpg|png|webp)$/.test(fileName || '')) { res.writeHead(400); return res.end(); }
+      const file = assertWithin(DATA_DIR, path.join(DATA_DIR, 'partners', contactId, fileName));
+      if (!fs.existsSync(file)) { res.writeHead(404); return res.end(); }
+      const type = { '.jpg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' }[path.extname(file)];
+      res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'private, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' });
+      return fs.createReadStream(file).pipe(res);
+    } catch (_) {
+      res.writeHead(400); return res.end();
+    }
+  }
+
   if (pathname === '/api/documents/upload' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => {
@@ -3761,3 +3829,8 @@ server.listen(PORT, '0.0.0.0', () => {
   }
 });
 module.exports = server;
+
+// Write any pending Excel export before the server stops.
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.once(signal, () => { if (excelExportTimer) flushExcelExport(); process.exit(0); });
+}

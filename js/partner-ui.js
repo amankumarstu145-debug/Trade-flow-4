@@ -212,6 +212,20 @@
   const state = { tab: {}, editing: null, overlay: null, query: {}, filter: {}, prevQuery: '', draftPerson: null, undo: null };
 
   /* ------------------------------------------------------------------ directory */
+  // Two middle summary tiles that matter for each partner type.
+  function roleTiles(app, role, rows) {
+    const orders = rows.flatMap(x => x.s.orders);
+    const open = orders.filter(isOpen);
+    const count = f => open.filter(f).length;
+    if (role === 'retailer') {
+      const overdue = rows.reduce((t, x) => t + x.s.overdue, 0), n = rows.filter(x => x.s.overdue > 0).length;
+      return [['Overdue', inr(overdue), n ? n + (n === 1 ? ' buyer' : ' buyers') : 'nothing overdue', overdue > 0 ? 'pu-red' : ''], ['Open orders', String(open.length), count(o => o.status === 'action_needed') + ' need action', '']];
+    }
+    if (role === 'manufacturer') return [['In production', String(count(o => o.status === 'in_production')), 'orders being made', ''], ['Waiting to start', String(count(o => o.status === 'action_needed')), 'need advance or PO', '']];
+    if (role === 'packaging') return [['Pending supply', String(count(o => o.packagingStatus !== 'delivered')), 'orders not yet delivered', ''], ['Delivered', String(orders.filter(o => o.packagingStatus === 'delivered').length), 'supplies received', '']];
+    if (role === 'transporter') return [['In transit', String(count(o => o.status === 'in_transit')), 'trips on the road', ''], ['Trips', String(orders.length), 'all trips so far', '']];
+    return [['Buyers brought', String(new Set(orders.map(o => o.retailerId || o.retailerName)).size), 'unique buyers', ''], ['Orders brought', String(orders.length), open.length + ' still open', '']];
+  }
   function renderDirectory(app, role) {
     const r = ROLES[role];
     const contacts = (app.data.contacts || []).filter(c => c.role === role && !c.isDeleted);
@@ -234,18 +248,17 @@
       const hay = [x.c.name, x.c.brandName, x.c.city, x.c.state, x.c.gstin, x.c.dealsIn, x.c.id, ...p.map(pp => [pp.name, pp.phone, pp.email].join(' '))].join(' ').toLowerCase();
       return hay.includes(q);
     });
+    const extra = roleTiles(app, role, rows);
     const tiles = [
-      [rows[0] ? rows[0].s.bigLabel : 'Balance', inr(totalBig), `across ${rows.length} ${rows.length === 1 ? 'partner' : 'partners'}`, totalBig > 0 && role === 'retailer' ? 'pu-red' : ''],
-      role === 'retailer' ? ['Overdue', inr(totalOverdue), counts.overdue ? counts.overdue + (counts.overdue === 1 ? ' buyer' : ' buyers') : 'nothing overdue', totalOverdue > 0 ? 'pu-red' : ''] : ['Open orders', String(openOrders), counts.open + ' partners with open work', ''],
-      ['Open orders', String(openOrders), 'linked to these partners', ''],
+      [rows[0] ? rows[0].s.bigLabel : 'Balance', inr(totalBig), `across ${rows.length} ${rows.length === 1 ? 'partner' : 'partners'}`, ''],
+      ...extra,
       [rows[0] ? rows[0].s.doneLabel.replace(/^./, ch => ch.toUpperCase()) + ' so far' : 'Paid so far', inr(totalDone), totalOf ? Math.round(totalDone * 100 / totalOf) + '% of ' + (rows[0] ? rows[0].s.ofLabel : 'total') : '—', 'pu-green']
     ];
-    if (role !== 'retailer') tiles.splice(2, 1, ['Partners', String(rows.length), counts.balance + ' with a balance', '']);
     const chip = (id, label, n, tone = '') => `<button type="button" class="pu-chip ${f === id ? 'is-on' : ''} ${tone}" onclick="TFPartnerUI.setFilter('${role}','${id}')">${esc(label)} <b>${n}</b></button>`;
     return `
     <div class="pu-root pu-dir">
       <div class="pu-dir-head">
-        <div><h1 class="pu-h1">${esc(r.plural)}</h1><p class="pu-sub">${rows.length} ${rows.length === 1 ? 'partner' : 'partners'} · double-click any detail to copy it</p></div>
+        <div><h1 class="pu-h1">${esc(r.plural)}</h1><p class="pu-sub">${rows.length} ${rows.length === 1 ? 'partner' : 'partners'} · tap any detail to copy it</p></div>
         <div class="pu-row-wrap">
           <label class="pu-sr" for="pu-search-${role}">Search ${esc(r.plural)}</label>
           <input id="pu-search-${role}" type="search" class="pu-input pu-search" placeholder="Search name, city, GSTIN, person or product" value="${esc(state.query[role] || '')}" oninput="TFPartnerUI.setQuery('${role}', this.value)">
@@ -277,18 +290,17 @@
     <article class="pu-card" data-partner-type="${esc(c.role)}" data-name="${esc(String(c.name || '').toLowerCase())}">
       <div class="pu-card-top">
         <button type="button" class="pu-icon-btn pu-card-edit" title="Edit" aria-label="Edit ${esc(c.name)}" onclick="TFPartnerUI.open(${id}, 'company', 'company')">${svg(ICON.edit, 15)}</button>
-        <div class="pu-avatar-wrap">
-          <div class="pu-avatar">${logo ? `<img src="${esc(logo)}" alt="">` : esc(initials(c.name))}</div>
-          <label class="pu-cam" title="Upload photo" aria-label="Upload photo of ${esc(c.name)}">${svg(ICON.camera, 13)}<input type="file" accept="image/*" class="pu-sr" onchange="TFPartnerUI.uploadLogo(${id}, this)"></label>
-        </div>
+        <label class="pu-avatar-wrap" title="Change photo">
+          <span class="pu-avatar">${logo ? `<img src="${esc(logo)}" alt="">` : esc(initials(c.name))}</span>
+          <span class="pu-cam" aria-hidden="true">${svg(ICON.camera, 13)}</span>
+          <input type="file" accept="image/*" class="pu-sr" aria-label="Upload photo of ${esc(c.name)}" onchange="TFPartnerUI.uploadLogo(${id}, this)">
+        </label>
         <h2 class="pu-card-name"><button type="button" onclick="TFPartnerUI.open(${id}, 'company')" title="${esc(c.name)}">${esc(c.name || 'Unnamed partner')}</button></h2>
         <div class="pu-badges">${deals.length ? deals.map(d => `<span class="pu-badge">${svg(ICON.tag, 12)}${esc(d)}</span>`).join('') : `<button type="button" class="pu-badge pu-badge-add" onclick="TFPartnerUI.open(${id}, 'company', 'company')">+ ${esc(r.badge)}</button>`}</div>
         <div class="pu-lines">
-          ${rows.map(([k, label, v]) => `
-          <div class="pu-line ${v ? '' : 'is-empty'}" ${v ? `ondblclick="TFPartnerUI.copy(${jsArg(v.replace(/^GST /, ''))}, '${label}')" title="Double-click to copy"` : ''}>
-            ${svg(ICON[k], 15, 'class="pu-line-icon"')}<span class="pu-line-text">${esc(v || 'Add ' + label.toLowerCase())}</span>
-            ${v ? `<button type="button" class="pu-copy" aria-label="Copy ${esc(label)}" title="Copy" onclick="TFPartnerUI.copy(${jsArg(v.replace(/^GST /, ''))}, '${label}')">${svg(ICON.copy, 14)}</button>` : ''}
-          </div>`).join('')}
+          ${rows.map(([k, label, v]) => v
+            ? `<button type="button" class="pu-line" title="Tap to copy" aria-label="Copy ${esc(label)}: ${esc(v)}" onclick="TFPartnerUI.copy(${jsArg(v.replace(/^GST /, ''))}, '${label}')">${svg(ICON[k], 15, 'class="pu-line-icon"')}<span class="pu-line-text">${esc(v)}</span><span class="pu-copy">${svg(ICON.copy, 14)}</span></button>`
+            : `<button type="button" class="pu-line is-empty" onclick="TFPartnerUI.open(${id}, 'company', '${k === 'gst' ? 'kyc' : k === 'place' ? 'address' : 'person:' + esc((p && p.id) || 'p1')}')">${svg(ICON[k], 15, 'class="pu-line-icon"')}<span class="pu-line-text">Add ${esc(label.toLowerCase())}</span></button>`).join('')}
         </div>
       </div>
       <div class="pu-card-body">
@@ -309,6 +321,7 @@
 
   /* ------------------------------------------------------------------ partner page */
   function renderPage(app, c) {
+    setTimeout(() => migrateImages(c), 0);
     const r = roleOf(c);
     const tab = state.tab[c.id] || 'company';
     const s = summary(app, c);
@@ -328,28 +341,30 @@
     <div class="pu-root pu-page">
       <button type="button" class="pu-back" onclick="app.navigateBack()">← Back</button>
       <section class="pu-hero">
-        <div class="pu-avatar-wrap pu-avatar-lg">
-          <div class="pu-avatar">${logo ? `<img src="${esc(logo)}" alt="">` : esc(initials(c.name))}</div>
-          <label class="pu-cam" title="Upload logo or photo" aria-label="Upload logo or photo">${svg(ICON.camera, 15)}<input type="file" accept="image/*" class="pu-sr" onchange="TFPartnerUI.uploadLogo(${id}, this)"></label>
-        </div>
+        <label class="pu-avatar-wrap pu-avatar-lg" title="Change logo or photo">
+          <span class="pu-avatar">${logo ? `<img src="${esc(logo)}" alt="">` : esc(initials(c.name))}</span>
+          <span class="pu-cam" aria-hidden="true">${svg(ICON.camera, 15)}</span>
+          <input type="file" accept="image/*" class="pu-sr" aria-label="Upload logo or photo" onchange="TFPartnerUI.uploadLogo(${id}, this)">
+        </label>
         <div class="pu-hero-main">
-          <div class="pu-row-wrap"><h1 class="pu-h1 pu-hero-name">${esc(c.name || 'Unnamed partner')}</h1><span class="pu-idtag">${esc(c.id)} · ${esc(r.single)}</span></div>
+          <div class="pu-row-wrap pu-hero-title"><h1 class="pu-h1 pu-hero-name">${esc(c.name || 'Unnamed partner')}</h1><span class="pu-idtag">${esc(c.id)} · ${esc(r.single)}</span>
+            <button type="button" class="pu-balance ${s.overdue > 0 ? 'is-bad' : ''}" onclick="TFPartnerUI.setTab(${id}, 'work')" title="Open ${esc(r.workTab)}">${esc(inr(s.big))} <span>${esc(s.bigLabel.toLowerCase())}</span></button></div>
           <div class="pu-row-wrap pu-gap6">
             <span class="pu-label">${esc(r.badge)}</span>
             ${deals.map(d => `<span class="pu-badge">${svg(ICON.tag, 12)}${esc(d)}</span>`).join('')}
-            <button type="button" class="pu-badge pu-badge-add" onclick="TFPartnerUI.edit(${id}, 'company')">${deals.length ? 'Edit' : '+ Add'}</button>
-            ${p && p.name ? `<span class="pu-hint">· Contact: <b>${esc(p.name)}</b></span>` : ''}
+            <button type="button" class="pu-icon-btn pu-icon-sm" title="${deals.length ? 'Edit' : 'Add'} ${esc(r.badge.toLowerCase())}" aria-label="${deals.length ? 'Edit' : 'Add'} ${esc(r.badge.toLowerCase())}" onclick="TFPartnerUI.edit(${id}, 'company')">${svg(deals.length ? ICON.edit : 'M12 5v14 M5 12h14', 14)}</button>
           </div>
+          ${p && p.name ? `<div class="pu-hint pu-contact-line">Contact person: <b>${esc(p.name)}</b>${p.role ? ' · ' + esc(p.role) : ''}</div>` : ''}
           <div class="pu-chip-grid">${chips.map(([k, label, v]) => `<button type="button" class="pu-copychip ${v ? '' : 'is-empty'}" ${v ? `onclick="TFPartnerUI.copy(${jsArg(v)}, '${label}')" title="Click to copy"` : `onclick="TFPartnerUI.edit(${id}, '${k === 'phone' || k === 'email' ? 'person:' + esc(p ? p.id : 'p1') : k === 'gst' ? 'kyc' : 'address'}')"`}>${svg(ICON[k], 14)}<span>${esc(v ? (k === 'gst' ? 'GST ' + v : v) : 'Add ' + label.toLowerCase())}</span></button>`).join('')}</div>
         </div>
         <div class="pu-row-wrap pu-hero-actions">
           ${phone ? `<a class="pu-btn" href="tel:${esc(phone)}">Call</a>` : ''}
           ${wa ? `<a class="pu-btn" href="https://wa.me/${esc(wa.length === 10 ? '91' + wa : wa)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
-          <button type="button" class="pu-btn pu-dark" onclick="TFPartnerUI.edit(${id}, 'company')">${svg(ICON.edit, 15)} Edit profile</button>
+          <button type="button" class="pu-btn pu-dark" onclick="TFPartnerUI.edit(${id}, 'company')">${svg(ICON.edit, 15)} Edit company</button>
         </div>
       </section>
       <div class="pu-tabs" role="tablist" aria-label="Partner sections">
-        ${[['company', 'Company & contact', 'Details, people, licences, bank'], ['work', r.workTab, s.openCount + ' open · ' + inr(s.big) + ' ' + s.bigLabel.toLowerCase()]].map(([t, label, hint]) => `
+        ${[['company', 'Company & contact', 'Details, licences, bank'], ['work', r.workTab, s.openCount + ' open · ' + inr(s.big)]].map(([t, label, hint]) => `
         <button type="button" role="tab" aria-selected="${tab === t}" class="pu-tab ${tab === t ? 'is-on' : ''}" onclick="TFPartnerUI.setTab(${id}, '${t}')"><span>${esc(label)}</span><small>${esc(hint)}</small></button>`).join('')}
       </div>
       ${tab === 'work' ? workTab(app, c, s) : companyTab(app, c)}
@@ -406,9 +421,12 @@
   function box(app, c, sx) {
     const id = jsArg(c.id);
     const editing = state.editing === c.id + '|' + sx.id;
-    const filled = sx.fields.filter(f => get(c, f.key));
+    // Name, "deals in", city and state are already in the page header, so the box does not repeat them.
+    const inHeader = new Set(['name', 'dealsIn', 'city', 'state']);
+    const filledAll = sx.fields.filter(f => get(c, f.key));
+    const filled = filledAll.filter(f => !inHeader.has(f.key));
     const missing = sx.fields.filter(f => !get(c, f.key));
-    const subtitle = sx.isCard ? 'Front and back photo' : filled.length + ' of ' + sx.fields.length + ' filled';
+    const subtitle = sx.isCard ? 'Front and back photo' : filledAll.length + ' of ' + sx.fields.length + ' filled';
     let body = '';
     if (editing && !sx.isCard) {
       const values = {}; sx.fields.forEach(f => { values[f.key] = raw(c, f.key); });
@@ -420,7 +438,8 @@
       if (sx.isAddress) {
         const q = encodeURIComponent([c.billingAddress || c.shippingAddress, c.city, c.state, c.pincode].filter(Boolean).join(', '));
         const link = c.mapsLink || (q ? 'https://www.google.com/maps/search/?api=1&query=' + q : '');
-        body += `<div class="pu-pad"><div class="pu-map"><span class="pu-map-pin">${svg(ICON.place, 18)}</span><span class="pu-map-label">${esc(c.city || 'Location')}</span></div>
+        const mapQuery = mapQueryOf(c);
+        body += `<div class="pu-pad">${c.mapsLink && mapQuery ? `<iframe class="pu-map pu-map-live" title="Map of ${esc(c.name)}" loading="lazy" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups" src="https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&amp;output=embed"></iframe>` : `<div class="pu-map"><span class="pu-map-pin">${svg(ICON.place, 18)}</span><span class="pu-map-label">${esc(c.city || 'Location')}${c.mapsLink ? '' : ' · add a Google Maps link to see the real map'}</span></div>`}
           <div class="pu-two">${link ? `<a class="pu-btn pu-primary" href="${esc(link)}" target="_blank" rel="noopener">Open in Google Maps</a><a class="pu-btn" href="https://wa.me/?text=${encodeURIComponent((c.name || '') + ' – ' + decodeURIComponent(link))}" target="_blank" rel="noopener">Send location on WhatsApp</a>` : '<span class="pu-hint">Add an address or a Google Maps link to see it on the map.</span>'}</div></div>`;
       }
       if (sx.isCard) {
@@ -440,7 +459,8 @@
     const editing = state.editing === c.id + '|' + key;
     const isPrimary = (primaryOf(c) || {}).id === p.id;
     const title = total > 1 ? (isPrimary ? 'Primary contact' : 'Person ' + (i + 1)) : 'Contact person';
-    const shown = PERSON_FIELDS.filter(f => f.key !== 'name' && f.key !== 'role');
+    // The primary person's phone and email are already in the page header.
+    const shown = PERSON_FIELDS.filter(f => f.key !== 'name' && f.key !== 'role' && !(isPrimary && (f.key === 'phone' || f.key === 'email')));
     const filled = shown.filter(f => p[f.key]);
     const missing = shown.filter(f => !p[f.key]);
     let body;
@@ -449,8 +469,8 @@
         total > 1 ? `<button type="button" class="pu-btn pu-danger" onclick="TFPartnerUI.removePerson(${id}, ${jsArg(p.id)})">Remove person</button>` : '');
     } else {
       body = `<div class="pu-person">
-          <div class="pu-avatar-wrap pu-avatar-md"><div class="pu-avatar">${p.photo ? `<img src="${esc(p.photo)}" alt="">` : esc(initials(p.name))}</div>
-            <label class="pu-cam" title="Upload photo" aria-label="Upload photo of ${esc(p.name || 'this person')}">${svg(ICON.camera, 12)}<input type="file" accept="image/*" class="pu-sr" onchange="TFPartnerUI.uploadPersonPhoto(${id}, ${jsArg(p.id)}, this)"></label></div>
+          <label class="pu-avatar-wrap pu-avatar-md" title="Change photo"><span class="pu-avatar">${p.photo ? `<img src="${esc(p.photo)}" alt="">` : esc(initials(p.name))}</span>
+            <span class="pu-cam" aria-hidden="true">${svg(ICON.camera, 12)}</span><input type="file" accept="image/*" class="pu-sr" aria-label="Upload photo of ${esc(p.name || 'this person')}" onchange="TFPartnerUI.uploadPersonPhoto(${id}, ${jsArg(p.id)}, this)"></label>
           <div class="pu-grow"><b class="pu-person-name">${esc(p.name || 'Name not added')}</b><span class="pu-hint">${esc(p.role || 'Add their role')}</span></div>
           ${total > 1 ? (isPrimary ? '<span class="pu-tag is-green">★ Primary contact</span>' : `<button type="button" class="pu-btn pu-btn-sm" onclick="TFPartnerUI.makePrimary(${id}, ${jsArg(p.id)})">Make primary</button>`) : ''}
         </div>`
@@ -471,6 +491,14 @@
       return `<div class="pu-step ${done ? 'is-done' : ''} ${now ? (bad ? 'is-bad' : 'is-now') : ''} ${i === 0 ? 'is-first' : ''} ${i <= reached ? 'is-lit' : ''}"><span>${done ? '✓' : i + 1}</span><small>${label}</small></div>`;
     }).join('');
   }
+  // Coordinates or place text from a saved Google Maps link, else the written address.
+  function mapQueryOf(c) {
+    const link = String(c.mapsLink || '');
+    const at = /@(-?\d+\.\d+),(-?\d+\.\d+)/.exec(link);
+    if (at) return at[1] + ',' + at[2];
+    try { const u = new URL(link); const q = u.searchParams.get('q') || u.searchParams.get('query'); if (q) return q; const place = /\/place\/([^/]+)/.exec(u.pathname); if (place) return decodeURIComponent(place[1].replace(/\+/g, ' ')); } catch (_) {}
+    return [c.billingAddress || c.shippingAddress, c.city, c.state, c.pincode].filter(Boolean).join(', ');
+  }
   function docsFor(app, o) { return (app.data.documents || []).filter(d => d.orderId === o.id && !d.isDeleted); }
   // The saved invoice file for an order, as seen from this partner (buyer invoice, factory bill or packaging bill).
   const INVOICE_CATEGORY = { retailer: ['retailer_invoice', 'tax_invoice'], manufacturer: ['mfg_invoice'], packaging: ['pkg_invoice'] };
@@ -487,8 +515,8 @@
     const previous = s.orders.filter(o => !isOpen(o)).filter(o => !prevQ || [o.id, o.invoiceNumber, productsOf(o)].join(' ').toLowerCase().includes(prevQ));
     const direction = c.role === 'retailer' ? 'received' : 'paid';
     const kpis = [
-      [s.bigLabel, inr(s.big), 'across ' + s.openCount + ' open', s.overdue > 0 || (c.role === 'retailer' && s.big > 0) ? 'pu-red' : ''],
-      c.role === 'retailer' ? ['Overdue', inr(s.overdue), s.overdueSince ? 'since ' + shortDate(s.overdueSince) : 'nothing overdue', s.overdue > 0 ? 'pu-red' : ''] : ['Open', String(s.openCount), 'orders in progress', ''],
+      [s.bigLabel, inr(s.big), 'across ' + s.openCount + ' open', ''],
+      c.role === 'retailer' ? ['Overdue', inr(s.overdue), s.overdueSince ? 'since ' + shortDate(s.overdueSince) : 'nothing overdue', s.overdue > 0 ? 'pu-red' : ''] : roleTiles(app, c.role, [{ c, s }])[0],
       ['Total ' + s.ofLabel, inr(s.of), s.orders.length + ' orders', ''],
       [s.doneLabel.replace(/^./, ch => ch.toUpperCase()), inr(s.done), s.of ? Math.round(s.done * 100 / s.of) + '% of total' : '—', 'pu-green'],
       ['Terms', c.paymentTerms || (c.commissionRate ? c.commissionRate + '%' : '—'), c.role === 'marketeer' ? 'commission terms' : 'payment terms', '']
@@ -592,6 +620,33 @@
     });
   }
   const toast = m => { const a = appRef(); if (a && a.showToast) a.showToast(m); };
+  // Images are saved as files next to the data; the partner record keeps only the link.
+  async function storeImage(contactId, slot, dataUrl) {
+    const resp = await fetch('/api/partners/image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contactId, slot, dataUrl: dataUrl || '' }) });
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok || !json.success) throw new Error(json.error || 'Could not save the image');
+    return json.url;
+  }
+  const isInline = v => typeof v === 'string' && v.startsWith('data:image');
+  const migrating = new Set();
+  // Older records kept photos inside the data; move them to files once, then save.
+  async function migrateImages(c) {
+    if (!c || migrating.has(c.id) || typeof fetch !== 'function') return;
+    const jobs = [];
+    if (isInline(c.logo)) jobs.push(['logo', v => { c.logo = v; }, c.logo]);
+    const card = c.businessCard || {};
+    for (const side of ['front', 'back']) if (isInline(card[side])) jobs.push(['card-' + side, v => { c.businessCard = { ...(c.businessCard || {}), [side]: v }; }, card[side]]);
+    (Array.isArray(c.people) ? c.people : []).forEach(p => { if (isInline(p.photo)) jobs.push(['person-' + p.id, v => { p.photo = v; }, p.photo]); });
+    if (!jobs.length) return;
+    migrating.add(c.id);
+    try {
+      for (const [slot, apply, data] of jobs) apply(await storeImage(c.id, slot, data));
+      c.updated_at = new Date().toISOString();
+      await appRef().saveData('Operator', 'Moved partner images to files · ' + (c.name || c.id));
+      rerender();
+    } catch (e) { console.warn('Image move skipped:', e.message); }
+    finally { migrating.delete(c.id); }
+  }
   function ask(title, message, confirmText) {
     const a = appRef();
     if (a && typeof a.showModalConfirm === 'function') return a.showModalConfirm({ title, subtitle: 'Please confirm', message, confirmText, confirmClass: 'bg-rose-600 hover:bg-rose-500', icon: 'trash-2' });
@@ -698,20 +753,21 @@
     },
     async uploadLogo(contactId, input) {
       const c = contactById(contactId); const file = input.files && input.files[0]; if (!c || !file) return;
-      try { c.logo = await shrinkImage(file, 320); c.logoUrl = ''; stamp(c, `Updated photo of ${c.name}`); toast('✓ Photo updated'); } catch (e) { toast(e.message); }
+      try { c.logo = await storeImage(c.id, 'logo', await shrinkImage(file, 320)); c.logoUrl = ''; stamp(c, `Updated photo of ${c.name}`); toast('✓ Photo updated'); } catch (e) { toast(e.message); } finally { input.value = ''; }
     },
     async uploadPersonPhoto(contactId, personId, input) {
       const c = contactById(contactId); const file = input.files && input.files[0]; if (!c || !file) return;
-      try { const list = peopleOf(c).map(p => ({ ...p })); const p = list.find(x => x.id === personId); if (!p) return; p.photo = await shrinkImage(file, 240); c.people = list; if (!c.primaryPersonId) c.primaryPersonId = list[0].id; stamp(c, `Updated person photo for ${c.name}`); } catch (e) { toast(e.message); }
+      try { const list = peopleOf(c).map(p => ({ ...p })); const p = list.find(x => x.id === personId); if (!p) return; p.photo = await storeImage(c.id, 'person-' + p.id, await shrinkImage(file, 240)); c.people = list; if (!c.primaryPersonId) c.primaryPersonId = list[0].id; stamp(c, `Updated person photo for ${c.name}`); } catch (e) { toast(e.message); }
     },
     async uploadCard(contactId, side, input) {
       const c = contactById(contactId); const file = input.files && input.files[0]; if (!c || !file) return;
-      try { c.businessCard = { ...(c.businessCard || {}), [side]: await shrinkImage(file, 1400) }; stamp(c, `Saved business card of ${c.name}`); toast('✓ Business card saved'); } catch (e) { toast(e.message); }
+      try { const url = await storeImage(c.id, 'card-' + side, await shrinkImage(file, 1400)); c.businessCard = { ...(c.businessCard || {}), [side]: url }; stamp(c, `Saved business card of ${c.name}`); toast('✓ Business card saved'); } catch (e) { toast(e.message); } finally { input.value = ''; }
     },
     removeCard(contactId, side) {
       const c = contactById(contactId); if (!c || !c.businessCard) return;
       ask('Remove business card image?', 'Remove the <b>' + esc(side) + '</b> of the business card?', 'Remove').then(ok => { if (!ok) return;
       const card = { ...c.businessCard }; delete card[side]; c.businessCard = card;
+      storeImage(c.id, 'card-' + side, '').catch(() => {});
       stamp(c, `Removed business card image of ${c.name}`); });
     },
     viewImage(contactId, side) { state.overlay = { kind: 'image', contactId, side }; rerender(); },

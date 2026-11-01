@@ -400,3 +400,27 @@ test('partners: "Delete invoice" only targets the saved invoice file of that ord
   assert.deepEqual(ui.invoiceDocsFor(app, { role: 'manufacturer' }, { id: 'A' }).map(d => d.id), ['D4']);
   assert.deepEqual(ui.invoiceDocsFor(app, { role: 'marketeer' }, { id: 'A' }).map(d => d.id), []);
 });
+
+// ---- v5: partner images are files, and only real images are accepted ----
+test('partner images: saved as files under data/partners, served back, and non-images refused', async () => {
+  const env = await fixture();
+  try {
+    const png = 'data:image/png;base64,' + Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d4944415478da63f8ffff3f0005fe02fea7d5bb5f0000000049454e44ae426082', 'hex').toString('base64');
+    const post = body => fetch(env.base + '/api/partners/image', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: env.base }, body: JSON.stringify(body) });
+    const ok = await post({ contactId: 'RET-01', slot: 'logo', dataUrl: png });
+    assert.equal(ok.status, 200);
+    const { url } = await ok.json();
+    assert.match(url, /^\/api\/partners\/image\/RET-01\/logo-\d+\.png$/);
+    const img = await fetch(env.base + url);
+    assert.equal(img.status, 200);
+    assert.equal(img.headers.get('content-type'), 'image/png');
+    const html = 'data:image/png;base64,' + Buffer.from('<script>alert(1)</script>').toString('base64');
+    assert.equal((await post({ contactId: 'RET-01', slot: 'logo', dataUrl: html })).status, 415);
+    assert.equal((await post({ contactId: '../../etc', slot: 'logo', dataUrl: png })).status, 400);
+    assert.equal((await post({ contactId: 'RET-01', slot: '../x', dataUrl: png })).status, 400);
+    assert.ok([400, 403].includes((await fetch(env.base + '/api/partners/image/RET-01/..%2F..%2Fserver.js')).status));
+    // sending no image removes the slot
+    assert.equal((await post({ contactId: 'RET-01', slot: 'logo' })).status, 200);
+    assert.equal((await fetch(env.base + url)).status, 404);
+  } finally { await env.close(); }
+});
