@@ -2651,6 +2651,9 @@ html.dark .pu-map { background: repeating-linear-gradient(0deg, transparent 0 46
 .pu-table td { padding: 14px 12px; border-bottom: 1px solid var(--pu-line2); vertical-align: top; }
 .pu-table th:first-child, .pu-table td:first-child { padding-left: 18px; } .pu-table th:last-child, .pu-table td:last-child { padding-right: 18px; }
 .pu-num { text-align: right !important; font-variant-numeric: tabular-nums; }
+.pu-table .pu-link { white-space: nowrap; }
+.pu-table .pu-row-end { flex-wrap: nowrap; }
+.pu-table { min-width: 1080px; }
 .pu-overlay { position: fixed; inset: 0; z-index: 150; background: rgba(15,23,42,.45); display: flex; justify-content: center; align-items: flex-start; padding: 40px 16px; overflow-y: auto; }
 .pu-dialog { width: 100%; max-width: 680px; background: var(--pu-card); color: var(--pu-text); border-radius: 18px; box-shadow: 0 20px 50px rgba(15,23,42,.3); overflow: hidden; }
 .pu-file { display: flex; align-items: center; gap: 12px; min-height: 52px; border: 1px solid var(--pu-line); border-radius: 10px; padding: 6px 12px; }

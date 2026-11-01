@@ -525,7 +525,7 @@
             return `<tr><td><button type="button" class="pu-link" onclick="app.openOrderDetailPage(${jsArg(o.id)})">${esc(o.invoiceNumber || o.id)}</button><div class="pu-hint">${esc(longDate(o.date))}</div></td>
               <td class="pu-small">${esc(productsOf(o))}</td><td class="pu-num">${casesOf(o)}</td><td class="pu-num"><b>${esc(inr(m.total))}</b></td>
               <td><span class="pu-status is-ok">✓ Paid in full</span><div class="pu-hint">${pays.length ? pays.length + (pays.length === 1 ? ' payment' : ' payments') + (last ? ' · last ' + esc(shortDate(last)) : '') : 'payments recorded on the order'}</div></td>
-              <td>${esc(longDate(o.deliveredDate || o.settledDate || o.dueDate))}</td>
+              <td>${esc(o.settledDate || o.deliveredDate || last ? longDate(o.settledDate || o.deliveredDate || last) : '—')}</td>
               <td class="pu-num"><div class="pu-row-end">${c.role === 'retailer' ? `<button type="button" class="pu-btn pu-btn-sm" onclick="app.openInvoiceModal(${jsArg(o.id)})">View invoice</button>` : ''}<button type="button" class="pu-btn pu-btn-sm" onclick="TFPartnerUI.folder(${id}, ${jsArg(o.id)})">Folder · ${docs.length}</button>${invoiceDocsFor(app, c, o).length ? `<button type="button" class="pu-btn pu-btn-sm pu-danger" title="Delete the saved invoice file" onclick="TFPartnerUI.deleteInvoice(${id}, ${jsArg(o.id)})">Delete invoice</button>` : ''}</div></td></tr>`; }).join('')}
         </tbody></table></div>` : `<div class="pu-empty">${prevQ ? 'No previous orders match this search.' : 'No completed orders yet. Orders move here once they are delivered and fully paid.'}</div>`}
       </section>`;
