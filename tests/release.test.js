@@ -208,3 +208,93 @@ test('security: every PDF.js call disables font evaluation', () => {
 test('security: launchers never kill a process to take over its port', () => {
   for (const file of ['server.js', 'start.server.bat']) assert(!/taskkill|Stop-Process|exec\(`/i.test(fs.readFileSync(path.join(root, file), 'utf8')), file);
 });
+
+// ---- Regression tests for the security and data-integrity fixes ----
+const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aRXsAAAAASUVORK5CYII=';
+const PDF = Buffer.from('%PDF-1.4\n%test\n').toString('base64');
+const HTML = Buffer.from('<html><script>alert(1)</script></html>').toString('base64');
+function filesUnder(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? filesUnder(path.join(directory, entry.name)) : [path.join(directory, entry.name)]);
+}
+test('security: the unused payment/order/partner write endpoints are gone (path traversal write)', async () => {
+  for (const route of ['/api/payments', '/api/orders', '/api/partners']) {
+    const response = await fetch(env.base + route, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount: '100', party: 'X', name: 'X', id: 'X', date: '/../../../../../../POC', proofFilename: 'x.bat', proofData: 'ZWNobyBQT0M=' }) });
+    assert(response.status >= 400, route);
+  }
+  assert(!filesUnder(env.directory).some(file => /\.bat$|POC/i.test(file)), 'no file may be written');
+});
+test('security: payment proof archive refuses non-document bytes and executable names', async () => {
+  const bad = await post('/api/vault/archive-payment-proof', { orderRef: 'ORD-TEST', fileData: 'data:application/octet-stream;base64,ZWNobyBQT0M=', originalName: 'run.bat', date: '/../../x' });
+  assert.equal(bad.status, 415);
+  const good = await post('/api/vault/archive-payment-proof', { orderRef: 'ORD-TEST', fileData: 'data:image/png;base64,' + PNG, originalName: 'slip.bat', date: '2026-10-30' });
+  assert.equal(good.status, 200);
+  assert(!filesUnder(path.join(env.directory, 'data')).some(file => file.endsWith('.bat')));
+  assert(filesUnder(path.join(env.directory, 'data', 'orders')).some(file => file.endsWith('.png')));
+});
+test('security: document uploads check content, accept numeric order IDs and fix mislabelled images', async () => {
+  const disguised = await post('/api/documents/upload', { orderId: 'ORD-TEST', fileName: 'invoice.pdf', fileData: 'data:application/pdf;base64,' + HTML });
+  assert.equal(disguised.status, 415);
+  const numeric = await post('/api/documents/upload', { orderId: 4242, fileName: 'invoice.pdf', fileData: 'data:application/pdf;base64,' + PDF });
+  assert.equal(numeric.status, 200, JSON.stringify(numeric.data));
+  const relabelled = await post('/api/documents/upload', { orderId: 'ORD-TEST', fileName: 'photo.jpg', fileData: 'data:image/jpeg;base64,' + PNG });
+  assert.equal(relabelled.status, 200);
+  assert.match(relabelled.data.doc.storedFileName, /\.png$/);
+});
+test('security: phone uploads must be real images/PDFs and saved phones can be unpaired', async () => {
+  const session = await post('/api/mobile-snap/session', {});
+  const html = await post('/api/mobile-snap/upload', { sessionId: session.data.sessionId, fileData: 'data:image/jpeg;base64,' + HTML, fileName: 'slip.jpg' });
+  assert.equal(html.status, 415);
+  const permanent = new URL(session.data.permanentUrl).searchParams.get('session');
+  assert.equal((await post('/api/mobile-snap/upload', { sessionId: permanent, fileData: 'data:image/png;base64,' + PNG, fileName: 'a.png' })).status, 200);
+  assert.equal((await post('/api/mobile-snap/revoke', {})).status, 200);
+  assert.equal((await post('/api/mobile-snap/upload', { sessionId: permanent, fileData: 'data:image/png;base64,' + PNG, fileName: 'a.png' })).status, 403);
+  assert(!fs.existsSync(path.join(env.directory, 'data', '.mobile-pairing.json')));
+});
+test('security: document preview errors do not reveal file-system paths', async () => {
+  const body = await (await fetch(env.base + '/api/documents/preview?path=missing.pdf')).text();
+  assert(!body.includes(env.directory) && !body.includes('candidates'), body);
+});
+test('data: purge only removes items that are already in the recycle bin', async () => {
+  assert.equal((await post('/api/recycle-bin/purge', { entityType: 'order', id: 'ORD-TEST' })).status, 409);
+  assert.equal((await post('/api/recycle-bin/purge', { type: 'order', id: 'ORD-TEST' })).status, 400);
+  const current = (await (await fetch(env.base + '/api/data')).json()).data;
+  assert(current.orders.some(order => order.id === 'ORD-TEST'), 'live order must survive');
+});
+test('data: a stale window cannot delete or overwrite records saved after it loaded', async () => {
+  const windowA = await (await fetch(env.base + '/api/data')).json();
+  const windowB = await (await fetch(env.base + '/api/data')).json();
+  await new Promise(resolve => setTimeout(resolve, 5));
+  // Window B adds a payment and edits the order.
+  const b = structuredClone(windowB.data);
+  b.payments.push({ id: 'PAY-WINDOW-B', partyName: 'B', direction: 'received', amount: 77, date: '2026-10-31' });
+  b.orders[0].status = 'in_transit';
+  const savedB = await post('/api/data', { data: b, baseTimestamp: windowB.timestamp });
+  assert.equal(savedB.status, 200); assert.deepEqual(savedB.data.conflicts, []);
+  // Window A saves its older copy with its own small change.
+  const a = structuredClone(windowA.data);
+  a.orders[0].status = 'settled';
+  const savedA = await post('/api/data', { data: a, baseTimestamp: windowA.timestamp });
+  assert.equal(savedA.status, 200);
+  assert(savedA.data.conflicts.some(c => c.id === 'PAY-WINDOW-B'), 'reports the kept payment');
+  assert(savedA.data.conflicts.some(c => c.id === a.orders[0].id), 'reports the kept order');
+  const after = (await (await fetch(env.base + '/api/data')).json()).data;
+  assert(after.payments.some(p => p.id === 'PAY-WINDOW-B'), 'payment from window B must survive');
+  assert.equal(after.orders[0].status, 'in_transit', 'window B edit must survive');
+  // A window deleting a record it has seen still works.
+  const fresh = await (await fetch(env.base + '/api/data')).json();
+  const c = structuredClone(fresh.data);
+  c.payments = c.payments.filter(p => p.id !== 'PAY-WINDOW-B');
+  const savedC = await post('/api/data', { data: c, baseTimestamp: fresh.timestamp });
+  assert.deepEqual(savedC.data.conflicts, []);
+  assert(!(await (await fetch(env.base + '/api/data')).json()).data.payments.some(p => p.id === 'PAY-WINDOW-B'));
+});
+test('security: upload content checks recognise each allowed type', () => {
+  const { contentMatchesExtension, verifiedExtension } = require('../security');
+  assert(contentMatchesExtension(Buffer.from('%PDF-1.7'), '.pdf'));
+  assert(contentMatchesExtension(Buffer.from(PNG, 'base64'), '.png'));
+  assert(contentMatchesExtension(Buffer.from([0xff, 0xd8, 0xff, 0xe0]), '.jpg'));
+  assert(!contentMatchesExtension(Buffer.from('<html>'), '.pdf'));
+  assert(!contentMatchesExtension(Buffer.from('MZ\x90\x00'), '.exe'));
+  assert.equal(verifiedExtension(Buffer.from(PNG, 'base64'), '.jpg'), '.png');
+  assert.equal(verifiedExtension(Buffer.from('echo hi'), '.bat'), null);
+});

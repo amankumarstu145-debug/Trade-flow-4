@@ -312,7 +312,10 @@ class DBManager {
   }
 
   // Replace the full app snapshot atomically, including deletions and metadata.
-  saveSnapshot(data, userName = 'Admin') {
+  // options.baseTimestamp is when the saving window last loaded or saved data. Records changed
+  // after that (by another window, the phone, Excel import or a rollback) are kept, not deleted or
+  // overwritten, and are reported back as conflicts so the window can reload.
+  saveSnapshot(data, userName = 'Admin', options = {}) {
     const groups = ['orders', 'contacts', 'products', 'payments', 'documents'];
     if (!data || typeof data !== 'object') throw new Error('Invalid dataset');
     for (const key of groups) {
@@ -325,25 +328,41 @@ class DBManager {
         }
       }
     }
+    const baseMs = options && typeof options.baseTimestamp === 'string' ? Date.parse(options.baseTimestamp) : NaN;
+    const base = Number.isFinite(baseMs) ? new Date(baseMs).toISOString() : null;
+    const conflicts = [];
+    const accepted = {};
     this.db.exec('BEGIN IMMEDIATE');
     try {
       for (const [table, entity] of [['orders', 'ORDER'], ['contacts', 'PARTNER'], ['payments', 'PAYMENT'], ['products', 'SKU'], ['documents', 'DOCUMENT']]) {
-        const keep = new Set(data[table].map(row => row.id));
-        for (const row of this.db.prepare('SELECT id, data_json FROM ' + table).all()) {
-          if (!keep.has(row.id)) {
+        const incoming = new Map(data[table].map(row => [row.id, row]));
+        const stampColumn = table === 'documents' ? 'created_at' : 'updated_at';
+        for (const row of this.db.prepare('SELECT id, data_json, ' + stampColumn + ' AS stamp FROM ' + table).all()) {
+          const changedSinceBase = Boolean(base && row.stamp && row.stamp > base);
+          if (!incoming.has(row.id)) {
+            if (changedSinceBase) { conflicts.push({ table, id: row.id, reason: 'kept_newer_record' }); continue; }
             this.db.prepare('DELETE FROM ' + table + ' WHERE id = ?').run(row.id);
             this.logActivity({ userName, actionType: 'DELETE', entityType: entity, entityId: row.id, summary: 'Deleted ' + entity + ' ' + row.id, previousState: JSON.parse(row.data_json) });
+          } else if (changedSinceBase && !isDeepStrictEqual(JSON.parse(row.data_json), incoming.get(row.id))) {
+            conflicts.push({ table, id: row.id, reason: 'kept_newer_version' });
+            incoming.delete(row.id);
           }
         }
+        accepted[table] = [...incoming.values()];
       }
-      data.orders.forEach(row => this.saveOrder(row, userName));
-      data.contacts.forEach(row => this.saveContact(row, userName));
-      data.payments.forEach(row => this.savePayment(row, userName));
+      accepted.orders.forEach(row => this.saveOrder(row, userName));
+      accepted.contacts.forEach(row => this.saveContact(row, userName));
+      accepted.payments.forEach(row => this.savePayment(row, userName));
       const now = new Date().toISOString();
+      const existingProduct = this.db.prepare('SELECT data_json FROM products WHERE id = ?');
       const product = this.db.prepare('INSERT OR REPLACE INTO products (id, name, short_name, sku, hsn, mrp, data_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
-      data.products.forEach(row => product.run(row.id, row.name || '', row.shortName || '', row.sku || '', row.hsn || '', Number(row.mrp || 0), JSON.stringify(row), row.createdAt || now, now));
+      accepted.products.forEach(row => {
+        const json = JSON.stringify(row);
+        if (existingProduct.get(row.id)?.data_json === json) return; // unchanged: keep its timestamp
+        product.run(row.id, row.name || '', row.shortName || '', row.sku || '', row.hsn || '', Number(row.mrp || 0), json, row.createdAt || now, now);
+      });
       const document = this.db.prepare('INSERT OR REPLACE INTO documents (id, order_id, category, file_name, file_url, data_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
-      data.documents.forEach(row => document.run(row.id, row.orderId || '', row.category || '', row.fileName || row.storedFileName || '', row.fileUrl || '', JSON.stringify(row), row.createdAt || now));
+      accepted.documents.forEach(row => document.run(row.id, row.orderId || '', row.category || '', row.fileName || row.storedFileName || '', row.fileUrl || '', JSON.stringify(row), row.createdAt || now));
       const setting = this.db.prepare('INSERT OR REPLACE INTO system_settings (key, value, updated_at) VALUES (?, ?, ?)');
       const metadata = Object.fromEntries(Object.entries(data).filter(([key]) => !groups.includes(key)));
       setting.run('snapshotMetadata', JSON.stringify(metadata), now);
@@ -354,6 +373,7 @@ class DBManager {
       this.db.exec('ROLLBACK');
       throw error;
     }
+    return { conflicts };
   }
 
   // Load canonical full dataset

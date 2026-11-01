@@ -57,10 +57,39 @@ function browserPath() {
       app.updateProfitCalculator();
     });
     const calculator = await page.evaluate(() => Object.fromEntries(['big-tile-our-profit', 'big-tile-landed-outflow', 'big-tile-ss-invoice'].map(id => [id, document.getElementById(id).innerText])));
-    assert(calculator['big-tile-our-profit'].includes('8,035'));
-    assert(calculator['big-tile-landed-outflow'].includes('40,176'));
-    assert(calculator['big-tile-ss-invoice'].includes('60,264'));
+    // 7,200 units: factory 32,400 + 18% GST 5,832 + 5% freight 1,911.60 = 40,143.60 outflow (no per-unit rounding).
+    assert(calculator['big-tile-our-profit'].includes('8,028.72'), JSON.stringify(calculator));
+    assert(calculator['big-tile-landed-outflow'].includes('40,143.60'), JSON.stringify(calculator));
+    assert(calculator['big-tile-ss-invoice'].includes('60,215.40'), JSON.stringify(calculator));
     passed.push('Real calculator computes expected profit, cost and invoice totals');
+    const advancedProfit = await page.evaluate(() => {
+      app.calcMode = 'advanced';
+      app.advancedCalcProducts = [{ id: 'same', ...app.simpleCalcData }];
+      app.updateProfitCalculator();
+      return document.getElementById('big-tile-our-profit').innerText;
+    });
+    assert.equal(advancedProfit, calculator['big-tile-our-profit'], 'simple and advanced modes must agree');
+    passed.push('Simple and advanced calculator modes agree');
+    const finance = await page.evaluate(() => {
+      app.studioDraftData = { items: [{ name: 'A', gstRate: 18, totalAmount: 1000 }, { name: 'B', gstRate: 5, totalAmount: 1000 }], gstType: 'intra' };
+      app.recalculateStudioFinancials();
+      const gstTotal = app.studioDraftData.totalInvoiceAmount;
+      app.invoiceDraftData = { items: [{ quantity: 100, totalAmount: 10000, baseCostPerUnit: 10 }, { quantity: 100, totalAmount: 30000, baseCostPerUnit: 200 }], gstType: 'intra' };
+      app.recalculateDraftOrderFinancials();
+      return {
+        gstTotal, mfgCost: app.invoiceDraftData.manufacturerTotalCost,
+        words: app.numberToIndianWords(1500000000), negative: app.numberToIndianWords(-2500),
+        missing: ['openFolderByTarget', 'copyToClipboard', 'revealDataFolder', 'copyStudioValue', 'openStudioMetricsDrilldownModal'].filter(name => typeof app[name] !== 'function'),
+        noUpi: app.generateUpiQrUrl('', 'X', 1, 'INV-1')
+      };
+    });
+    assert.equal(finance.gstTotal, 2230, 'GST uses each line\'s own rate');
+    assert.equal(finance.mfgCost, 21000, 'each product line uses its own cost');
+    assert.equal(finance.words, 'Rupees One Hundred Fifty Crore Only');
+    assert.match(finance.negative, /^Minus /);
+    assert.deepEqual(finance.missing, []);
+    assert.equal(finance.noUpi, '', 'no UPI QR without a UPI ID in the profile');
+    passed.push('Per-line GST, per-product costs, amount in words, button handlers and UPI guard');
     await page.evaluate(() => app.openInvoiceStudioModal('ORD-TEST'));
     passed.push('Invoice studio opens for the test order');
     await assertCleanTemplates();

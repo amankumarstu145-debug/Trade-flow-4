@@ -5515,6 +5515,9 @@ Carrot 2case, Red chilli 1case..."></textarea>
               Open ↗
             </button>
           </div>
+          <button type="button" onclick="app.revokeMobileSnapDevices()" class="mt-2 w-full px-2.5 py-1.5 rounded-lg border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-bold" title="Stop every saved phone from sending files">
+            Unpair all saved phones
+          </button>
         </div>
       </div>
 
@@ -6900,7 +6903,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>Legal Entity Name</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-legalName').innerText, 'Legal Entity Name')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-legalName" class="text-xs font-black text-slate-900 dark:text-white truncate">Amrit Ras Consumer Products LLP</div>
+              <div id="hub-view-legalName" class="text-xs font-black text-slate-900 dark:text-white truncate">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Registered Corporate Entity</div>
             </div>
 
@@ -6910,7 +6913,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>Trade Brand Name</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-brandName').innerText, 'Brand Name')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-brandName" class="text-xs font-black text-emerald-600 dark:text-emerald-400 truncate">Magic Roots</div>
+              <div id="hub-view-brandName" class="text-xs font-black text-emerald-600 dark:text-emerald-400 truncate">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Commercial Brand &amp; Trademark</div>
             </div>
 
@@ -6920,7 +6923,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>GSTIN Identification</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-gstin').innerText, 'GSTIN')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-gstin" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wide">27AAACA9876Q1ZM</div>
+              <div id="hub-view-gstin" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wide">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">State Code: 27 (Maharashtra)</div>
             </div>
 
@@ -6930,7 +6933,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>Income Tax PAN</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-pan').innerText, 'PAN')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-pan" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wide">AAACA9876Q</div>
+              <div id="hub-view-pan" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wide">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Permanent Account Number</div>
             </div>
 
@@ -6940,7 +6943,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>FSSAI License #</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-fssai').innerText, 'FSSAI License')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-fssai" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wide">11523998000421</div>
+              <div id="hub-view-fssai" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wide">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Food Safety Standards Authority</div>
             </div>
 
@@ -6950,7 +6953,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>Head Office &amp; Facility</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-address').innerText, 'Head Office Address')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-address" class="text-xs font-semibold text-slate-900 dark:text-white line-clamp-2">Unit 14, Sunrise Industrial Estate, Kanjurmarg West, Mumbai - 400078</div>
+              <div id="hub-view-address" class="text-xs font-semibold text-slate-900 dark:text-white line-clamp-2">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Primary Manufacturing &amp; Dispatch</div>
             </div>
 
@@ -6960,7 +6963,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>Commercial Billing Email</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-email').innerText, 'Billing Email')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-email" class="text-xs font-bold text-slate-900 dark:text-white truncate">billing@amritrasfoods.in</div>
+              <div id="hub-view-email" class="text-xs font-bold text-slate-900 dark:text-white truncate">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Official Invoicing Communication</div>
             </div>
 
@@ -6970,7 +6973,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>Executive Contact Phone</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-phone').innerText, 'Contact Phone')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-phone" class="text-xs font-mono font-bold text-slate-900 dark:text-white truncate">+91 98201 44552</div>
+              <div id="hub-view-phone" class="text-xs font-mono font-bold text-slate-900 dark:text-white truncate">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Commercial Helpline &amp; WhatsApp</div>
             </div>
 
@@ -6981,8 +6984,8 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-accountNumber').innerText, 'Bank Account Number')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
               <div class="text-xs font-bold text-slate-900 dark:text-white flex items-center justify-between">
-                <span id="hub-view-bankName">HDFC Bank Ltd</span>
-                <span id="hub-view-accountNumber" class="font-mono text-emerald-600 dark:text-emerald-400">50200034891122</span>
+                <span id="hub-view-bankName">—</span>
+                <span id="hub-view-accountNumber" class="font-mono text-emerald-600 dark:text-emerald-400">—</span>
               </div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Current Business Account</div>
             </div>
@@ -6993,8 +6996,8 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>RTGS / NEFT IFSC Code</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-ifsc').innerText, 'IFSC Code')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-ifsc" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wider">HDFC0000240</div>
-              <div id="hub-view-branch" class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">Kanjurmarg Branch, Mumbai</div>
+              <div id="hub-view-ifsc" class="text-xs font-mono font-black text-slate-900 dark:text-white tracking-wider">—</div>
+              <div id="hub-view-branch" class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">—</div>
             </div>
 
             <!-- UPI ID / VPA -->
@@ -7003,7 +7006,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
                 <span>Official UPI ID (Instant Merchant VPA)</span>
                 <button type="button" onclick="app.copyToClipboard(document.getElementById('hub-view-upiId').innerText, 'UPI ID')" class="text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity font-bold">Copy</button>
               </div>
-              <div id="hub-view-upiId" class="text-xs font-mono font-black text-teal-600 dark:text-teal-400 tracking-wide">amritrasfoods@hdfcbank</div>
+              <div id="hub-view-upiId" class="text-xs font-mono font-black text-teal-600 dark:text-teal-400 tracking-wide">—</div>
               <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Linked to Dynamic Invoice QR Code Generation</div>
             </div>
 

@@ -76,14 +76,19 @@ class SyncManager {
   }
 
   // Save updated data to SQLite Database and sync with mock-data.js
-  saveData(data, userName = 'Admin', reason = 'Data Update') {
-    this.dbManager.saveSnapshot(data, userName);
+  saveData(data, userName = 'Admin', reason = 'Data Update', options = {}) {
+    const result = this.dbManager.saveSnapshot(data, userName, options);
+    // When newer records were kept, the database (not the payload) is the true state.
+    if (result.conflicts.length) data = this.dbManager.getFullData();
 
     // Also update mock-data.js for filesystem consistency
     const fileContent = `// Mock Data for TradeFlow - Authoritative Store: tradeflow.db\nconst INITIAL_DATA = ${JSON.stringify(data, null, 2).replace(/</g, '\\u003c')};\n\nif (typeof module !== 'undefined') {\n  module.exports = INITIAL_DATA;\n}\n`;
     const temporary = this.mockDataPath + '.tmp';
     fs.writeFileSync(temporary, fileContent, 'utf8');
     fs.renameSync(temporary, this.mockDataPath);
+    // Tell every open window so none keeps working on stale data.
+    this.notifyChange('data_saved', { originTabId: options.originTabId || null, conflicts: result.conflicts.length });
+    return result;
   }
 
   getSyncStatus() {
@@ -113,6 +118,7 @@ class SyncManager {
 
   // Get or create order folder
   resolveOrderFolder(orderIdOrFolder) {
+    orderIdOrFolder = orderIdOrFolder === undefined || orderIdOrFolder === null ? '' : String(orderIdOrFolder).trim();
     if (!orderIdOrFolder || orderIdOrFolder.toLowerCase() === 'general') {
       const genDir = path.join(this.ordersDir, 'general');
       if (!fs.existsSync(genDir)) fs.mkdirSync(genDir, { recursive: true });

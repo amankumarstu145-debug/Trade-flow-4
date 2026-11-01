@@ -23,6 +23,36 @@ function assertWithin(root, target) {
   return target;
 }
 function allowedDocument(target) { return documentExtensions.has(path.extname(target).toLowerCase()); }
+// Uploaded bytes must match the claimed type, so a script renamed to .pdf/.jpg is refused.
+const startsWith = (buffer, bytes) => buffer.length >= bytes.length && bytes.every((byte, index) => buffer[index] === byte);
+const looksLikeText = buffer => !buffer.subarray(0, 4096).includes(0);
+const signatures = {
+  '.pdf': buffer => buffer.subarray(0, 5).toString('latin1') === '%PDF-',
+  '.png': buffer => startsWith(buffer, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+  '.jpg': buffer => startsWith(buffer, [0xff, 0xd8, 0xff]),
+  '.jpeg': buffer => startsWith(buffer, [0xff, 0xd8, 0xff]),
+  '.webp': buffer => buffer.subarray(0, 4).toString('latin1') === 'RIFF' && buffer.subarray(8, 12).toString('latin1') === 'WEBP',
+  '.xlsx': buffer => startsWith(buffer, [0x50, 0x4b, 0x03, 0x04]),
+  '.xls': buffer => startsWith(buffer, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]),
+  '.csv': looksLikeText,
+  '.txt': looksLikeText
+};
+function contentMatchesExtension(buffer, extension) {
+  const check = signatures[String(extension || '').toLowerCase()];
+  return Boolean(check && Buffer.isBuffer(buffer) && buffer.length > 0 && check(buffer));
+}
+// Returns the extension implied by the bytes for PDFs and images, or null.
+function detectDocumentExtension(buffer) {
+  for (const extension of ['.pdf', '.png', '.jpg', '.webp']) if (contentMatchesExtension(buffer, extension)) return extension;
+  return null;
+}
+// Keeps a matching extension, corrects a mislabelled PDF/image (e.g. PNG bytes named .jpg),
+// and returns null when the bytes are not an allowed document of any kind.
+function verifiedExtension(buffer, claimed) {
+  const extension = String(claimed || '').toLowerCase();
+  if (contentMatchesExtension(buffer, extension)) return extension;
+  return detectDocumentExtension(buffer);
+}
 function fail(res, status, error) {
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ success: false, error }));
@@ -81,4 +111,4 @@ function createGuard(root, port) {
     }
   };
 }
-module.exports = { createGuard, assertWithin, isWithin, allowedDocument, MAX_BODY };
+module.exports = { createGuard, assertWithin, isWithin, allowedDocument, contentMatchesExtension, detectDocumentExtension, verifiedExtension, MAX_BODY };

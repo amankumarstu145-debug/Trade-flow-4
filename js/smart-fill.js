@@ -567,6 +567,11 @@
       node('smart-fill-duplicate-banner')?.remove();
     }
 
+    // Called by the "Compare Slips Side-by-Side" button in the Smart Fill duplicate banner.
+    openComparisonFromSmartFill() {
+      return this.openDualSlipFromWarning();
+    }
+
     openDualSlipFromWarning() {
       if (!this.duplicateConflict || !window.app?.openDualSlipComparison) return;
       const dupRecord = this.duplicateConflict.duplicate || this.duplicateConflict.existing;
@@ -2189,6 +2194,7 @@
     prevPdfPage: () => controller.prevPdfPage(),
     nextPdfPage: () => controller.nextPdfPage(),
     downloadOriginalFile: () => controller.downloadOriginalFile(),
+    openComparisonFromSmartFill: () => controller.openComparisonFromSmartFill(),
     openPreviewNewTab: () => controller.openPreviewNewTab(),
     openDualSlipFromWarning: () => controller.openDualSlipFromWarning(),
     hideDuplicateWarning: () => controller.hideDuplicateWarning(),
