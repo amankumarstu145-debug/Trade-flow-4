@@ -9,7 +9,7 @@ window.TFComponents = {
   renderDocumentVault(orderId, docs = [], options = {}) {
     const catConfig = {
       mfg_invoice: { label: 'Factory Invoice', sub: 'Job-work bill', icon: 'factory', color: 'text-blue-500', bg: 'bg-blue-500/10 border-blue-500/20' },
-      pkg_invoice: { label: 'Packaging Bill', sub: 'Jars & labels', icon: 'package', color: 'text-sky-500', bg: 'bg-sky-500/10 border-sky-500/20' },
+      pkg_invoice: { label: 'Packaging Bill', sub: 'Jars & labels', icon: 'package', color: 'text-blue-500', bg: 'bg-blue-500/10 border-blue-500/20' },
       transport_bilty: { label: 'LR / Bilty', sub: 'Goods receipt', icon: 'truck', color: 'text-purple-500', bg: 'bg-purple-500/10 border-purple-500/20' },
       bank_receipt: { label: 'Bank Receipt', sub: 'NEFT / RTGS slip', icon: 'landmark', color: 'text-amber-500', bg: 'bg-amber-500/10 border-amber-500/20' },
       retailer_invoice: { label: 'Buyer Invoice', sub: 'Sales invoice', icon: 'building-2', color: 'text-emerald-500', bg: 'bg-emerald-500/10 border-emerald-500/20' },
@@ -23,15 +23,15 @@ window.TFComponents = {
       const amtStr = meta.totalAmount ? (typeof app !== 'undefined' ? app.formatCurrency(meta.totalAmount) : `₹${meta.totalAmount}`) : '';
 
       return `
-        <div class="tf-doc-card group relative p-4 rounded-xl bg-white dark:bg-[#131722] border border-slate-200 dark:border-slate-800 hover:border-amber-500/40 transition-all shadow-xs flex flex-col justify-between">
+        <div class="tf-doc-card group relative p-4 rounded-xl bg-white dark:bg-[#131722] border border-slate-200 dark:border-slate-800 hover:border-emerald-600/40 transition-all shadow-xs flex flex-col justify-between">
           <div>
             <div class="flex items-start justify-between gap-2 mb-2">
-              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold ${tfEscapeHtml(cfg.bg)} ${tfEscapeHtml(cfg.color)}">
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-bold ${tfEscapeHtml(cfg.bg)} ${tfEscapeHtml(cfg.color)}">
                 <i data-lucide="${tfEscapeHtml(cfg.icon)}" class="w-3 h-3"></i>
                 <span>${tfEscapeHtml(cfg.label)}</span>
               </span>
               <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onclick="event.stopPropagation(); app.previewDocument('${tfEscapeHtml(tfEscapeJs(doc.id))}')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-amber-500 transition-colors" title="Preview Document">
+                <button onclick="event.stopPropagation(); app.previewDocument('${tfEscapeHtml(tfEscapeJs(doc.id))}')" class="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-emerald-700 transition-colors" title="Preview Document">
                   <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                 </button>
                 <button onclick="event.stopPropagation(); app.deleteDocument('${tfEscapeHtml(tfEscapeJs(doc.id))}', '${tfEscapeHtml(tfEscapeJs(orderId))}')" class="p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-500 transition-colors" title="Remove from Vault">
@@ -43,19 +43,19 @@ window.TFComponents = {
             <h4 class="font-bold text-xs text-slate-900 dark:text-white truncate" title="${tfEscapeHtml(meta.invoiceNumber || doc.fileName)}">
               ${tfEscapeHtml(meta.invoiceNumber || doc.fileName)}
             </h4>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
               ${tfEscapeHtml(meta.counterpartyName || cfg.label)}${tfEscapeHtml(meta.gstin ? ` • ${meta.gstin}` : '')}
             </p>
 
             <div class="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 text-xs">
-              <span class="text-slate-400 text-[10px] font-medium">${tfEscapeHtml(dateStr || 'Verified Proof')}</span>
+              <span class="text-slate-400 text-xs font-medium">${tfEscapeHtml(dateStr || 'Verified Proof')}</span>
               ${amtStr ? `<span class="font-black font-mono-num text-slate-900 dark:text-amber-400 text-xs">${tfEscapeHtml(amtStr)}</span>` : ''}
             </div>
-            ${meta.utrNumber ? `<div class="mt-1 text-[10px] font-mono-num text-amber-600 dark:text-amber-400">UTR: ${tfEscapeHtml(meta.utrNumber)}</div>` : ''}
+            ${meta.utrNumber ? `<div class="mt-1 text-xs font-mono-num text-amber-600 dark:text-amber-400">UTR: ${tfEscapeHtml(meta.utrNumber)}</div>` : ''}
           </div>
 
           <!-- Direct In-App Preview Trigger -->
-          <button onclick="app.previewDocument('${tfEscapeHtml(tfEscapeJs(doc.id))}')" class="btn-tactile mt-3 w-full py-1.5 px-3 rounded-lg text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 flex items-center justify-center gap-1.5 transition-all">
+          <button onclick="app.previewDocument('${tfEscapeHtml(tfEscapeJs(doc.id))}')" class="btn-tactile mt-3 w-full py-1.5 px-3 rounded-lg text-xs font-bold text-amber-800 dark:text-amber-300 bg-emerald-700/10 hover:bg-emerald-800/20 border border-amber-500/30 flex items-center justify-center gap-1.5 transition-all">
             <i data-lucide="eye" class="w-3.5 h-3.5 text-amber-500"></i>
             <span>View Bill Copy</span>
           </button>
@@ -65,18 +65,18 @@ window.TFComponents = {
 
     const uploadCards = [
       { cat: 'mfg_invoice', label: 'Factory Invoice', sub: 'Job-work bill', icon: 'factory', color: 'text-blue-500' },
-      { cat: 'pkg_invoice', label: 'Packaging Bill', sub: 'Jars & labels', icon: 'package', color: 'text-sky-500' },
+      { cat: 'pkg_invoice', label: 'Packaging Bill', sub: 'Jars & labels', icon: 'package', color: 'text-blue-500' },
       { cat: 'transport_bilty', label: 'LR / Bilty', sub: 'Goods receipt', icon: 'truck', color: 'text-purple-500' },
       { cat: 'bank_receipt', label: 'Bank Receipt', sub: 'NEFT / RTGS slip', icon: 'landmark', color: 'text-amber-500' },
       { cat: 'retailer_invoice', label: 'Buyer Invoice', sub: 'Sales bill', icon: 'building-2', color: 'text-emerald-500' },
     ].map(b => `
-      <button onclick="app.triggerOrderDocUpload('${tfEscapeHtml(tfEscapeJs(orderId))}', '${tfEscapeHtml(tfEscapeJs(b.cat))}')" class="btn-tactile flex flex-col items-center justify-center p-3.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700/80 hover:border-amber-500 bg-slate-50/50 hover:bg-amber-500/5 dark:bg-slate-900/40 dark:hover:bg-amber-500/10 text-slate-600 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-all text-center group shadow-2xs">
+      <button onclick="app.triggerOrderDocUpload('${tfEscapeHtml(tfEscapeJs(orderId))}', '${tfEscapeHtml(tfEscapeJs(b.cat))}')" class="btn-tactile flex flex-col items-center justify-center p-3.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700/80 hover:border-emerald-600 bg-slate-50/50 hover:bg-amber-500/5 dark:bg-slate-900/40 dark:hover:bg-amber-500/10 text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all text-center group shadow-2xs">
         <div class="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center mb-1.5 shadow-xs group-hover:scale-110 transition-transform">
           <i data-lucide="${tfEscapeHtml(b.icon)}" class="w-4 h-4 ${tfEscapeHtml(b.color)}"></i>
         </div>
         <span class="text-xs font-bold leading-tight text-slate-800 dark:text-slate-200">${tfEscapeHtml(b.label)}</span>
-        <span class="text-[10px] text-slate-400 mt-0.5 font-medium">${tfEscapeHtml(b.sub)}</span>
-        <span class="mt-2 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">
+        <span class="text-xs text-slate-400 mt-0.5 font-medium">${tfEscapeHtml(b.sub)}</span>
+        <span class="mt-2 px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 group-hover:bg-amber-500 group-hover:text-slate-950 transition-colors">
           Upload
         </span>
       </button>
@@ -93,7 +93,7 @@ window.TFComponents = {
             <div>
               <div class="flex items-center gap-2">
                 <h3 class="text-sm font-bold text-slate-900 dark:text-white">Attached Invoices &amp; Bank Proofs Vault</h3>
-                <span class="px-2 py-0.5 text-[10px] font-mono-num font-bold rounded-md bg-amber-500 text-slate-950">${tfEscapeHtml(docs.length)} Filed</span>
+                <span class="px-2 py-0.5 text-xs font-mono-num font-bold rounded-md bg-amber-500 text-slate-950">${tfEscapeHtml(docs.length)} Filed</span>
               </div>
               <p class="text-xs text-slate-400">Universal document repository for this order • All bills stored with OCR audit logs</p>
             </div>
@@ -113,11 +113,11 @@ window.TFComponents = {
             <!-- Upload More Bills - Centered & Full Width 5-Column Grid -->
             <div class="pt-4 border-t border-slate-100 dark:border-slate-800/80">
               <div class="flex items-center justify-between mb-3">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                   <i data-lucide="upload-cloud" class="w-3.5 h-3.5 text-amber-500"></i>
                   <span>Upload More Bills &amp; Vouchers</span>
                 </span>
-                <span class="text-[10px] text-slate-400">Click any category to attach a scan or bill</span>
+                <span class="text-xs text-slate-400">Click any category to attach a scan or bill</span>
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 w-full">
                 ${uploadCards}
@@ -199,8 +199,8 @@ window.TFComponents = {
 
       // Live Commercial Health Pill
       const healthPill = balance > 0
-        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/25 backdrop-blur-md text-amber-200 border border-amber-400/30 flex items-center gap-1"><span>⬆</span><span>Due ₹${tfEscapeHtml(Math.round(balance/1000))}k</span></span>`
-        : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/25 backdrop-blur-md text-emerald-200 border border-emerald-400/30 flex items-center gap-1"><span>🟢</span><span>Settled</span></span>`;
+        ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/25 backdrop-blur-md text-amber-200 border border-amber-400/30 flex items-center gap-1"><span>⬆</span><span>Due ₹${tfEscapeHtml(Math.round(balance/1000))}k</span></span>`
+        : `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/25 backdrop-blur-md text-emerald-200 border border-emerald-400/30 flex items-center gap-1"><span>🟢</span><span>Settled</span></span>`;
 
       return `
         <div class="tf-card-v4 group" id="partner-card-${tfEscapeHtml(m.id)}" data-partner-type="marketeer" data-name="${tfEscapeHtml((m.name||'').toLowerCase())}" data-person="${tfEscapeHtml((m.contactPerson||'').toLowerCase())}" data-city="${tfEscapeHtml(safeAddress.toLowerCase())}" data-active-orders="${tfEscapeHtml(mOrders.length)}" data-has-balance="${tfEscapeHtml(balance > 0 ? 'true' : 'false')}">
@@ -209,11 +209,11 @@ window.TFComponents = {
             <!-- Top Badges & Kebab Row -->
             <div class="flex items-center justify-between gap-2 relative">
               <div class="flex items-center gap-1.5 flex-wrap min-w-0">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/15 backdrop-blur-md text-white border border-white/20 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/15 backdrop-blur-md text-white border border-white/20 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
                   <span class="w-1.5 h-1.5 rounded-full bg-purple-300 animate-pulse"></span>
                   <span>SALES BROKER</span>
                 </span>
-                <span class="font-mono text-[10px] text-white/90 font-bold bg-white/15 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15">${tfEscapeHtml(m.id)}</span>
+                <span class="font-mono text-xs text-white/90 font-bold bg-white/15 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15">${tfEscapeHtml(m.id)}</span>
                 ${healthPill}
               </div>
               
@@ -298,18 +298,18 @@ window.TFComponents = {
               <!-- Left Column: Territory & Email -->
               <div class="space-y-1 min-w-0 pr-1">
                 <div class="tf-copy-clickable" onclick="event.stopPropagation(); app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeAddress))}', 'Territory')" title="Click to copy Territory">
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="map-pin" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
                     <span>Territory</span>
                   </div>
-                  <div class="text-[11px] text-white font-medium line-clamp-2 leading-tight mt-0.5">
+                  <div class="text-xs text-white font-medium line-clamp-2 leading-tight mt-0.5">
                     ${tfEscapeHtml(m.territory || m.billingAddress || '')}
                   </div>
                 </div>
                 <div class="tf-copy-clickable truncate" onclick="event.stopPropagation(); app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeEmail))}', 'Email')" title="Click to copy Email">
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="mail" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
-                    <span class="truncate text-[11px] text-white font-medium">${tfEscapeHtml(m.email || 'broker@' + (m.name || 'marketeer').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com')}</span>
+                    <span class="truncate text-xs text-white font-medium">${tfEscapeHtml(m.email || 'broker@' + (m.name || 'marketeer').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com')}</span>
                   </div>
                 </div>
               </div>
@@ -317,20 +317,20 @@ window.TFComponents = {
               <!-- Right Column: Business Type & Brokerage Rate / PAN -->
               <div class="space-y-1 min-w-0 pl-1 border-l border-white/15">
                 <div>
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="percent" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
                     <span>Brokerage Rate</span>
                   </div>
-                  <div class="text-[11px] text-white font-semibold truncate mt-0.5">
+                  <div class="text-xs text-white font-semibold truncate mt-0.5">
                     ${tfEscapeHtml(m.commissionRate || '3.0')}% Standard
                   </div>
                 </div>
                 <div class="tf-copy-clickable truncate" onclick="event.stopPropagation(); app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safePan))}', 'PAN')" title="Click to copy PAN">
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="credit-card" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
                     <span>PAN Number</span>
                   </div>
-                  <div class="text-[11px] text-white font-mono font-semibold truncate mt-0.5">
+                  <div class="text-xs text-white font-mono font-semibold truncate mt-0.5">
                     ${tfEscapeHtml(m.pan || '')}
                   </div>
                 </div>
@@ -349,7 +349,7 @@ window.TFComponents = {
                     <div class="w-5 h-5 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-purple-600 shadow-2xs shrink-0">
                       <i data-lucide="briefcase" class="w-3 h-3"></i>
                     </div>
-                    <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Active Deals</span>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Active Deals</span>
                   </div>
                   <div class="w-4.5 h-4.5 rounded-full bg-purple-500/15 dark:bg-purple-500/25 flex items-center justify-center text-purple-700 dark:text-purple-300 group-hover/tile:bg-purple-600 group-hover/tile:text-white transition-colors shrink-0">
                     <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
@@ -359,7 +359,7 @@ window.TFComponents = {
                   <span class="text-xl font-black text-slate-900 dark:text-white leading-none">
                     ${tfEscapeHtml(String(mOrders.length).padStart(2, '0'))}
                   </span>
-                  <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+                  <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
                     ${tfEscapeHtml(mOrders.length > 0 ? mOrders.length + ' Linked POs' : 'No Deals')}
                   </span>
                 </div>
@@ -372,7 +372,7 @@ window.TFComponents = {
                     <div class="w-5 h-5 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-blue-600 shadow-2xs shrink-0">
                       <i data-lucide="wallet" class="w-3 h-3"></i>
                     </div>
-                    <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Brokerage Due</span>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Brokerage Due</span>
                   </div>
                   <div class="w-4.5 h-4.5 rounded-full bg-blue-500/15 dark:bg-blue-500/25 flex items-center justify-center text-blue-700 dark:text-blue-300 group-hover/tile:bg-blue-600 group-hover/tile:text-white transition-colors shrink-0">
                     <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
@@ -382,8 +382,8 @@ window.TFComponents = {
                   <span class="text-lg font-black text-[#1d4ed8] dark:text-blue-400 leading-none font-mono-num truncate" title="${tfEscapeHtml(typeof app !== 'undefined' ? app.formatCurrency(balance) : '₹' + balance)}">
                     ${tfEscapeHtml(typeof app !== 'undefined' ? app.formatCurrency(balance) : '₹' + balance)}
                   </span>
-                  <span class="text-[10px] font-semibold ${tfEscapeHtml(balance > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')} truncate">
-                    ${tfEscapeHtml(balance > 0 ? '⬆ Due' : '✓ Settled')}
+                  <span class="text-xs font-semibold ${tfEscapeHtml(balance > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')} truncate">
+                    ${tfEscapeHtml(balance > 0 ? 'Due' : 'Settled')}
                   </span>
                 </div>
               </div>
@@ -396,7 +396,7 @@ window.TFComponents = {
                   <i data-lucide="handshake" class="w-3.5 h-3.5 text-purple-600"></i>
                   <span>Latest Deals</span>
                 </div>
-                <button type="button" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(m.id))}', 'hub', 'orders')" class="text-[11px] font-bold text-purple-700 dark:text-purple-400 hover:underline flex items-center gap-0.5" title="View all deals for ${tfEscapeHtml(m.name)}">
+                <button type="button" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(m.id))}', 'hub', 'orders')" class="text-xs font-bold text-purple-700 dark:text-purple-400 hover:underline flex items-center gap-0.5" title="View all deals for ${tfEscapeHtml(m.name)}">
                   <span>View All</span>
                   <i data-lucide="chevron-right" class="w-3 h-3"></i>
                 </button>
@@ -523,8 +523,8 @@ window.TFComponents = {
 
       // Live Commercial Health Pill
       const healthPill = balance > 0
-        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/25 backdrop-blur-md text-blue-200 border border-blue-400/30 flex items-center gap-1"><span>⬇</span><span>Due ₹${tfEscapeHtml(Math.round(balance/1000))}k</span></span>`
-        : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/25 backdrop-blur-md text-emerald-200 border border-emerald-400/30 flex items-center gap-1"><span>🟢</span><span>Healthy</span></span>`;
+        ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-500/25 backdrop-blur-md text-blue-200 border border-blue-400/30 flex items-center gap-1"><span>⬇</span><span>Due ₹${tfEscapeHtml(Math.round(balance/1000))}k</span></span>`
+        : `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/25 backdrop-blur-md text-emerald-200 border border-emerald-400/30 flex items-center gap-1"><span>🟢</span><span>Healthy</span></span>`;
 
       return `
         <div class="tf-card-v4 group" id="partner-card-${tfEscapeHtml(r.id)}" data-partner-type="retailer" data-name="${tfEscapeHtml((r.name||'').toLowerCase())}" data-person="${tfEscapeHtml((r.contactPerson||'').toLowerCase())}" data-city="${tfEscapeHtml(safeAddress.toLowerCase())}" data-active-orders="${tfEscapeHtml(rOrders.length)}" data-has-balance="${tfEscapeHtml(balance > 0 ? 'true' : 'false')}">
@@ -533,11 +533,11 @@ window.TFComponents = {
             <!-- Top Badges & Kebab Row -->
             <div class="flex items-center justify-between gap-2 relative">
               <div class="flex items-center gap-1.5 flex-wrap min-w-0">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/15 backdrop-blur-md text-white border border-white/20 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/15 backdrop-blur-md text-white border border-white/20 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
                   <span>RETAILER / BUYER</span>
                 </span>
-                <span class="font-mono text-[10px] text-white/90 font-bold bg-white/15 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15">${tfEscapeHtml(r.id)}</span>
+                <span class="font-mono text-xs text-white/90 font-bold bg-white/15 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15">${tfEscapeHtml(r.id)}</span>
                 ${healthPill}
               </div>
               
@@ -622,18 +622,18 @@ window.TFComponents = {
               <!-- Left Column: Address & Email -->
               <div class="space-y-1 min-w-0 pr-1">
                 <div class="tf-copy-clickable" onclick="event.stopPropagation(); app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeAddress))}', 'Address', this)" title="Click to copy Address">
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="map-pin" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
                     <span>Address</span>
                   </div>
-                  <div class="text-[11px] text-white font-medium line-clamp-2 leading-tight mt-0.5">
+                  <div class="text-xs text-white font-medium line-clamp-2 leading-tight mt-0.5">
                     ${tfEscapeHtml(r.shippingAddress || r.billingAddress || '')}
                   </div>
                 </div>
                 <div class="tf-copy-clickable truncate" onclick="event.stopPropagation(); app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeEmail))}', 'Email', this)" title="Click to copy Email">
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="mail" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
-                    <span class="truncate text-[11px] text-white font-medium">${tfEscapeHtml(r.email || 'orders@' + (r.name || 'buyer').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com')}</span>
+                    <span class="truncate text-xs text-white font-medium">${tfEscapeHtml(r.email || 'orders@' + (r.name || 'buyer').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com')}</span>
                   </div>
                 </div>
               </div>
@@ -641,20 +641,20 @@ window.TFComponents = {
               <!-- Right Column: Business Type & GSTIN -->
               <div class="space-y-1 min-w-0 pl-1 border-l border-white/15">
                 <div>
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="store" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
                     <span>Business Type</span>
                   </div>
-                  <div class="text-[11px] text-white font-semibold truncate mt-0.5">
+                  <div class="text-xs text-white font-semibold truncate mt-0.5">
                     ${tfEscapeHtml(r.businessType || 'Retailer / Buyer')}
                   </div>
                 </div>
                 <div class="tf-copy-clickable truncate" onclick="event.stopPropagation(); app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeGstin))}', 'GSTIN', this)" title="Click to copy GSTIN">
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="file-text" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
                     <span>GSTIN</span>
                   </div>
-                  <div class="text-[11px] text-white font-mono font-semibold truncate mt-0.5">
+                  <div class="text-xs text-white font-mono font-semibold truncate mt-0.5">
                     ${tfEscapeHtml(r.gstin || '')}
                   </div>
                 </div>
@@ -673,7 +673,7 @@ window.TFComponents = {
                     <div class="w-5 h-5 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-emerald-600 shadow-2xs shrink-0">
                       <i data-lucide="file-text" class="w-3 h-3"></i>
                     </div>
-                    <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Active Orders</span>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Active Orders</span>
                   </div>
                   <div class="w-4.5 h-4.5 rounded-full bg-emerald-500/15 dark:bg-emerald-500/25 flex items-center justify-center text-emerald-700 dark:text-emerald-300 group-hover/tile:bg-emerald-600 group-hover/tile:text-white transition-colors shrink-0">
                     <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
@@ -683,7 +683,7 @@ window.TFComponents = {
                   <span class="text-xl font-black text-slate-900 dark:text-white leading-none">
                     ${tfEscapeHtml(String(rOrders.length).padStart(2, '0'))}
                   </span>
-                  <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+                  <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
                     ${tfEscapeHtml(rOrders.length > 0 ? rOrders.length + ' Orders' : 'Capacity Open')}
                   </span>
                 </div>
@@ -696,7 +696,7 @@ window.TFComponents = {
                     <div class="w-5 h-5 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-blue-600 shadow-2xs shrink-0">
                       <i data-lucide="wallet" class="w-3 h-3"></i>
                     </div>
-                    <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Receivables</span>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Receivables</span>
                   </div>
                   <div class="w-4.5 h-4.5 rounded-full bg-blue-500/15 dark:bg-blue-500/25 flex items-center justify-center text-blue-700 dark:text-blue-300 group-hover/tile:bg-blue-600 group-hover/tile:text-white transition-colors shrink-0">
                     <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
@@ -706,8 +706,8 @@ window.TFComponents = {
                   <span class="text-lg font-black text-[#1d4ed8] dark:text-blue-400 leading-none font-mono-num truncate" title="${tfEscapeHtml(typeof app !== 'undefined' ? app.formatCurrency(balance) : '₹' + balance)}">
                     ${tfEscapeHtml(typeof app !== 'undefined' ? app.formatCurrency(balance) : '₹' + balance)}
                   </span>
-                  <span class="text-[10px] font-semibold ${tfEscapeHtml(balance > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')} truncate">
-                    ${tfEscapeHtml(balance > 0 ? '⬆ Due' : '✓ Settled')}
+                  <span class="text-xs font-semibold ${tfEscapeHtml(balance > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')} truncate">
+                    ${tfEscapeHtml(balance > 0 ? 'Due' : 'Settled')}
                   </span>
                 </div>
               </div>
@@ -720,7 +720,7 @@ window.TFComponents = {
                   <i data-lucide="package" class="w-3.5 h-3.5 text-emerald-600"></i>
                   <span>Latest Orders</span>
                 </div>
-                <button type="button" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(r.id))}', 'hub', 'orders')" class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-0.5" title="View all orders for ${tfEscapeHtml(r.name)}">
+                <button type="button" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(r.id))}', 'hub', 'orders')" class="text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-0.5" title="View all orders for ${tfEscapeHtml(r.name)}">
                   <span>View All</span>
                   <i data-lucide="chevron-right" class="w-3 h-3"></i>
                 </button>
@@ -869,7 +869,7 @@ window.TFComponents = {
       manufacturer: { label: 'MANUFACTURER', bg: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20', icon: 'factory', color: 'text-emerald-600', balanceLabel: 'Payable to Factory' },
       retailer: { label: 'RETAILER / BUYER', bg: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20', icon: 'store', color: 'text-emerald-600', balanceLabel: 'Receivable from Buyer' },
       marketeer: { label: 'SALES BROKER', bg: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20', icon: 'handshake', color: 'text-purple-600', balanceLabel: 'Payable Brokerage' },
-      packaging: { label: 'PACKAGING SUPPLIER', bg: 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20', icon: 'package', color: 'text-sky-600', balanceLabel: 'Payable to Supplier' },
+      packaging: { label: 'PACKAGING SUPPLIER', bg: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20', icon: 'package', color: 'text-blue-600', balanceLabel: 'Payable to Supplier' },
       transporter: { label: 'LOGISTICS / FREIGHT', bg: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20', icon: 'truck', color: 'text-amber-600', balanceLabel: 'Pending Freight' }
     };
     const theme = roleThemes[contact.role] || roleThemes.retailer;
@@ -972,13 +972,13 @@ window.TFComponents = {
           <td class="py-3 px-3.5 text-xs text-slate-500 dark:text-slate-400 font-mono-num whitespace-nowrap">${tfEscapeHtml(orderDate)}</td>
           <td class="py-3 px-3.5 text-xs font-medium text-slate-800 dark:text-slate-200 max-w-[220px] truncate" title="${tfEscapeHtml(itemsSummary)}">${tfEscapeHtml(itemsSummary)}</td>
           <td class="py-3 px-3.5 text-xs">
-            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border ${tfEscapeHtml(st.bg)}">${tfEscapeHtml(st.label)}</span>
+            <span class="px-2 py-0.5 rounded-md text-xs font-bold border ${tfEscapeHtml(st.bg)}">${tfEscapeHtml(st.label)}</span>
           </td>
           <td class="py-3 px-3.5 text-xs text-right font-bold font-mono-num text-slate-900 dark:text-white">${tfEscapeHtml(orderTotal)}</td>
           <td class="py-3 px-3.5 text-xs text-right font-medium font-mono-num text-emerald-600 dark:text-emerald-400">${tfEscapeHtml(advancePaid)}</td>
           <td class="py-3 px-3.5 text-xs text-right font-black font-mono-num ${tfEscapeHtml(balanceDue > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500')}">${tfEscapeHtml(orderBal)}</td>
           <td class="py-3 px-3.5 text-right whitespace-nowrap" onclick="event.stopPropagation()">
-            <button onclick="app.openOrderDetailPage('${tfEscapeHtml(tfEscapeJs(o.id))}')" class="btn-tactile px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 rounded-lg border border-slate-300 dark:border-slate-700 flex items-center gap-1 inline-flex shadow-2xs">
+            <button onclick="app.openOrderDetailPage('${tfEscapeHtml(tfEscapeJs(o.id))}')" class="btn-tactile px-2.5 py-1 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 rounded-lg border border-slate-300 dark:border-slate-700 flex items-center gap-1 inline-flex shadow-2xs">
               <i data-lucide="eye" class="w-3 h-3 text-amber-500"></i>
               <span>Inspect</span>
             </button>
@@ -996,11 +996,11 @@ window.TFComponents = {
           <td class="py-2.5 px-3.5 font-mono text-slate-500 dark:text-slate-400 font-mono-num whitespace-nowrap">${tfEscapeHtml(pDate)}</td>
           <td class="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">${tfEscapeHtml(p.partyName || contact.name)}</td>
           <td class="py-2.5 px-3.5">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+            <span class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
               ${tfEscapeHtml(p.mode || 'NEFT / RTGS')}
             </span>
           </td>
-          <td class="py-2.5 px-3.5 font-mono text-slate-600 dark:text-slate-300 text-[11px]">${tfEscapeHtml(p.referenceNumber || p.utrNumber || '')}</td>
+          <td class="py-2.5 px-3.5 font-mono text-slate-600 dark:text-slate-300 text-xs">${tfEscapeHtml(p.referenceNumber || p.utrNumber || '')}</td>
           <td class="py-2.5 px-3.5 text-right font-black font-mono-num text-emerald-600 dark:text-emerald-400 text-xs">${tfEscapeHtml(pAmt)}</td>
           <td class="py-2.5 px-3.5 text-slate-500 dark:text-slate-400 truncate max-w-[200px]">${tfEscapeHtml(p.notes || 'Settlement processed')}</td>
         </tr>
@@ -1018,7 +1018,7 @@ window.TFComponents = {
               <span>${tfEscapeHtml(backLabel)}</span>
             </button>
             <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${tfEscapeHtml(theme.bg)}">${tfEscapeHtml(theme.label)}</span>
+              <span class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${tfEscapeHtml(theme.bg)}">${tfEscapeHtml(theme.label)}</span>
               <span>/</span>
               <span class="font-bold text-slate-900 dark:text-white">${tfEscapeHtml(contact.name)}</span>
             </div>
@@ -1029,12 +1029,12 @@ window.TFComponents = {
             <button onclick="app.switchContactViewMode('hub')" class="tf-tab-pill ${tfEscapeHtml(!isDossierMode ? 'active' : '')}">
               <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>
               <span>Business Deals &amp; Orders Hub</span>
-              <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold ${tfEscapeHtml(!isDossierMode ? 'bg-white/25 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600')}">${tfEscapeHtml(linkedOrders.length)}</span>
+              <span class="px-1.5 py-0.2 rounded-full text-xs font-bold ${tfEscapeHtml(!isDossierMode ? 'bg-white/25 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600')}">${tfEscapeHtml(linkedOrders.length)}</span>
             </button>
             <button onclick="app.switchContactViewMode('dossier')" class="tf-tab-pill ${tfEscapeHtml(isDossierMode ? 'active' : '')}">
               <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
               <span>Profile Dossier &amp; AI Studio</span>
-              <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold ${tfEscapeHtml(isDossierMode ? 'bg-white/25 text-white' : 'bg-emerald-500/15 text-emerald-600')}">${tfEscapeHtml(completenessPct)}%</span>
+              <span class="px-1.5 py-0.2 rounded-full text-xs font-bold ${tfEscapeHtml(isDossierMode ? 'bg-white/25 text-white' : 'bg-emerald-500/15 text-emerald-600')}">${tfEscapeHtml(completenessPct)}%</span>
             </button>
           </div>
         </div>
@@ -1052,9 +1052,9 @@ window.TFComponents = {
                   <div class="flex items-center gap-2 flex-wrap">
                     <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white leading-tight truncate">${tfEscapeHtml(contact.name)}</h2>
                     ${contact.brandName ? `<span class="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">Brand: ${tfEscapeHtml(contact.brandName)}</span>` : ''}
-                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${tfEscapeHtml(theme.bg)}">${tfEscapeHtml(theme.label)}</span>
-                    <span class="font-mono text-[10px] text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">${tfEscapeHtml(contact.id)}</span>
-                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                    <span class="px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider border ${tfEscapeHtml(theme.bg)}">${tfEscapeHtml(theme.label)}</span>
+                    <span class="font-mono text-xs text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">${tfEscapeHtml(contact.id)}</span>
+                    <span class="px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
                       ${tfEscapeHtml(stateCode ? `${stateCode} · ${stateName}` : stateName)}
                     </span>
                   </div>
@@ -1063,11 +1063,11 @@ window.TFComponents = {
                     <div class="w-32 tf-completeness-meter">
                       <div class="tf-completeness-bar" style="width: ${tfEscapeHtml(completenessPct)}%"></div>
                     </div>
-                    <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300 font-mono-num">${tfEscapeHtml(completenessPct)}% Profile Complete</span>
+                    <span class="text-xs font-bold text-slate-600 dark:text-slate-300 font-mono-num">${tfEscapeHtml(completenessPct)}% Profile Complete</span>
                     ${missingSpecs.length > 0 ? `
-                      <span class="text-[10px] text-amber-600 dark:text-amber-400 font-medium hidden sm:inline">• Missing: ${tfEscapeHtml(missingSpecs.slice(0, 2).join(', '))}</span>
+                      <span class="text-xs text-amber-600 dark:text-amber-400 font-medium hidden sm:inline">• Missing: ${tfEscapeHtml(missingSpecs.slice(0, 2).join(', '))}</span>
                     ` : `
-                      <span class="text-[10px] text-emerald-600 font-bold hidden sm:inline">• ✓ 100% Fully Verified</span>
+                      <span class="text-xs text-emerald-600 font-bold hidden sm:inline">• 100% Fully Verified</span>
                     `}
                   </div>
                 </div>
@@ -1109,7 +1109,7 @@ window.TFComponents = {
                   <span class="p-1.5 rounded-lg bg-purple-500 text-white"><i data-lucide="sparkles" class="w-4 h-4"></i></span>
                   <div>
                     <h3 class="text-xs font-bold uppercase tracking-wider text-purple-950 dark:text-purple-200">AI Smart Profile Extractor</h3>
-                    <p class="text-[11px] text-slate-500">Drop visiting card photo, invoice bill, or paste text to auto-populate without overwriting existing data</p>
+                    <p class="text-xs text-slate-500">Drop visiting card photo, invoice bill, or paste text to auto-populate without overwriting existing data</p>
                   </div>
                 </div>
                 <button onclick="app.toggleDossierAiDrawer()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -1118,7 +1118,7 @@ window.TFComponents = {
                 <div class="p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 text-center cursor-pointer hover:border-purple-500 transition-colors" onclick="document.getElementById('dossier-ai-file-input').click()">
                   <i data-lucide="upload-cloud" class="w-6 h-6 text-purple-500 mx-auto mb-1"></i>
                   <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Upload Card / Invoice Image</span>
-                  <span class="text-[10px] text-slate-400">PNG, JPG, PDF receipt (AI Vision OCR)</span>
+                  <span class="text-xs text-slate-400">PNG, JPG, PDF receipt (AI Vision OCR)</span>
                   <input type="file" id="dossier-ai-file-input" class="hidden" accept="image/*" onchange="app.handleDossierImageUpload(this)">
                 </div>
                 <div class="space-y-2">
@@ -1311,17 +1311,17 @@ window.TFComponents = {
                 <!-- Column 1: Commercial & Identity -->
                 <div class="tf-spec-card space-y-2.5">
                   <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-2">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                       <i data-lucide="building-2" class="w-3.5 h-3.5 text-emerald-500"></i>
                       <span>Commercial Identity</span>
                     </span>
-                    <span class="text-[10px] font-mono text-slate-400">SPEC-01</span>
+                    <span class="text-xs font-mono text-slate-400">SPEC-01</span>
                   </div>
 
                   <div class="space-y-1.5 text-xs">
                     <div class="tf-spec-cell">
                       <div class="min-w-0 pr-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Trade / Entity Name</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Trade / Entity Name</span>
                         <span class="font-bold text-slate-900 dark:text-white truncate block text-xs" title="${tfEscapeHtml(contact.name)}">${tfEscapeHtml(contact.name)}</span>
                       </div>
                       <button onclick="app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(contact.name))}', 'Company Name', this)" class="tf-copy-btn" title="Copy Entity Name">
@@ -1331,7 +1331,7 @@ window.TFComponents = {
 
                     <div class="tf-spec-cell">
                       <div class="min-w-0 pr-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Contact Person</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Contact Person</span>
                         <span class="font-bold text-slate-800 dark:text-slate-200 block text-xs">${tfEscapeHtml(contact.contactPerson || 'Direct')} (${tfEscapeHtml(contact.designation || 'Owner')})</span>
                       </div>
                       <button onclick="app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(contact.contactPerson||''))}', 'Contact Person', this)" class="tf-copy-btn" title="Copy Contact Person">
@@ -1341,7 +1341,7 @@ window.TFComponents = {
 
                     <div class="tf-spec-cell">
                       <div class="min-w-0 pr-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Primary Telephony</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Primary Telephony</span>
                         <span class="font-mono-num font-bold text-emerald-600 dark:text-emerald-400 text-xs">${tfEscapeHtml(contact.phone || 'Not Specified')}</span>
                       </div>
                       <button onclick="app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safePhone))}', 'Phone Number', this)" class="tf-copy-btn" title="Copy Phone">
@@ -1352,7 +1352,7 @@ window.TFComponents = {
                     ${contact.altPhone ? `
                       <div class="tf-spec-cell">
                         <div class="min-w-0 pr-2">
-                          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Alternate Phone</span>
+                          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Alternate Phone</span>
                           <span class="font-mono-num font-bold text-slate-700 dark:text-slate-300 text-xs">${tfEscapeHtml(contact.altPhone)}</span>
                         </div>
                         <button onclick="app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeAltPhone))}', 'Alternate Phone', this)" class="tf-copy-btn" title="Copy Alt Phone">
@@ -1363,7 +1363,7 @@ window.TFComponents = {
 
                     <div class="tf-spec-cell">
                       <div class="min-w-0 pr-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Official Email</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Official Email</span>
                         <span class="font-medium text-slate-800 dark:text-slate-200 truncate block text-xs" title="${tfEscapeHtml(contact.email || 'None')}">${tfEscapeHtml(contact.email || 'orders@tradeflow.com')}</span>
                       </div>
                       <button onclick="app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeEmail))}', 'Email', this)" class="tf-copy-btn" title="Copy Email">
@@ -1373,7 +1373,7 @@ window.TFComponents = {
 
                     <div class="tf-spec-cell">
                       <div class="min-w-0 pr-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Payment Terms</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Payment Terms</span>
                         <span class="font-bold text-amber-600 dark:text-amber-400 text-xs">${tfEscapeHtml(contact.paymentTerms || ((typeof app !== 'undefined' && app.config) ? app.config().defaultPaymentTerms : 'Net 15 Days'))}</span>
                       </div>
                       <button onclick="app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(contact.paymentTerms || ((typeof app !== 'undefined' && app.config) ? app.config().defaultPaymentTerms : 'Net 15 Days')))}', 'Payment Terms', this)" class="tf-copy-btn">
@@ -1386,20 +1386,20 @@ window.TFComponents = {
                 <!-- Column 2: Statutory & Tax Verification -->
                 <div class="tf-spec-card space-y-2.5">
                   <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-2">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                       <i data-lucide="file-check" class="w-3.5 h-3.5 text-blue-500"></i>
                       <span>Tax &amp; Credentials</span>
                     </span>
-                    <span class="text-[10px] font-mono text-slate-400">SPEC-02</span>
+                    <span class="text-xs font-mono text-slate-400">SPEC-02</span>
                   </div>
 
                   <div class="space-y-1.5 text-xs">
                     <div class="tf-spec-cell">
                       <div class="min-w-0 pr-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">GSTIN Registration</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">GSTIN Registration</span>
                         <div class="flex items-center gap-1.5 mt-0.5">
                           <span class="font-mono font-bold text-slate-900 dark:text-white text-xs">${tfEscapeHtml(contact.gstin || '')}</span>
-                          <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200">
+                          <span class="text-xs font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200">
                             ${tfEscapeHtml(stateCode || '27')}
                           </span>
                         </div>
@@ -1411,7 +1411,7 @@ window.TFComponents = {
 
                     <div class="tf-spec-cell">
                       <div class="min-w-0 pr-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Income Tax PAN</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Income Tax PAN</span>
                         <span class="font-mono font-bold text-slate-900 dark:text-white text-xs">${tfEscapeHtml(contact.pan || (gstin ? gstin.substring(2, 12) : 'AABCS1234F'))}</span>
                       </div>
                       <button onclick="app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safePan))}', 'PAN', this)" class="tf-copy-btn" title="Copy PAN">
@@ -1421,7 +1421,7 @@ window.TFComponents = {
 
                     <div class="tf-spec-cell">
                       <div class="min-w-0 pr-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">FSSAI Food License</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">FSSAI Food License</span>
                         <span class="font-mono font-semibold text-slate-800 dark:text-slate-200 text-xs">${tfEscapeHtml(contact.fssai || contact.fssaiNumber || '11521034000123')}</span>
                       </div>
                       <button onclick="app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeFssai))}', 'FSSAI License', this)" class="tf-copy-btn" title="Copy FSSAI">
@@ -1431,7 +1431,7 @@ window.TFComponents = {
 
                     <div class="tf-spec-cell">
                       <div class="min-w-0 pr-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">MSME / Udyam No</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">MSME / Udyam No</span>
                         <span class="font-mono font-medium text-slate-800 dark:text-slate-200 text-xs">${tfEscapeHtml(contact.msme || 'UDYAM-MH-01-0012345')}</span>
                       </div>
                       <button onclick="app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeMsme))}', 'MSME Number', this)" class="tf-copy-btn" title="Copy MSME">
@@ -1441,10 +1441,10 @@ window.TFComponents = {
 
                     <div class="tf-spec-cell">
                       <div class="min-w-0 pr-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Business Nature</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Business Nature</span>
                         <span class="font-medium text-slate-800 dark:text-slate-200 text-xs">${tfEscapeHtml(contact.businessNature || contact.businessType || '')}</span>
                       </div>
-                      <span class="text-[10px] text-emerald-600 font-bold">✓ Active</span>
+                      <span class="text-xs text-emerald-600 font-bold">Active</span>
                     </div>
                   </div>
                 </div>
@@ -1452,17 +1452,17 @@ window.TFComponents = {
                 <!-- Column 3: Banking & Payout Coordinates -->
                 <div class="tf-spec-card space-y-2.5">
                   <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-2">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                       <i data-lucide="landmark" class="w-3.5 h-3.5 text-amber-500"></i>
                       <span>Banking Coordinates</span>
                     </span>
-                    <span class="text-[10px] font-mono text-slate-400">SPEC-03</span>
+                    <span class="text-xs font-mono text-slate-400">SPEC-03</span>
                   </div>
 
                   <div class="space-y-1.5 text-xs">
                     <div class="tf-spec-cell">
                       <div class="min-w-0 pr-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Bank Name &amp; Branch</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Bank Name &amp; Branch</span>
                         <span class="font-bold text-slate-900 dark:text-white text-xs">${tfEscapeHtml(contact.bankName || contact.bankDetails?.bankName || '')} • ${tfEscapeHtml(contact.branch || contact.bankDetails?.branch || '')}</span>
                       </div>
                       <button onclick="app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeBankName))}', 'Bank Name', this)" class="tf-copy-btn" title="Copy Bank Name">
@@ -1472,7 +1472,7 @@ window.TFComponents = {
 
                     <div class="tf-spec-cell">
                       <div class="min-w-0 pr-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Beneficiary Name</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Beneficiary Name</span>
                         <span class="font-medium text-slate-800 dark:text-slate-200 truncate block text-xs">${tfEscapeHtml(contact.beneficiaryName || contact.bankDetails?.beneficiaryName || contact.name)}</span>
                       </div>
                       <button onclick="app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeBeneficiary))}', 'Beneficiary Name', this)" class="tf-copy-btn" title="Copy Beneficiary">
@@ -1482,7 +1482,7 @@ window.TFComponents = {
 
                     <div class="tf-spec-cell">
                       <div class="min-w-0 pr-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Account Number</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Account Number</span>
                         <span class="font-mono font-bold text-slate-900 dark:text-white text-xs">${tfEscapeHtml(contact.accountNumber || contact.bankDetails?.accountNumber || '')}</span>
                       </div>
                       <button onclick="app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeAccNo))}', 'Account Number', this)" class="tf-copy-btn" title="Copy Account No">
@@ -1492,7 +1492,7 @@ window.TFComponents = {
 
                     <div class="tf-spec-cell">
                       <div class="min-w-0 pr-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Bank IFSC Code</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Bank IFSC Code</span>
                         <span class="font-mono font-bold text-amber-600 dark:text-amber-400 text-xs">${tfEscapeHtml(contact.ifsc || contact.bankDetails?.ifsc || 'HDFC0001234')}</span>
                       </div>
                       <button onclick="app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeIfsc))}', 'IFSC Code', this)" class="tf-copy-btn" title="Copy IFSC">
@@ -1502,7 +1502,7 @@ window.TFComponents = {
 
                     <div class="tf-spec-cell">
                       <div class="min-w-0 pr-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Instant UPI VPA</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Instant UPI VPA</span>
                         <span class="font-mono text-emerald-600 dark:text-emerald-400 text-xs font-semibold">${tfEscapeHtml(contact.upiId || contact.bankDetails?.upiId || `${(contact.name||'trade').toLowerCase().replace(/[^a-z]/g,'')}@okhdfcbank`)}</span>
                       </div>
                       <button onclick="app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeUpi))}', 'UPI ID', this)" class="tf-copy-btn" title="Copy UPI">
@@ -1518,7 +1518,7 @@ window.TFComponents = {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                   <div class="tf-spec-cell">
                     <div class="min-w-0 pr-2">
-                      <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                      <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
                         <i data-lucide="map-pin" class="w-3 h-3 text-rose-500"></i>
                         <span>Registered Office / Billing Address</span>
                       </span>
@@ -1531,7 +1531,7 @@ window.TFComponents = {
 
                   <div class="tf-spec-cell">
                     <div class="min-w-0 pr-2">
-                      <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                      <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
                         <i data-lucide="truck" class="w-3 h-3 text-blue-500"></i>
                         <span>Factory / Dispatch Gate Address</span>
                       </span>
@@ -1547,7 +1547,7 @@ window.TFComponents = {
               <!-- Zone D: Dynamic Custom Specifications & Tags (Zero Wasted Space) -->
               <div class="p-4 rounded-xl bg-white dark:bg-[#10141e] border border-slate-200/90 dark:border-slate-800 shadow-sm flex items-center justify-between flex-wrap gap-2">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                  <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
                     <i data-lucide="tag" class="w-3.5 h-3.5 text-purple-500"></i>
                     <span>Custom Specifications:</span>
                   </span>
@@ -1574,44 +1574,44 @@ window.TFComponents = {
             <!-- Financial KPI Ribbon -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <div class="p-4 rounded-2xl bg-white dark:bg-[#10141e] border border-slate-200/90 dark:border-slate-800 shadow-sm">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
                   ${tfEscapeHtml(isMarketeer ? 'Brokerage Generated' : (isMfg ? 'Factory Job-Work Cost' : (isPkg ? 'Packaging Bills' : 'Total B2B Volume')))}
                 </span>
                 <span class="text-xl sm:text-2xl font-black font-mono-num text-slate-900 dark:text-white">
                   ${tfEscapeHtml(typeof app !== 'undefined' ? app.formatCurrency(totalVolume) : '₹' + totalVolume)}
                 </span>
-                <span class="text-[11px] text-slate-500 block mt-1">${tfEscapeHtml(linkedOrders.length)} Linked Deal Batches</span>
+                <span class="text-xs text-slate-500 block mt-1">${tfEscapeHtml(linkedOrders.length)} Linked Deal Batches</span>
               </div>
 
               <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 shadow-sm">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block mb-1">
                   ${tfEscapeHtml(isMarketeer ? 'Commission Paid' : (isRetailer ? 'Customer Advances Recv' : 'Advances Disbursed'))}
                 </span>
                 <span class="text-xl sm:text-2xl font-black font-mono-num text-emerald-600 dark:text-emerald-400">
                   ${tfEscapeHtml(typeof app !== 'undefined' ? app.formatCurrency(totalPaid) : '₹' + totalPaid)}
                 </span>
-                <span class="text-[11px] text-emerald-700/80 dark:text-emerald-300/80 block mt-1">${tfEscapeHtml(linkedPayments.length)} Bank Transactions</span>
+                <span class="text-xs text-emerald-700/80 dark:text-emerald-300/80 block mt-1">${tfEscapeHtml(linkedPayments.length)} Bank Transactions</span>
               </div>
 
               <div class="p-4 rounded-2xl ${tfEscapeHtml(balanceDue > 0 ? 'bg-blue-500/10 border-blue-500/20' : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800')} shadow-sm">
-                <span class="text-[10px] font-bold uppercase tracking-wider ${tfEscapeHtml(balanceDue > 0 ? 'text-blue-800 dark:text-blue-300' : 'text-slate-400')} block mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider ${tfEscapeHtml(balanceDue > 0 ? 'text-blue-800 dark:text-blue-300' : 'text-slate-400')} block mb-1">
                   ${tfEscapeHtml(theme.balanceLabel)}
                 </span>
                 <span class="text-xl sm:text-2xl font-black font-mono-num ${tfEscapeHtml(balanceDue > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300')}">
                   ${tfEscapeHtml(typeof app !== 'undefined' ? app.formatCurrency(balanceDue) : '₹' + balanceDue)}
                 </span>
-                <span class="text-[11px] font-bold ${tfEscapeHtml(balanceDue > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600')} block mt-1">
-                  ${tfEscapeHtml(balanceDue > 0 ? 'Action Required' : '✓ Fully Reconciled')}
+                <span class="text-xs font-bold ${tfEscapeHtml(balanceDue > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600')} block mt-1">
+                  ${tfEscapeHtml(balanceDue > 0 ? 'Action Required' : 'Fully Reconciled')}
                 </span>
               </div>
 
               <div class="p-4 rounded-2xl bg-white dark:bg-[#10141e] border border-slate-200/90 dark:border-slate-800 shadow-sm">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Production Batches</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Production Batches</span>
                 <div class="flex items-baseline gap-2">
                   <span class="text-xl sm:text-2xl font-black font-mono-num text-slate-900 dark:text-white">${tfEscapeHtml(workingBatches.length)}</span>
                   <span class="text-xs text-slate-400 font-medium">In Production / Transit</span>
                 </div>
-                <span class="text-[11px] text-slate-500 block mt-1">${tfEscapeHtml(completedBatches.length)} Batches Delivered &amp; Settled</span>
+                <span class="text-xs text-slate-500 block mt-1">${tfEscapeHtml(completedBatches.length)} Batches Delivered &amp; Settled</span>
               </div>
             </div>
 
@@ -1636,7 +1636,7 @@ window.TFComponents = {
               <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                   <thead>
-                    <tr class="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
+                    <tr class="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
                       <th class="py-2.5 px-3.5">PO / Invoice #</th>
                       <th class="py-2.5 px-3.5">Date</th>
                       <th class="py-2.5 px-3.5">Products / Flavours</th>
@@ -1679,7 +1679,7 @@ window.TFComponents = {
               <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                   <thead>
-                    <tr class="text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
+                    <tr class="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
                       <th class="py-2.5 px-3.5">Date</th>
                       <th class="py-2.5 px-3.5">Counterparty</th>
                       <th class="py-2.5 px-3.5">Mode</th>
@@ -1746,7 +1746,7 @@ window.TFComponents = {
       ).length;
 
       return `
-        <div class="tf-card p-5 rounded-2xl bg-white dark:bg-[#111522] border border-slate-200 dark:border-slate-800 hover:border-amber-500/40 transition-all shadow-xs flex flex-col justify-between group">
+        <div class="tf-card p-5 rounded-2xl bg-white dark:bg-[#111522] border border-slate-200 dark:border-slate-800 hover:border-emerald-600/40 transition-all shadow-xs flex flex-col justify-between group">
           <div>
             <!-- SKU Card Header -->
             <div class="flex items-start justify-between gap-2 mb-3">
@@ -1755,11 +1755,11 @@ window.TFComponents = {
                   ${tfEscapeHtml(p.name)}
                 </h3>
                 <div class="flex items-center gap-1.5 mt-1">
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                     <i data-lucide="${tfEscapeHtml(packIcon)}" class="w-3 h-3 text-amber-500"></i>
                     <span>${tfEscapeHtml(p.variant || packBadge)}</span>
                   </span>
-                  <span class="px-1.5 py-0.5 text-[10px] font-mono-num font-bold rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <span class="px-1.5 py-0.5 text-xs font-mono-num font-bold rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
                     ${tfEscapeHtml(p.id)}
                   </span>
                 </div>
@@ -1785,7 +1785,7 @@ window.TFComponents = {
                 </div>
                 <div class="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden flex">
                   <div class="bg-blue-500 h-full" style="width: ${tfEscapeHtml(unitCogs > 0 ? (mfgCost / unitCogs) * 100 : 0)}%" title="Factory: ${tfEscapeHtml(typeof app !== 'undefined' ? app.formatCurrency(mfgCost) : mfgCost)}"></div>
-                  <div class="bg-sky-400 h-full" style="width: ${tfEscapeHtml(unitCogs > 0 ? (pkgCost / unitCogs) * 100 : 0)}%" title="Packaging: ${tfEscapeHtml(typeof app !== 'undefined' ? app.formatCurrency(pkgCost) : pkgCost)}"></div>
+                  <div class="bg-blue-400 h-full" style="width: ${tfEscapeHtml(unitCogs > 0 ? (pkgCost / unitCogs) * 100 : 0)}%" title="Packaging: ${tfEscapeHtml(typeof app !== 'undefined' ? app.formatCurrency(pkgCost) : pkgCost)}"></div>
                 </div>
               </div>
             </div>
@@ -1796,12 +1796,12 @@ window.TFComponents = {
                 <span class="text-slate-500 dark:text-slate-400">Selling to Retailer:</span>
                 <span class="font-mono-num font-black text-sm ${tfEscapeHtml(sellingPrice > 0 ? 'text-slate-900 dark:text-white' : 'text-amber-700 dark:text-amber-300')}">${tfEscapeHtml(sellingPrice > 0 ? (typeof app !== 'undefined' ? app.formatCurrency(sellingPrice) : '₹' + sellingPrice) : 'Price not set')}</span>
               </div>
-              <div class="flex justify-between items-center text-[11px] text-slate-400">
+              <div class="flex justify-between items-center text-xs text-slate-400">
                 <span>MRP (Retail Price):</span>
                 <span class="font-mono-num font-semibold text-slate-600 dark:text-slate-300">${tfEscapeHtml(mrp > 0 ? (typeof app !== 'undefined' ? app.formatCurrency(mrp) : '₹' + mrp) : '—')}</span>
               </div>
               <div class="pt-1.5 border-t border-amber-500/15 flex justify-between items-center">
-                <span class="text-emerald-700 dark:text-emerald-400 font-bold text-[11px]">Gross Unit Margin:</span>
+                <span class="text-emerald-700 dark:text-emerald-400 font-bold text-xs">Gross Unit Margin:</span>
                 <span class="inline-flex items-center gap-1 font-mono-num font-black text-xs ${tfEscapeHtml(sellingPrice <= 0 ? 'text-slate-500 dark:text-slate-400' : grossMargin < 0 ? 'text-rose-600 dark:text-rose-400' : parseFloat(marginPct) >= 30 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400')}">
                   ${sellingPrice <= 0 ? 'Set a selling price' : `${tfEscapeHtml(grossMargin >= 0 ? '+' : '−')}${tfEscapeHtml(typeof app !== 'undefined' ? app.formatCurrency(Math.abs(grossMargin)) : '₹' + Math.abs(grossMargin))} (${tfEscapeHtml(marginPct)}%)`}
                 </span>
@@ -1809,10 +1809,10 @@ window.TFComponents = {
             </div>
 
             <!-- Active Orders using this SKU -->
-            <div class="flex items-center justify-between text-[11px] text-slate-400 px-1 mb-2">
+            <div class="flex items-center justify-between text-xs text-slate-400 px-1 mb-2">
               <span>Case Pack: <strong class="text-slate-700 dark:text-slate-300 font-mono-num">${tfEscapeHtml(p.casePack || 24)} jars/case</strong></span>
               <span class="font-semibold text-slate-600 dark:text-slate-300">
-                ${tfEscapeHtml(activeBatchesCount > 0 ? `🔥 Used in ${activeBatchesCount} Batches` : 'Standard Catalog')}
+                ${tfEscapeHtml(activeBatchesCount > 0 ? `Used in ${activeBatchesCount} Batches` : 'Standard Catalog')}
               </span>
             </div>
           </div>
@@ -1823,7 +1823,7 @@ window.TFComponents = {
               <i data-lucide="edit-3" class="w-3.5 h-3.5 text-amber-500"></i>
               <span>Edit SKU</span>
             </button>
-            <button onclick="app.openSkuCalculatorModal('${tfEscapeHtml(tfEscapeJs(p.id))}')" class="btn-tactile flex-1 py-1.5 px-3 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-950 rounded-lg shadow-2xs flex items-center justify-center gap-1.5">
+            <button onclick="app.openSkuCalculatorModal('${tfEscapeHtml(tfEscapeJs(p.id))}')" class="btn-tactile flex-1 py-1.5 px-3 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-800 dark:text-white rounded-lg shadow-2xs flex items-center justify-center gap-1.5">
               <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
               <span>Simulate Batch</span>
             </button>
@@ -1851,18 +1851,18 @@ window.TFComponents = {
           <!-- Quick Metrics & Actions -->
           <div class="flex items-center gap-3 flex-wrap">
             <div class="p-2.5 px-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-center">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Catalog</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Catalog</span>
               <span class="font-mono-num font-black text-sm text-slate-900 dark:text-white">${tfEscapeHtml(totalSkus)} SKUs</span>
             </div>
             <div class="p-2.5 px-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 block mb-0.5">Avg Margin</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 block mb-0.5">Avg Margin</span>
               <span class="font-mono-num font-black text-sm text-emerald-600 dark:text-emerald-400">${tfEscapeHtml(avgMargin)}%</span>
             </div>
             <button onclick="app.openSkuEditModal()" class="btn-tactile px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow-2xs flex items-center gap-1.5">
               <i data-lucide="plus" class="w-4 h-4"></i>
               <span>Add Product</span>
             </button>
-            <button onclick="app.openSkuCalculatorModal()" class="btn-tactile px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-950 rounded-lg shadow-sm flex items-center gap-1.5">
+            <button onclick="app.openSkuCalculatorModal()" class="btn-tactile px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-800 dark:text-white rounded-lg shadow-sm flex items-center gap-1.5">
               <i data-lucide="calculator" class="w-4 h-4"></i>
               <span>Batch Profit Simulator</span>
             </button>

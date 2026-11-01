@@ -503,7 +503,7 @@ class TradeFlowApp {
         amountLabel: 'Document Status',
         timestamp: snap.timestamp || new Date().toISOString(),
         timeFormatted: snap.timeFormatted || 'Received recently',
-        actionLabel: 'Start Work Now ➔',
+        actionLabel: 'Start Work Now →',
         actionCallback: `app.processPendingMobileSnap('${snap.id}')`,
         discardCallback: `app.discardPendingMobileSnap('${snap.id}')`,
         fileUrl: snap.fileUrl || snap.base64 || ''
@@ -537,7 +537,7 @@ class TradeFlowApp {
             amountLabel: 'Draft Amount',
             timestamp: draft.updatedAt || draft.timestamp || new Date().toISOString(),
             timeFormatted: 'In-Progress (Draft)',
-            actionLabel: 'Resume Filling ➔',
+            actionLabel: 'Resume Filling →',
             actionCallback: 'app.resumePendingIntakeDraft()'
           });
         }
@@ -565,7 +565,7 @@ class TradeFlowApp {
           amountLabel: 'Idle Advance',
           timestamp: o.createdAt || (o.date ? new Date(o.date).toISOString() : new Date().toISOString()),
           timeFormatted: o.timeLog || (o.date ? `${this.formatDate(o.date)} • 10:00:00 AM` : 'Active Order'),
-          actionLabel: 'Place Vendor Orders ➔',
+          actionLabel: 'Place Vendor Orders →',
           actionCallback: `app.openFactoryPOModal('${o.id}')`
         });
       }
@@ -592,7 +592,7 @@ class TradeFlowApp {
           amountLabel: 'Balance Due',
           timestamp: o.dueDate ? new Date(o.dueDate).toISOString() : (o.createdAt || new Date().toISOString()),
           timeFormatted: o.dueDate ? `Due by ${this.formatDate(o.dueDate)}` : 'Overdue',
-          actionLabel: 'Inspect Order Dossier ➔',
+          actionLabel: 'Inspect Order Dossier →',
           actionCallback: `app.openOrderPaymentFullModal('${o.id}')`
         });
       }
@@ -617,7 +617,7 @@ class TradeFlowApp {
           amountLabel: 'Advance Pending',
           timestamp: o.createdAt || (o.date ? new Date(o.date).toISOString() : new Date().toISOString()),
           timeFormatted: o.timeLog || (o.date ? `${this.formatDate(o.date)} • 11:30:00 AM` : 'Active PO'),
-          actionLabel: 'Log Advance Payment ➔',
+          actionLabel: 'Log Advance Payment →',
           actionCallback: `app.openPaymentModal()`
         });
       }
@@ -641,7 +641,7 @@ class TradeFlowApp {
           amountLabel: 'Amount',
           timestamp: p.createdAt || (p.date ? new Date(p.date).toISOString() : new Date().toISOString()),
           timeFormatted: p.timeLog || (p.date ? `${this.formatDate(p.date)} • 12:00:00 PM` : 'Recent Payment'),
-          actionLabel: 'Attach Proof ➔',
+          actionLabel: 'Attach Proof →',
           actionCallback: `app.openPaymentDetailDrawer('${p.id}')`
         });
       }
@@ -710,7 +710,7 @@ class TradeFlowApp {
     }
 
     container.innerHTML = items.map(item => `
-      <div class="p-4 rounded-xl bg-white dark:bg-[#151926] border border-slate-200 dark:border-slate-800 hover:border-amber-500/40 transition-all shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="p-4 rounded-xl bg-white dark:bg-[#151926] border border-slate-200 dark:border-slate-800 hover:border-emerald-600/40 transition-all shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-start gap-3.5 min-w-0">
           <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 overflow-hidden ${
             tfEscapeHtml(item.type === 'po_needed' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' :
@@ -736,11 +736,11 @@ class TradeFlowApp {
           <div class="min-w-0">
             <div class="flex items-center gap-2 flex-wrap mb-1">
               <h4 class="font-bold text-slate-900 dark:text-white text-xs">${tfEscapeHtml(item.title)}</h4>
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${tfEscapeHtml(item.badgeClass)}">${tfEscapeHtml(item.badgeText)}</span>
-              ${item.invoiceNumber ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-mono-num font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">${tfEscapeHtml(item.invoiceNumber)}</span>` : ''}
+              <span class="px-2 py-0.5 rounded text-xs font-bold ${tfEscapeHtml(item.badgeClass)}">${tfEscapeHtml(item.badgeText)}</span>
+              ${item.invoiceNumber ? `<span class="px-1.5 py-0.5 rounded text-xs font-mono-num font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">${tfEscapeHtml(item.invoiceNumber)}</span>` : ''}
             </div>
             <p class="text-xs text-slate-600 dark:text-slate-300 mb-1.5">${tfEscapeHtml(item.description)}</p>
-            <div class="flex items-center gap-3 text-[11px] text-slate-400 flex-wrap">
+            <div class="flex items-center gap-3 text-xs text-slate-400 flex-wrap">
               <span class="flex items-center gap-1 font-mono-num">
                 <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
                 <span>${tfEscapeHtml(item.timeFormatted)}</span>
@@ -763,7 +763,7 @@ class TradeFlowApp {
               <span>Discard</span>
             </button>
           ` : ''}
-          <button onclick="${tfEscapeHtml(item.actionCallback)}; app.closeUrgentActionsModal();" class="btn-tactile px-3.5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-950 rounded-lg shadow-2xs whitespace-nowrap flex items-center gap-1.5">
+          <button onclick="${tfEscapeHtml(item.actionCallback)}; app.closeUrgentActionsModal();" class="btn-tactile px-3.5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-800 dark:text-white rounded-lg shadow-2xs whitespace-nowrap flex items-center gap-1.5">
             <span>${tfEscapeHtml(item.actionLabel)}</span>
           </button>
         </div>
@@ -783,7 +783,7 @@ class TradeFlowApp {
       const draft = JSON.parse(raw);
       this.closeUrgentActionsModal();
       window.TradeFlowSmartFill?.restoreFromDraft?.(draft);
-      this.showToast('📂 Resumed in-progress draft.');
+      this.showToast('Resumed in-progress draft.');
     } catch (e) {
       console.error('Failed to resume draft:', e);
       this.showToast('Error restoring draft.');
@@ -891,12 +891,12 @@ class TradeFlowApp {
           this.updateExcelSyncPill('synced');
         }
       } else {
-        this.showSyncAlert(`⚠️ Database save error: ${res.error || 'Failed to save to backend'}`);
+        this.showSyncAlert(`Database save error: ${res.error || 'Failed to save to backend'}`);
         this.updateExcelSyncPill('error');
       }
     } catch (err) {
       console.warn('Could not reach backend server; running in offline fallback mode:', err);
-      this.showSyncAlert('⚠️ Backend server unreachable. Running in offline fallback mode.');
+      this.showSyncAlert('Backend server unreachable. Running in offline fallback mode.');
       this.updateExcelSyncPill('offline');
     }
   }
@@ -927,15 +927,15 @@ class TradeFlowApp {
       if (res.success) {
         this.hideSyncAlert();
         this.updateExcelSyncPill('synced');
-        this.showToast('✅ Excel successfully synced!');
+        this.showToast('Excel successfully synced!');
       } else if (res.locked) {
-        this.showSyncAlert('⚠️ Excel file is still open/locked in Microsoft Excel. Please close it and retry.');
+        this.showSyncAlert('Excel file is still open/locked in Microsoft Excel. Please close it and retry.');
         this.updateExcelSyncPill('locked');
       } else {
-        this.showToast(`❌ Sync failed: ${res.error || 'Unknown error'}`);
+        this.showToast(`Sync failed: ${res.error || 'Unknown error'}`);
       }
     } catch (e) {
-      this.showToast('❌ Could not connect to sync service.');
+      this.showToast('Could not connect to sync service.');
     }
   }
 
@@ -995,17 +995,17 @@ class TradeFlowApp {
 
   /* ---------- EXCEL IMPORT PREVIEW & CONFIRM WORKFLOW ---------- */
   async openExcelSyncWorkflow() {
-    this.showToast('🔍 Inspecting Excel changes...');
+    this.showToast('Inspecting Excel changes...');
     try {
       const resp = await fetch('/api/sync/preview-from-excel', { method: 'POST' });
       const preview = await resp.json();
       if (!preview.success) {
-        this.showToast(`⚠️ Excel preview notice: ${preview.error || 'Check Excel file'}`);
+        this.showToast(`Excel preview notice: ${preview.error || 'Check Excel file'}`);
         return;
       }
 
       if (preview.diffsCount === 0) {
-        this.showToast('✅ Authoritative DB and Excel are fully in sync! No pending differences.');
+        this.showToast('Authoritative DB and Excel are fully in sync! No pending differences.');
         return;
       }
 
@@ -1014,7 +1014,7 @@ class TradeFlowApp {
       const modal = document.getElementById('excel-preview-modal');
       if (modal) modal.classList.remove('hidden');
     } catch (e) {
-      this.showToast('⚠️ Could not connect to Excel preview service.');
+      this.showToast('Could not connect to Excel preview service.');
     }
   }
 
@@ -1047,7 +1047,7 @@ class TradeFlowApp {
         <tr class="border-b border-slate-100 dark:border-slate-800 text-xs">
           <td class="py-1.5 px-3 font-semibold text-slate-700 dark:text-slate-300">${tfEscapeHtml(c.label || c.field)}</td>
           <td class="py-1.5 px-3 font-mono text-rose-600 dark:text-rose-400 line-through bg-rose-50/50 dark:bg-rose-950/20">${tfEscapeHtml(c.oldValue !== undefined ? c.oldValue : '-')}</td>
-          <td class="py-1.5 px-3 font-mono text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50/50 dark:bg-emerald-950/20">➔ ${tfEscapeHtml(c.newValue)}</td>
+          <td class="py-1.5 px-3 font-mono text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50/50 dark:bg-emerald-950/20">${tfEscapeHtml(c.newValue)}</td>
         </tr>
       `).join('');
 
@@ -1057,13 +1057,13 @@ class TradeFlowApp {
             <label class="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" value="${tfEscapeHtml(d.id)}" class="excel-diff-checkbox rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4" checked>
               <span class="text-xs font-bold text-slate-900 dark:text-white">${tfEscapeHtml(d.title || d.id)}</span>
-              <span class="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">${tfEscapeHtml(d.type)}</span>
+              <span class="px-1.5 py-0.2 rounded text-xs font-mono font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">${tfEscapeHtml(d.type)}</span>
             </label>
-            <span class="text-[11px] font-semibold text-slate-400">${tfEscapeHtml(d.changes.length)} field(s) modified</span>
+            <span class="text-xs font-semibold text-slate-400">${tfEscapeHtml(d.changes.length)} field(s) modified</span>
           </div>
           <table class="w-full text-left border-collapse bg-white dark:bg-slate-950/40 rounded-lg overflow-hidden border border-slate-200/80 dark:border-slate-800/80">
             <thead>
-              <tr class="border-b border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-400 uppercase">
+              <tr class="border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-400 uppercase">
                 <th class="py-1 px-3">Field</th>
                 <th class="py-1 px-3">Current Authoritative DB</th>
                 <th class="py-1 px-3">Incoming Excel Value</th>
@@ -1081,7 +1081,7 @@ class TradeFlowApp {
   async applyConfirmedExcelImport() {
     const selectedIds = Array.from(document.querySelectorAll('.excel-diff-checkbox:checked')).map(cb => cb.value);
     if (selectedIds.length === 0) {
-      this.showToast('⚠️ Please select at least one record change to apply.');
+      this.showToast('Please select at least one record change to apply.');
       return;
     }
 
@@ -1096,15 +1096,15 @@ class TradeFlowApp {
       });
       const res = await resp.json();
       if (res.success) {
-        this.showToast(`✅ Successfully applied ${res.updatedCount} record(s) from Excel! Safety checkpoint: ${res.backupId}`);
+        this.showToast(`Successfully applied ${res.updatedCount} record(s) from Excel! Safety checkpoint: ${res.backupId}`);
         this.closeExcelPreviewModal();
         await this.syncAuthoritativeDataFromServer();
         this.render();
       } else {
-        this.showToast(`❌ Error applying import: ${res.error || 'Failed'}`);
+        this.showToast(`Error applying import: ${res.error || 'Failed'}`);
       }
     } catch (e) {
-      this.showToast('❌ Connection error while applying import.');
+      this.showToast('Connection error while applying import.');
     } finally {
       if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="check-check" class="w-4 h-4"></i><span>Confirm & Apply Changes</span>'; }
     }
@@ -1150,7 +1150,7 @@ class TradeFlowApp {
           if (iconWrap) {
             const colorMap = {
               profile: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-              ai: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
+              ai: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
               data: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
               appearance: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
               role: 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
@@ -1229,13 +1229,13 @@ class TradeFlowApp {
     if (aiBadge) {
       aiBadge.innerText = isAi ? 'VISION AI ACTIVE' : 'OFFLINE ENGINE ACTIVE';
       aiBadge.className = isAi 
-        ? 'px-2.5 py-1 rounded-full text-[10px] font-bold font-mono bg-violet-500/15 text-violet-700 dark:text-violet-300 border border-violet-500/30'
-        : 'px-2.5 py-1 rounded-full text-[10px] font-bold font-mono bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20';
+        ? 'px-2.5 py-1 rounded-full text-xs font-bold font-mono bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30'
+        : 'px-2.5 py-1 rounded-full text-xs font-bold font-mono bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20';
     }
     if (aiMasterBtn) {
       aiMasterBtn.innerText = isAi ? 'AI ON (Active)' : 'AI OFF (Deterministic)';
       aiMasterBtn.className = isAi
-        ? 'btn-tactile px-3.5 py-1.5 rounded-lg text-xs font-bold shrink-0 bg-violet-600 hover:bg-violet-500 text-white shadow-xs'
+        ? 'btn-tactile px-3.5 py-1.5 rounded-lg text-xs font-bold shrink-0 bg-purple-600 hover:bg-purple-500 text-white shadow-xs'
         : 'btn-tactile px-3.5 py-1.5 rounded-lg text-xs font-bold shrink-0 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700';
     }
 
@@ -1244,11 +1244,11 @@ class TradeFlowApp {
     const keyBadge = document.getElementById('settings-ai-key-badge');
     if (keyBadge) {
       if (savedKey) {
-        keyBadge.innerText = '✓ Key Active in Storage';
-        keyBadge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30';
+        keyBadge.innerText = 'Key Active in Storage';
+        keyBadge.className = 'px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30';
       } else {
         keyBadge.innerText = 'Not Configured';
-        keyBadge.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
+        keyBadge.className = 'px-2 py-0.5 rounded text-xs font-mono font-bold bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
       }
     }
 
@@ -1292,15 +1292,15 @@ class TradeFlowApp {
 
     if (currentMode === 'operator') {
       if (roleBadge) {
-        roleBadge.innerText = '👤 Operator Mode Active';
-        roleBadge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold font-mono bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20 shrink-0';
+        roleBadge.innerText = 'Operator Mode Active';
+        roleBadge.className = 'px-2.5 py-1 rounded-full text-xs font-bold font-mono bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20 shrink-0';
       }
       if (roleBtn) roleBtn.innerText = 'Switch to Owner Mode';
       if (roleDesc) roleDesc.innerText = 'Operator Mode: Trade margins, vendor purchase costs, and raw profits are shielded from screen.';
     } else {
       if (roleBadge) {
-        roleBadge.innerText = '👑 Owner Mode Active';
-        roleBadge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold font-mono bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 shrink-0';
+        roleBadge.innerText = 'Owner Mode Active';
+        roleBadge.className = 'px-2.5 py-1 rounded-full text-xs font-bold font-mono bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 shrink-0';
       }
       if (roleBtn) roleBtn.innerText = 'Switch to Operator Mode';
       if (roleDesc) roleDesc.innerText = 'Owner Mode: Full commercial financial visibility, margins, debt aging, and net profit unlocked.';
@@ -1368,7 +1368,7 @@ class TradeFlowApp {
     const brandHeader = document.getElementById('sidebar-brand-name');
     if (brandHeader) brandHeader.innerText = this.config().brand;
 
-    this.showToast('✓ Business Profile & GST Tax Master saved successfully!');
+    this.showToast('Business Profile & GST Tax Master saved successfully!');
   }
 
   toggleSettingsApiKeyVisibility() {
@@ -1390,7 +1390,7 @@ class TradeFlowApp {
     const val = input ? input.value.trim() : '';
     if (val) {
       localStorage.setItem('tradeflow_gemini_api_key', val);
-      this.showToast('✨ Gemini Vision API key saved successfully!');
+      this.showToast('Gemini Vision API key saved successfully!');
     } else {
       localStorage.removeItem('tradeflow_gemini_api_key');
       this.showToast('Gemini API key removed.');
@@ -1416,32 +1416,32 @@ class TradeFlowApp {
 
     if (!key) {
       resultEl.className = 'p-2.5 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20';
-      resultEl.innerHTML = tfSanitizeHtml('⚠️ Please enter or save a Gemini API key first.');
+      resultEl.innerHTML = tfSanitizeHtml('Please enter or save a Gemini API key first.');
       return;
     }
 
     resultEl.className = 'p-2.5 rounded-lg text-xs font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20';
-    resultEl.innerHTML = tfSanitizeHtml('⏳ Testing connection to Google Generative Language API...');
+    resultEl.innerHTML = tfSanitizeHtml('Testing connection to Google Generative Language API...');
 
     try {
       const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models', { headers: { 'x-goog-api-key': key } });
       const data = await resp.json();
       if (resp.ok && data.models) {
         resultEl.className = 'p-2.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
-        resultEl.innerHTML = tfSanitizeHtml(`✅ API Key verified! Gemini connection is active (${data.models.length} models accessible).`);
+        resultEl.innerHTML = tfSanitizeHtml(`API Key verified! Gemini connection is active (${data.models.length} models accessible).`);
       } else {
         resultEl.className = 'p-2.5 rounded-lg text-xs font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20';
-        resultEl.innerHTML = tfSanitizeHtml(`❌ Connection error: ${data.error?.message || 'Invalid API key or network restricted'}`);
+        resultEl.innerHTML = tfSanitizeHtml(`Connection error: ${data.error?.message || 'Invalid API key or network restricted'}`);
       }
     } catch (e) {
       resultEl.className = 'p-2.5 rounded-lg text-xs font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20';
-      resultEl.innerHTML = tfSanitizeHtml(`❌ Connection test failed: ${e.message || 'Network unreachable'}`);
+      resultEl.innerHTML = tfSanitizeHtml(`Connection test failed: ${e.message || 'Network unreachable'}`);
     }
   }
 
   onSettingsModelChange(val) {
     localStorage.setItem('tradeflow_gemini_model', val);
-    this.showToast(`🤖 Active vision model set to ${val}`);
+    this.showToast(`Active vision model set to ${val}`);
   }
 
   saveSettingsGoogleSheetUrl() {
@@ -1449,7 +1449,7 @@ class TradeFlowApp {
     const val = input ? input.value.trim() : '';
     if (val) {
       localStorage.setItem('TF_GOOGLE_SHEET_URL', val);
-      this.showToast('🔗 Google Sheet connection URL updated!');
+      this.showToast('Google Sheet connection URL updated!');
     }
   }
 
@@ -1468,7 +1468,7 @@ class TradeFlowApp {
     }
     this.updateThemeButton();
     this.populateSettingsForm();
-    this.showToast(`🎨 Switched to ${theme === 'dark' ? 'Dark' : 'Light'} theme`);
+    this.showToast(`Switched to ${theme === 'dark' ? 'Dark' : 'Light'} theme`);
   }
 
   saveSettingsAppearance() {
@@ -1484,7 +1484,7 @@ class TradeFlowApp {
     }
 
     this.saveData();
-    this.showToast('🎨 Appearance & invoice preferences saved!');
+    this.showToast('Appearance & invoice preferences saved!');
   }
 
   updateSettingsModalUI() {
@@ -1538,14 +1538,14 @@ class TradeFlowApp {
             <div class="space-y-1 min-w-0">
               <div class="flex items-center gap-2">
                 <span class="text-xs font-bold font-mono text-slate-900 dark:text-white truncate">${tfEscapeHtml(b.id)}</span>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${tfEscapeHtml(reasonBadge)}">${tfEscapeHtml(b.reason)}</span>
+                <span class="px-2 py-0.5 rounded-full text-xs font-bold ${tfEscapeHtml(reasonBadge)}">${tfEscapeHtml(b.reason)}</span>
               </div>
-              <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-3">
-                <span>🕒 ${tfEscapeHtml(timeStr)}</span>
-                <span>📦 ${tfEscapeHtml(ordersCount)} Orders, ${tfEscapeHtml(paymentsCount)} Payments</span>
-                <span>💾 ${tfEscapeHtml(kbSize)} KB</span>
-                ${b.hasSqliteSnapshot ? '<span class="text-emerald-600 font-bold">✓ SQLite .db</span>' : ''}
-                ${b.hasExcelSnapshot ? '<span class="text-emerald-600 font-bold">✓ Excel .xlsx</span>' : ''}
+              <div class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-3">
+                <span>${tfEscapeHtml(timeStr)}</span>
+                <span>${tfEscapeHtml(ordersCount)} Orders, ${tfEscapeHtml(paymentsCount)} Payments</span>
+                <span>${tfEscapeHtml(kbSize)} KB</span>
+                ${b.hasSqliteSnapshot ? '<span class="text-emerald-600 font-bold">SQLite .db</span>' : ''}
+                ${b.hasExcelSnapshot ? '<span class="text-emerald-600 font-bold">Excel .xlsx</span>' : ''}
               </div>
             </div>
             <button type="button" onclick="app.restoreBackup('${tfEscapeHtml(tfEscapeJs(b.id))}')" class="btn-tactile px-3 py-1.5 text-xs font-bold rounded-lg bg-rose-600 hover:bg-rose-700 text-white shadow-2xs flex items-center gap-1.5 shrink-0 transition-all">
@@ -1573,7 +1573,7 @@ class TradeFlowApp {
     });
     if (reason === null || reason === undefined || reason === '') return;
 
-    this.showToast('📸 Creating point-in-time snapshot...');
+    this.showToast('Creating point-in-time snapshot...');
     try {
       const resp = await fetch('/api/backup/create', {
         method: 'POST',
@@ -1582,13 +1582,13 @@ class TradeFlowApp {
       });
       const res = await resp.json();
       if (res.success) {
-        this.showToast(`✓ Backup created successfully: ${res.backup.id}`);
+        this.showToast(`Backup created successfully: ${res.backup.id}`);
         await this.refreshBackupList();
       } else {
-        this.showToast(`❌ Failed to create backup: ${res.error}`);
+        this.showToast(`Failed to create backup: ${res.error}`);
       }
     } catch (e) {
-      this.showToast('❌ Connection error while creating backup.');
+      this.showToast('Connection error while creating backup.');
     }
   }
 
@@ -1603,7 +1603,7 @@ class TradeFlowApp {
     });
     if (!confirmed) return;
 
-    this.showToast('⏳ Restoring snapshot and rebuilding state...');
+    this.showToast('Restoring snapshot and rebuilding state...');
     try {
       const resp = await fetch('/api/backup/restore', {
         method: 'POST',
@@ -1612,15 +1612,15 @@ class TradeFlowApp {
       });
       const res = await resp.json();
       if (res.success) {
-        this.showToast(`✅ Successfully restored backup ${backupId}!`);
+        this.showToast(`Successfully restored backup ${backupId}!`);
         await this.syncAuthoritativeDataFromServer();
         this.render();
         this.closeBackupModal();
       } else {
-        this.showToast(`❌ Failed to restore backup: ${res.error}`);
+        this.showToast(`Failed to restore backup: ${res.error}`);
       }
     } catch (e) {
-      this.showToast(`❌ Network error during restore: ${e.message}`);
+      this.showToast(`Network error during restore: ${e.message}`);
     }
   }
 
@@ -1682,17 +1682,17 @@ class TradeFlowApp {
           <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 p-3 flex items-start justify-between gap-4">
             <div class="space-y-1 min-w-0">
               <div class="flex items-center gap-2">
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${tfEscapeHtml(actionBadge)}">${tfEscapeHtml(l.actionType)}</span>
+                <span class="px-2 py-0.5 rounded-full text-xs font-bold ${tfEscapeHtml(actionBadge)}">${tfEscapeHtml(l.actionType)}</span>
                 <span class="text-xs font-bold text-slate-900 dark:text-white">${tfEscapeHtml(l.summary)}</span>
               </div>
-              <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-3">
-                <span>🕒 ${tfEscapeHtml(timeStr)}</span>
-                <span>👤 By: <strong>${tfEscapeHtml(l.userName)}</strong></span>
-                <span>🏷️ ${tfEscapeHtml(l.entityType)} ${tfEscapeHtml(l.entityId || '')}</span>
+              <div class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-3">
+                <span>${tfEscapeHtml(timeStr)}</span>
+                <span>By: <strong>${tfEscapeHtml(l.userName)}</strong></span>
+                <span>${tfEscapeHtml(l.entityType)} ${tfEscapeHtml(l.entityId || '')}</span>
               </div>
             </div>
             ${canRollback ? `
-              <button type="button" onclick="app.rollbackChange('${tfEscapeHtml(tfEscapeJs(l.id))}')" class="btn-tactile px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1 shrink-0 transition-all" title="Rollback this edit and restore previous state">
+              <button type="button" onclick="app.rollbackChange('${tfEscapeHtml(tfEscapeJs(l.id))}')" class="btn-tactile px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-700/15 hover:bg-emerald-800/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1 shrink-0 transition-all" title="Rollback this edit and restore previous state">
                 <i data-lucide="undo-2" class="w-3.5 h-3.5"></i>
                 <span>Rollback</span>
               </button>
@@ -1718,7 +1718,7 @@ class TradeFlowApp {
     });
     if (!confirmed) return;
 
-    this.showToast('⏪ Rolling back change...');
+    this.showToast('Rolling back change...');
     try {
       const resp = await fetch('/api/history/rollback', {
         method: 'POST',
@@ -1727,15 +1727,15 @@ class TradeFlowApp {
       });
       const res = await resp.json();
       if (res.success) {
-        this.showToast(`✅ Change successfully rolled back! Restored ${res.entityType} ${res.entityId}`);
+        this.showToast(`Change successfully rolled back! Restored ${res.entityType} ${res.entityId}`);
         await this.syncAuthoritativeDataFromServer();
         this.render();
         await this.refreshChangeHistory();
       } else {
-        this.showToast(`❌ Rollback failed: ${res.error}`);
+        this.showToast(`Rollback failed: ${res.error}`);
       }
     } catch (e) {
-      this.showToast(`❌ Network error during rollback: ${e.message}`);
+      this.showToast(`Network error during rollback: ${e.message}`);
     }
   }
 
@@ -1896,7 +1896,7 @@ class TradeFlowApp {
   validateCurrentInvoice(forceModal = false, onProceed = null) {
     const order = this.currentInvoiceOrder || this.invoiceDraftData;
     if (!order) {
-      this.showToast('⚠️ No active invoice selected to validate.');
+      this.showToast('No active invoice selected to validate.');
       return false;
     }
 
@@ -2141,7 +2141,7 @@ class TradeFlowApp {
       // Reset filter status pills to 'all'
       document.querySelectorAll('[data-filter-status]').forEach(btn => {
         if (btn.getAttribute('data-filter-status') === 'all') {
-          btn.className = 'btn-tactile px-3 py-1 text-xs font-bold rounded-lg bg-amber-600 text-white dark:bg-amber-500 dark:text-slate-950 shadow-xs transition-all';
+          btn.className = 'btn-tactile px-3 py-1 text-xs font-bold rounded-lg bg-emerald-700 text-white dark:bg-emerald-700 dark:text-white shadow-xs transition-all';
         } else {
           btn.className = 'btn-tactile px-3 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800/80 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all';
         }
@@ -2151,7 +2151,7 @@ class TradeFlowApp {
       this.renderWorkspaceTabs();
       this.renderKPIs();
       this.renderActiveView();
-      this.showToast('🏠 Returned to Home Dashboard (Orders Pipeline)');
+      this.showToast('Returned to Home Dashboard (Orders Pipeline)');
     } else {
       // 2. If ALREADY on home page: Refresh dashboard & reload data
       this.searchQuery = '';
@@ -2162,7 +2162,7 @@ class TradeFlowApp {
 
       document.querySelectorAll('[data-filter-status]').forEach(btn => {
         if (btn.getAttribute('data-filter-status') === 'all') {
-          btn.className = 'btn-tactile px-3 py-1 text-xs font-bold rounded-lg bg-amber-600 text-white dark:bg-amber-500 dark:text-slate-950 shadow-xs transition-all';
+          btn.className = 'btn-tactile px-3 py-1 text-xs font-bold rounded-lg bg-emerald-700 text-white dark:bg-emerald-700 dark:text-white shadow-xs transition-all';
         } else {
           btn.className = 'btn-tactile px-3 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800/80 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all';
         }
@@ -2177,7 +2177,7 @@ class TradeFlowApp {
 
       this.loadData();
       this.render();
-      this.showToast('🔄 Home Dashboard Refreshed');
+      this.showToast('Home Dashboard Refreshed');
     }
 
     if (window.lucide) window.lucide.createIcons();
@@ -2305,11 +2305,11 @@ class TradeFlowApp {
       btn.addEventListener('click', () => {
         this.statusFilter = btn.getAttribute('data-filter-status');
         document.querySelectorAll('[data-filter-status]').forEach(b => {
-          b.classList.remove('bg-amber-600', 'text-white', 'dark:bg-amber-500', 'dark:text-slate-900', 'shadow-xs');
+          b.classList.remove('bg-emerald-700', 'text-white', 'dark:bg-emerald-700', 'dark:text-white', 'shadow-xs');
           b.classList.add('bg-slate-100', 'text-slate-600', 'dark:bg-slate-800/80', 'dark:text-slate-400');
         });
         btn.classList.remove('bg-slate-100', 'text-slate-600', 'dark:bg-slate-800/80', 'dark:text-slate-400');
-        btn.classList.add('bg-amber-600', 'text-white', 'dark:bg-amber-500', 'dark:text-slate-900', 'shadow-xs');
+        btn.classList.add('bg-emerald-700', 'text-white', 'dark:bg-emerald-700', 'dark:text-white', 'shadow-xs');
         this.renderOrdersTable();
       });
     });
@@ -2489,7 +2489,7 @@ class TradeFlowApp {
               <span class="flex h-3 w-3 shrink-0 rounded-full bg-amber-500 animate-urgent"></span>
               <div>
                 <p class="text-sm font-bold text-amber-900 dark:text-amber-200">
-                  ⚠️ ${tfEscapeHtml(topItem.title)}: ${tfEscapeHtml(topItem.description)}
+                  ${tfEscapeHtml(topItem.title)}: ${tfEscapeHtml(topItem.description)}
                 </p>
                 <p class="text-xs text-amber-800/80 dark:text-amber-300/80 mt-0.5 flex items-center gap-2">
                   <span class="font-mono-num">${tfEscapeHtml(topItem.timeFormatted)}</span>
@@ -2499,11 +2499,11 @@ class TradeFlowApp {
               </div>
             </div>
             <div class="flex items-center gap-2 self-start sm:self-auto shrink-0">
-              <button onclick="${tfEscapeHtml(topItem.actionCallback)}" class="btn-tactile px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-sm whitespace-nowrap flex items-center gap-1.5">
+              <button onclick="${tfEscapeHtml(topItem.actionCallback)}" class="btn-tactile px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg shadow-sm whitespace-nowrap flex items-center gap-1.5">
                 <span>${tfEscapeHtml(topItem.actionLabel)}</span>
               </button>
               ${urgentItems.length > 1 ? `
-                <button onclick="app.openUrgentActionsModal()" class="btn-tactile px-3 py-2 text-xs font-bold text-amber-900 dark:text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 rounded-lg whitespace-nowrap flex items-center gap-1">
+                <button onclick="app.openUrgentActionsModal()" class="btn-tactile px-3 py-2 text-xs font-bold text-amber-900 dark:text-amber-200 bg-emerald-700/20 hover:bg-emerald-800/30 border border-amber-500/30 rounded-lg whitespace-nowrap flex items-center gap-1">
                   <span>View All (${tfEscapeHtml(urgentItems.length)})</span>
                 </button>
               ` : ''}
@@ -2767,7 +2767,7 @@ class TradeFlowApp {
         el.className = 'text-amber-500 font-bold ml-1 text-xs';
         el.innerText = this.ordersSortDirection === 'asc' ? '↑' : '↓';
       } else {
-        el.className = 'text-slate-400 dark:text-slate-500 font-normal ml-0.5 text-[11px] opacity-60';
+        el.className = 'text-slate-400 dark:text-slate-500 font-normal ml-0.5 text-xs opacity-60';
         el.innerText = '⇅';
       }
     });
@@ -2836,7 +2836,7 @@ class TradeFlowApp {
       const hasPod = !!(order.deliveryDate || order.status === 'delivered_overdue' || order.status === 'settled');
 
       const docChips = `
-        <div class="flex items-center gap-1 mt-1 text-[9px] font-mono">
+        <div class="flex items-center gap-1 mt-1 text-xs font-mono">
           <span class="px-1.5 py-0.2 rounded font-bold ${tfEscapeHtml(hasInvoice ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800' : 'bg-slate-100 text-slate-400 dark:bg-slate-800 border border-slate-200 dark:border-slate-700')}" title="Invoice">INV</span>
           <span class="px-1.5 py-0.2 rounded font-bold ${tfEscapeHtml(hasPay ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-slate-100 text-slate-400 dark:bg-slate-800 border border-slate-200 dark:border-slate-700')}" title="Payment Proof">PAY</span>
           <span class="px-1.5 py-0.2 rounded font-bold ${tfEscapeHtml(hasBilty ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800' : 'bg-slate-100 text-slate-400 dark:bg-slate-800 border border-slate-200 dark:border-slate-700')}" title="LR / Bilty">LR</span>
@@ -2848,14 +2848,14 @@ class TradeFlowApp {
         <tr onclick="app.openOrderDetailPage('${tfEscapeHtml(tfEscapeJs(order.id))}', event)" class="hover:bg-amber-500/5 dark:hover:bg-amber-500/10 cursor-pointer border-b border-slate-100 dark:border-slate-800 transition-colors group" title="Click anywhere to inspect full order details">
           <td class="px-4 py-3.5 whitespace-nowrap">
             <div class="flex items-center gap-1.5">
-              <span class="font-mono-num font-bold text-sm text-amber-600 dark:text-amber-400 group-hover:underline whitespace-nowrap">${tfEscapeHtml(order.invoiceNumber)}</span>
-              ${order.urgentAlert ? '<span class="text-amber-500 font-bold" title="' + order.urgentAlert + '">⚠️</span>' : ''}
+              <span class="font-mono-num font-bold text-sm text-emerald-700 dark:text-emerald-400 group-hover:underline whitespace-nowrap">${tfEscapeHtml(order.invoiceNumber)}</span>
+              ${order.urgentAlert ? '<span class="text-amber-500 font-bold" title="' + order.urgentAlert + '"><i data-lucide="alert-triangle" class="w-3.5 h-3.5 inline-block align-[-2px]"></i></span>' : ''}
             </div>
-            <div class="text-[11px] text-slate-400 font-mono-num whitespace-nowrap">${tfEscapeHtml(this.formatDate(order.date))}</div>
+            <div class="text-xs text-slate-400 font-mono-num whitespace-nowrap">${tfEscapeHtml(this.formatDate(order.date))}</div>
           </td>
 
           <td class="px-4 py-3.5">
-            <button type="button" onclick="event.stopPropagation(); app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(order.retailerName || ''))}')" class="font-bold text-xs text-slate-900 dark:text-slate-100 hover:text-amber-600 dark:hover:text-amber-400 hover:underline transition-colors leading-snug inline-flex items-center gap-1 group text-left" title="Click to view Buyer account & order history">
+            <button type="button" onclick="event.stopPropagation(); app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(order.retailerName || ''))}')" class="font-bold text-xs text-slate-900 dark:text-slate-100 hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline transition-colors leading-snug inline-flex items-center gap-1 group text-left" title="Click to view Buyer account & order history">
               <span>${tfEscapeHtml(order.retailerName)}</span>
               <i data-lucide="arrow-up-right" class="w-3 h-3 opacity-0 group-hover:opacity-100 text-amber-500 shrink-0"></i>
             </button>
@@ -2864,7 +2864,7 @@ class TradeFlowApp {
 
           <td class="px-4 py-3.5 whitespace-nowrap">
             <div class="text-xs font-bold font-mono-num text-slate-800 dark:text-slate-200">${tfEscapeHtml(totalCases)} ${tfEscapeHtml(caseWord)}</div>
-            <div class="text-[11px] text-slate-400 font-normal">(${tfEscapeHtml(totalJars.toLocaleString('en-IN'))} ${tfEscapeHtml(jarWord)})</div>
+            <div class="text-xs text-slate-400 font-normal">(${tfEscapeHtml(totalJars.toLocaleString('en-IN'))} ${tfEscapeHtml(jarWord)})</div>
           </td>
 
           <td class="px-4 py-3.5 text-right font-mono-num whitespace-nowrap">
@@ -2876,7 +2876,7 @@ class TradeFlowApp {
           </td>
 
           <td class="px-4 py-3.5 text-right whitespace-nowrap">
-            <span class="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+            <span class="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 group-hover:text-emerald-700 dark:group-hover:text-emerald-700 transition-colors">
               <span>Details</span>
               <i data-lucide="chevron-right" class="w-4 h-4"></i>
             </span>
@@ -2967,12 +2967,12 @@ class TradeFlowApp {
             <!-- Top Badges & Kebab Row -->
             <div class="flex items-center justify-between gap-2 relative">
               <div class="flex items-center gap-1.5 flex-wrap min-w-0">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/15 backdrop-blur-md text-white border border-white/20 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/15 backdrop-blur-md text-white border border-white/20 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
                   <span>MANUFACTURER</span>
                 </span>
-                <span class="font-mono text-[10px] text-white/90 font-bold bg-white/15 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15">${tfEscapeHtml(mfg.id)}</span>
-                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${tfEscapeHtml(healthBadgeClass)}">${tfEscapeHtml(healthBadgeText)}</span>
+                <span class="font-mono text-xs text-white/90 font-bold bg-white/15 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15">${tfEscapeHtml(mfg.id)}</span>
+                <span class="px-2 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wider ${tfEscapeHtml(healthBadgeClass)}">${tfEscapeHtml(healthBadgeText)}</span>
               </div>
               
               <!-- 3-Dots Kebab Menu Button -->
@@ -3052,18 +3052,18 @@ class TradeFlowApp {
               <!-- Left Column: Address & Email -->
               <div class="space-y-1 min-w-0 pr-1">
                 <div class="tf-copy-clickable" onclick="event.stopPropagation(); app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeAddress))}', 'Address', this)" title="Click to copy Address">
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="map-pin" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
                     <span>Address</span>
                   </div>
-                  <div class="text-[11px] text-white font-medium line-clamp-2 leading-tight mt-0.5">
+                  <div class="text-xs text-white font-medium line-clamp-2 leading-tight mt-0.5">
                     ${tfEscapeHtml(mfg.billingAddress || mfg.shippingAddress || '')}
                   </div>
                 </div>
                 <div class="tf-copy-clickable truncate" onclick="event.stopPropagation(); app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeEmail))}', 'Email', this)" title="Click to copy Email">
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="mail" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
-                    <span class="truncate text-[11px] text-white font-medium">${tfEscapeHtml(mfg.email || '')}</span>
+                    <span class="truncate text-xs text-white font-medium">${tfEscapeHtml(mfg.email || '')}</span>
                   </div>
                 </div>
               </div>
@@ -3071,20 +3071,20 @@ class TradeFlowApp {
               <!-- Right Column: Business Type & GSTIN -->
               <div class="space-y-1 min-w-0 pl-1 border-l border-white/15">
                 <div>
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="factory" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
                     <span>Business Type</span>
                   </div>
-                  <div class="text-[11px] text-white font-semibold truncate mt-0.5">
+                  <div class="text-xs text-white font-semibold truncate mt-0.5">
                     ${tfEscapeHtml(mfg.businessType || 'Manufacturer')}
                   </div>
                 </div>
                 <div class="tf-copy-clickable truncate" onclick="event.stopPropagation(); app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeGstin))}', 'GSTIN', this)" title="Click to copy GSTIN">
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="file-text" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
                     <span>GSTIN</span>
                   </div>
-                  <div class="text-[11px] text-white font-mono font-semibold truncate mt-0.5">
+                  <div class="text-xs text-white font-mono font-semibold truncate mt-0.5">
                     ${tfEscapeHtml(mfg.gstin || '')}
                   </div>
                 </div>
@@ -3103,7 +3103,7 @@ class TradeFlowApp {
                     <div class="w-5 h-5 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-emerald-600 shadow-2xs shrink-0">
                       <i data-lucide="file-text" class="w-3 h-3"></i>
                     </div>
-                    <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Active Orders</span>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Active Orders</span>
                   </div>
                   <div class="w-4.5 h-4.5 rounded-full bg-emerald-500/15 dark:bg-emerald-500/25 flex items-center justify-center text-emerald-700 dark:text-emerald-300 group-hover/tile:bg-emerald-600 group-hover/tile:text-white transition-colors shrink-0">
                     <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
@@ -3113,7 +3113,7 @@ class TradeFlowApp {
                   <span class="text-xl font-black text-slate-900 dark:text-white leading-none">
                     ${tfEscapeHtml(String(activeBatchesCount).padStart(2, '0'))}
                   </span>
-                  <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+                  <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
                     ${tfEscapeHtml(activeBatchesCount > 0 ? activeBatchesCount + ' Batches' : 'Capacity Open')}
                   </span>
                 </div>
@@ -3126,7 +3126,7 @@ class TradeFlowApp {
                     <div class="w-5 h-5 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-blue-600 shadow-2xs shrink-0">
                       <i data-lucide="wallet" class="w-3 h-3"></i>
                     </div>
-                    <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Payables</span>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Payables</span>
                   </div>
                   <div class="w-4.5 h-4.5 rounded-full bg-blue-500/15 dark:bg-blue-500/25 flex items-center justify-center text-blue-700 dark:text-blue-300 group-hover/tile:bg-blue-600 group-hover/tile:text-white transition-colors shrink-0">
                     <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
@@ -3136,8 +3136,8 @@ class TradeFlowApp {
                   <span class="text-lg font-black text-[#1d4ed8] dark:text-blue-400 leading-none font-mono-num truncate" title="${tfEscapeHtml(this.formatCurrency(remainingBalance))}">
                     ${tfEscapeHtml(this.formatCurrency(remainingBalance))}
                   </span>
-                  <span class="text-[10px] font-semibold ${tfEscapeHtml(remainingBalance > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')} truncate">
-                    ${tfEscapeHtml(remainingBalance > 0 ? '⬆ Due' : '✓ Settled')}
+                  <span class="text-xs font-semibold ${tfEscapeHtml(remainingBalance > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')} truncate">
+                    ${tfEscapeHtml(remainingBalance > 0 ? 'Due' : 'Settled')}
                   </span>
                 </div>
               </div>
@@ -3150,7 +3150,7 @@ class TradeFlowApp {
                   <i data-lucide="package" class="w-3.5 h-3.5 text-emerald-600"></i>
                   <span>Latest Orders</span>
                 </div>
-                <button type="button" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(mfg.id))}', 'hub', 'orders')" class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-0.5" title="View all batches for ${tfEscapeHtml(mfg.name)}">
+                <button type="button" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(mfg.id))}', 'hub', 'orders')" class="text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-0.5" title="View all batches for ${tfEscapeHtml(mfg.name)}">
                   <span>View All</span>
                   <i data-lucide="chevron-right" class="w-3 h-3"></i>
                 </button>
@@ -3285,12 +3285,12 @@ class TradeFlowApp {
             <!-- Top Badges & Kebab Row -->
             <div class="flex items-center justify-between gap-2 relative">
               <div class="flex items-center gap-1.5 flex-wrap min-w-0">
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/15 backdrop-blur-md text-white border border-white/20 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/15 backdrop-blur-md text-white border border-white/20 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
                   <span class="w-1.5 h-1.5 rounded-full bg-blue-300 animate-pulse"></span>
                   <span>PACKAGING SUPPLIER</span>
                 </span>
-                <span class="font-mono text-[10px] text-white/90 font-bold bg-white/15 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15">${tfEscapeHtml(pkg.id)}</span>
-                <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${tfEscapeHtml(healthBadgeClass)}">${tfEscapeHtml(healthBadgeText)}</span>
+                <span class="font-mono text-xs text-white/90 font-bold bg-white/15 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15">${tfEscapeHtml(pkg.id)}</span>
+                <span class="px-2 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wider ${tfEscapeHtml(healthBadgeClass)}">${tfEscapeHtml(healthBadgeText)}</span>
               </div>
               
               <!-- 3-Dots Kebab Menu Button -->
@@ -3370,18 +3370,18 @@ class TradeFlowApp {
               <!-- Left Column: Address & Email -->
               <div class="space-y-1 min-w-0 pr-1">
                 <div class="tf-copy-clickable" onclick="event.stopPropagation(); app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeAddress))}', 'Address', this)" title="Click to copy Address">
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="map-pin" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
                     <span>Address</span>
                   </div>
-                  <div class="text-[11px] text-white font-medium line-clamp-2 leading-tight mt-0.5">
+                  <div class="text-xs text-white font-medium line-clamp-2 leading-tight mt-0.5">
                     ${tfEscapeHtml(pkg.billingAddress || pkg.shippingAddress || '')}
                   </div>
                 </div>
                 <div class="tf-copy-clickable truncate" onclick="event.stopPropagation(); app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeEmail))}', 'Email', this)" title="Click to copy Email">
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="mail" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
-                    <span class="truncate text-[11px] text-white font-medium">${tfEscapeHtml(pkg.email || 'supply@' + (pkg.name || 'pkg').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com')}</span>
+                    <span class="truncate text-xs text-white font-medium">${tfEscapeHtml(pkg.email || 'supply@' + (pkg.name || 'pkg').toLowerCase().replace(/[^a-z0-9]/g, '') + '.com')}</span>
                   </div>
                 </div>
               </div>
@@ -3389,20 +3389,20 @@ class TradeFlowApp {
               <!-- Right Column: Business Type & GSTIN -->
               <div class="space-y-1 min-w-0 pl-1 border-l border-white/15">
                 <div>
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="box" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
                     <span>Business Type</span>
                   </div>
-                  <div class="text-[11px] text-white font-semibold truncate mt-0.5">
+                  <div class="text-xs text-white font-semibold truncate mt-0.5">
                     ${tfEscapeHtml(pkg.businessType || 'Jars & Labels')}
                   </div>
                 </div>
                 <div class="tf-copy-clickable truncate" onclick="event.stopPropagation(); app.copyTextToClipboard('${tfEscapeHtml(tfEscapeJs(safeGstin))}', 'GSTIN', this)" title="Click to copy GSTIN">
-                  <div class="text-[10px] text-white/70 font-medium flex items-center gap-1">
+                  <div class="text-xs text-white/70 font-medium flex items-center gap-1">
                     <i data-lucide="file-text" class="w-2.5 h-2.5 text-white/70 shrink-0"></i>
                     <span>GSTIN</span>
                   </div>
-                  <div class="text-[11px] text-white font-mono font-semibold truncate mt-0.5">
+                  <div class="text-xs text-white font-mono font-semibold truncate mt-0.5">
                     ${tfEscapeHtml(pkg.gstin || '')}
                   </div>
                 </div>
@@ -3421,7 +3421,7 @@ class TradeFlowApp {
                     <div class="w-5 h-5 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-blue-600 shadow-2xs shrink-0">
                       <i data-lucide="boxes" class="w-3 h-3"></i>
                     </div>
-                    <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Active POs</span>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Active POs</span>
                   </div>
                   <div class="w-4.5 h-4.5 rounded-full bg-blue-500/15 dark:bg-blue-500/25 flex items-center justify-center text-blue-700 dark:text-blue-300 group-hover/tile:bg-blue-600 group-hover/tile:text-white transition-colors shrink-0">
                     <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
@@ -3431,7 +3431,7 @@ class TradeFlowApp {
                   <span class="text-xl font-black text-slate-900 dark:text-white leading-none">
                     ${tfEscapeHtml(String(pkgOrders.length).padStart(2, '0'))}
                   </span>
-                  <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+                  <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
                     ${tfEscapeHtml(pkgOrders.length > 0 ? pkgOrders.length + ' POs' : 'Ready for PO')}
                   </span>
                 </div>
@@ -3444,7 +3444,7 @@ class TradeFlowApp {
                     <div class="w-5 h-5 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-blue-600 shadow-2xs shrink-0">
                       <i data-lucide="wallet" class="w-3 h-3"></i>
                     </div>
-                    <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Payables</span>
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide truncate">Payables</span>
                   </div>
                   <div class="w-4.5 h-4.5 rounded-full bg-blue-500/15 dark:bg-blue-500/25 flex items-center justify-center text-blue-700 dark:text-blue-300 group-hover/tile:bg-blue-600 group-hover/tile:text-white transition-colors shrink-0">
                     <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
@@ -3454,8 +3454,8 @@ class TradeFlowApp {
                   <span class="text-lg font-black text-[#1d4ed8] dark:text-blue-400 leading-none font-mono-num truncate" title="${tfEscapeHtml(this.formatCurrency(balance))}">
                     ${tfEscapeHtml(this.formatCurrency(balance))}
                   </span>
-                  <span class="text-[10px] font-semibold ${tfEscapeHtml(balance > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')} truncate">
-                    ${tfEscapeHtml(balance > 0 ? '⬆ Due' : '✓ Settled')}
+                  <span class="text-xs font-semibold ${tfEscapeHtml(balance > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')} truncate">
+                    ${tfEscapeHtml(balance > 0 ? 'Due' : 'Settled')}
                   </span>
                 </div>
               </div>
@@ -3468,7 +3468,7 @@ class TradeFlowApp {
                   <i data-lucide="package" class="w-3.5 h-3.5 text-blue-600"></i>
                   <span>Latest Deliveries</span>
                 </div>
-                <button type="button" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(pkg.id))}', 'hub', 'orders')" class="text-[11px] font-bold text-blue-700 dark:text-blue-400 hover:underline flex items-center gap-0.5" title="View all POs for ${tfEscapeHtml(pkg.name)}">
+                <button type="button" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(pkg.id))}', 'hub', 'orders')" class="text-xs font-bold text-blue-700 dark:text-blue-400 hover:underline flex items-center gap-0.5" title="View all POs for ${tfEscapeHtml(pkg.name)}">
                   <span>View All</span>
                   <i data-lucide="chevron-right" class="w-3 h-3"></i>
                 </button>
@@ -3642,15 +3642,15 @@ class TradeFlowApp {
         <!-- Top Metrics Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Total Lifetime Volume</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Total Lifetime Volume</span>
             <span class="text-base font-black font-mono-num text-slate-900 dark:text-white">${tfEscapeHtml(this.formatCurrency(totalVol))}</span>
           </div>
           <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Advances / Cleared</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Advances / Cleared</span>
             <span class="text-base font-black font-mono-num text-emerald-600 dark:text-emerald-400">${tfEscapeHtml(this.formatCurrency(totalPaid))}</span>
           </div>
           <div class="p-3.5 rounded-xl ${tfEscapeHtml(balanceDue > 0 ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/60' : 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60')} border text-center">
-            <span class="text-[10px] font-bold uppercase tracking-wider ${tfEscapeHtml(balanceDue > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400')} block mb-1">
+            <span class="text-xs font-bold uppercase tracking-wider ${tfEscapeHtml(balanceDue > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400')} block mb-1">
               ${tfEscapeHtml(contact.role === 'retailer' ? 'Balance Receivable' : 'Current Factory Payable')}
             </span>
             <span class="text-base font-black font-mono-num ${tfEscapeHtml(balanceDue > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400')}">${tfEscapeHtml(this.formatCurrency(balanceDue))}</span>
@@ -3666,31 +3666,31 @@ class TradeFlowApp {
               </span>
               <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">Verified Bank Payout &amp; Settlement Coordinates</h4>
             </div>
-            <button type="button" onclick="app.closePartnerSpotlightModal(); app.openPaymentModal(null, '${tfEscapeHtml(tfEscapeJs(contact.name))}', '${tfEscapeHtml(tfEscapeJs(contact.role === 'retailer' ? 'received' : 'paid'))}')" class="btn-tactile px-3 py-1 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center gap-1 shadow-xs">
+            <button type="button" onclick="app.closePartnerSpotlightModal(); app.openPaymentModal(null, '${tfEscapeHtml(tfEscapeJs(contact.name))}', '${tfEscapeHtml(tfEscapeJs(contact.role === 'retailer' ? 'received' : 'paid'))}')" class="btn-tactile px-3 py-1 rounded-lg text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white flex items-center gap-1 shadow-xs">
               <i data-lucide="plus" class="w-3.5 h-3.5"></i>
               <span>Log Payment</span>
             </button>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div class="bg-white dark:bg-slate-900/90 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
-              <span class="text-[10px] text-slate-400 block font-medium">Bank Name</span>
+              <span class="text-xs text-slate-400 block font-medium">Bank Name</span>
               <span class="font-bold text-slate-800 dark:text-slate-200">${tfEscapeHtml(contact.bankName || '')}</span>
             </div>
             <div class="bg-white dark:bg-slate-900/90 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
-              <span class="text-[10px] text-slate-400 block font-medium">Account Number</span>
+              <span class="text-xs text-slate-400 block font-medium">Account Number</span>
               <div class="flex items-center justify-between">
                 <span class="font-mono font-bold text-slate-800 dark:text-slate-200">${tfEscapeHtml(contact.accountNumber || '')}</span>
-                <button type="button" onclick="navigator.clipboard.writeText('${tfEscapeHtml(tfEscapeJs(contact.accountNumber || ''))}'); app.showToast('📋 Account number copied!');" class="text-slate-400 hover:text-amber-500" title="Copy Account Number">
+                <button type="button" onclick="navigator.clipboard.writeText('${tfEscapeHtml(tfEscapeJs(contact.accountNumber || ''))}'); app.showToast('Account number copied!');" class="text-slate-400 hover:text-emerald-700" title="Copy Account Number">
                   <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                 </button>
               </div>
             </div>
             <div class="bg-white dark:bg-slate-900/90 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
-              <span class="text-[10px] text-slate-400 block font-medium">IFSC Code</span>
+              <span class="text-xs text-slate-400 block font-medium">IFSC Code</span>
               <span class="font-mono font-bold text-amber-600 dark:text-amber-400">${tfEscapeHtml(contact.ifsc || '')}</span>
             </div>
             <div class="bg-white dark:bg-slate-900/90 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
-              <span class="text-[10px] text-slate-400 block font-medium">Payment Terms</span>
+              <span class="text-xs text-slate-400 block font-medium">Payment Terms</span>
               <span class="font-semibold text-slate-800 dark:text-slate-200">${tfEscapeHtml(contact.paymentTerms || this.config().defaultPaymentTerms)}</span>
             </div>
           </div>
@@ -3699,11 +3699,11 @@ class TradeFlowApp {
         <!-- Address & Contact Row -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
           <div class="p-3 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Billing &amp; Registered Address</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Billing &amp; Registered Address</span>
             <p class="text-slate-700 dark:text-slate-300">${tfEscapeHtml(contact.billingAddress || 'Address on file')}</p>
           </div>
           <div class="p-3 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Direct Contact &amp; Telephony</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Direct Contact &amp; Telephony</span>
             <p class="text-slate-700 dark:text-slate-300 flex items-center gap-2">
               <span><strong>${tfEscapeHtml(contact.contactPerson || 'Direct')}</strong></span>
               <span>•</span>
@@ -3718,7 +3718,7 @@ class TradeFlowApp {
             <div class="flex items-center gap-2">
               <span class="font-bold text-xs text-slate-900 dark:text-white uppercase tracking-wider">Production Batches &amp; Orders (${tfEscapeHtml(linkedOrders.length)})</span>
             </div>
-            <span class="text-[11px] text-slate-400">Click any row to open full Order dossier</span>
+            <span class="text-xs text-slate-400">Click any row to open full Order dossier</span>
           </div>
           <div class="divide-y divide-slate-100 dark:divide-slate-800 max-h-64 overflow-y-auto">
             ${linkedOrders.length === 0 ? `
@@ -3729,16 +3729,16 @@ class TradeFlowApp {
                   <div class="flex items-center gap-2">
                     <span class="font-mono font-bold text-amber-600 dark:text-amber-400">${tfEscapeHtml(o.invoiceNumber || o.id)}</span>
                     <span class="text-slate-500">· For: ${tfEscapeHtml(o.retailerName || 'Retailer')}</span>
-                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase">${tfEscapeHtml((o.status || '').replace(/_/g, ' '))}</span>
+                    <span class="px-1.5 py-0.5 rounded text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase">${tfEscapeHtml((o.status || '').replace(/_/g, ' '))}</span>
                   </div>
-                  <p class="text-[11px] text-slate-400 mt-0.5">${tfEscapeHtml(o.items ? o.items.map(i => `${i.quantity}x ${i.variant || i.name}`).join(', ') : 'Pickle Batch')}</p>
+                  <p class="text-xs text-slate-400 mt-0.5">${tfEscapeHtml(o.items ? o.items.map(i => `${i.quantity}x ${i.variant || i.name}`).join(', ') : 'Pickle Batch')}</p>
                 </div>
                 <div class="flex items-center gap-3">
                   <div class="text-right">
                     <span class="font-mono font-bold text-slate-900 dark:text-white">${tfEscapeHtml(this.formatCurrency(contact.role === 'manufacturer' ? o.manufacturerTotalCost : contact.role === 'packaging' ? o.packagingCost : o.totalInvoiceAmount))}</span>
-                    <span class="block text-[10px] text-slate-400">Paid: ${tfEscapeHtml(this.formatCurrency(contact.role === 'manufacturer' ? o.manufacturerAdvancePaid : contact.role === 'packaging' ? o.packagingAdvancePaid : o.customerAdvanceReceived))}</span>
+                    <span class="block text-xs text-slate-400">Paid: ${tfEscapeHtml(this.formatCurrency(contact.role === 'manufacturer' ? o.manufacturerAdvancePaid : contact.role === 'packaging' ? o.packagingAdvancePaid : o.customerAdvanceReceived))}</span>
                   </div>
-                  <button type="button" class="btn-tactile px-2.5 py-1 text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded hover:bg-amber-500 hover:text-slate-950 transition-colors">Inspect ➔</button>
+                  <button type="button" class="btn-tactile px-2.5 py-1 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded hover:bg-amber-500 hover:text-slate-950 transition-colors">Inspect →</button>
                 </div>
               </div>
             `).join('')}
@@ -3769,10 +3769,10 @@ class TradeFlowApp {
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-2xs mb-4 flex items-center justify-between">
         <div>
           <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Lorry Receipt (LR / Bilty) & Freight Tracker</h3>
-          <p class="text-xs text-slate-500">Track transport legs from Packaging Vendor ➔ Factory ➔ Retailer Destination.</p>
+          <p class="text-xs text-slate-500">Track transport legs from Packaging Vendor Factory Retailer Destination.</p>
         </div>
         <div class="text-right">
-          <span class="text-[11px] text-slate-400 block">Total Freight Absorbed By You</span>
+          <span class="text-xs text-slate-400 block">Total Freight Absorbed By You</span>
           <span class="text-lg font-black font-mono-num text-slate-900 dark:text-slate-100">${tfEscapeHtml(this.formatCurrency(totalFreightPaid))}</span>
         </div>
       </div>
@@ -3780,7 +3780,7 @@ class TradeFlowApp {
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xs overflow-hidden">
         <table class="w-full text-left border-collapse text-xs">
           <thead>
-            <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-500 font-bold uppercase text-[11px]">
+            <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-500 font-bold uppercase text-xs">
               <th class="p-3.5">Invoice / Order</th>
               <th class="p-3.5">Transporter</th>
               <th class="p-3.5">LR / Bilty Number</th>
@@ -3802,25 +3802,25 @@ class TradeFlowApp {
                       <i data-lucide="truck" class="w-3.5 h-3.5 text-blue-500"></i>
                       <span>${tfEscapeHtml(o.transporterName)}</span>
                     </button>
-                    <button onclick="event.stopPropagation(); app.openEditContactModal('${tfEscapeHtml(tfEscapeJs(o.transporterId || ''))}')" class="text-slate-400 hover:text-amber-500 p-0.5" title="Edit Transporter Details">
+                    <button onclick="event.stopPropagation(); app.openEditContactModal('${tfEscapeHtml(tfEscapeJs(o.transporterId || ''))}')" class="text-slate-400 hover:text-emerald-700 p-0.5" title="Edit Transporter Details">
                       <i data-lucide="edit-3" class="w-3 h-3"></i>
                     </button>
                   </div>
                   ${tfEscapeHtml((() => {
                     const tr = this.data.contacts.find(c => c.id === (o.transporterId || ''));
-                    return tr && tr.phone ? `<a href="tel:${tfEscapeHtml(tr.phone.replace(/[^0-9+]/g, ''))}" class="inline-flex items-center gap-1 text-[11px] font-mono-num font-bold text-emerald-600 dark:text-emerald-400 hover:underline mt-0.5"><i data-lucide="phone" class="w-3 h-3"></i> ${tfEscapeHtml(tr.phone)}</a>` : '';
+                    return tr && tr.phone ? `<a href="tel:${tfEscapeHtml(tr.phone.replace(/[^0-9+]/g, ''))}" class="inline-flex items-center gap-1 text-xs font-mono-num font-bold text-emerald-600 dark:text-emerald-400 hover:underline mt-0.5"><i data-lucide="phone" class="w-3 h-3"></i> ${tfEscapeHtml(tr.phone)}</a>` : '';
                   })())}
                 </td>
                 <td class="p-3.5 font-mono-num font-bold ${tfEscapeHtml(o.lrNumber ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 italic')}">${tfEscapeHtml(o.lrNumber || 'Pending (Awaiting Dispatch)')}</td>
                 <td class="p-3.5 font-mono-num ${tfEscapeHtml(o.vehicleNumber ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 italic')}">${tfEscapeHtml(o.vehicleNumber || 'Unassigned')}</td>
                 <td class="p-3.5 text-slate-600 dark:text-slate-400">
-                  <button onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(o.retailerId))}')" class="text-slate-900 dark:text-slate-100 hover:text-amber-600 dark:hover:text-amber-400 font-semibold hover:underline" title="Click to open Buyer hub">
+                  <button onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(o.retailerId))}')" class="text-slate-900 dark:text-slate-100 hover:text-emerald-700 dark:hover:text-emerald-400 font-semibold hover:underline" title="Click to open Buyer hub">
                     ${tfEscapeHtml(o.retailerName)}
                   </button>
                 </td>
                 <td class="p-3.5 text-right font-mono-num font-bold text-slate-900 dark:text-slate-100">${tfEscapeHtml(this.formatCurrency(o.totalTransportCost))}</td>
                 <td class="p-3.5 text-center">
-                  <span class="px-2 py-0.5 rounded text-[11px] font-semibold ${tfEscapeHtml(o.status === 'in_transit' ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400')}">
+                  <span class="px-2 py-0.5 rounded text-xs font-semibold ${tfEscapeHtml(o.status === 'in_transit' ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400')}">
                     ${tfEscapeHtml(o.status.replace(/_/g, ' ').toUpperCase())}
                   </span>
                 </td>
@@ -3855,11 +3855,11 @@ class TradeFlowApp {
     const retailers = this.data.contacts.filter(c => c.role === 'retailer');
 
     container.innerHTML = retailers.map(r => `
-      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-2xs flex flex-col justify-between hover:border-amber-400 transition-colors">
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-2xs flex flex-col justify-between hover:border-emerald-600 transition-colors">
         <div>
           <div class="flex items-start justify-between mb-2">
             <div>
-              <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm hover:text-amber-600 dark:hover:text-amber-400 hover:underline cursor-pointer" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(r.id))}')">${tfEscapeHtml(r.name)}</h4>
+              <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(r.id))}')">${tfEscapeHtml(r.name)}</h4>
               <div class="flex items-center gap-2 flex-wrap text-xs text-slate-500 dark:text-slate-400 mt-1">
                 <span>Contact: <strong class="text-slate-900 dark:text-white">${tfEscapeHtml(r.contactPerson)}</strong></span>
                 <span>•</span>
@@ -3869,7 +3869,7 @@ class TradeFlowApp {
                 </a>
               </div>
             </div>
-            <span class="px-2 py-0.5 text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 rounded">
+            <span class="px-2 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 rounded">
               ${tfEscapeHtml(r.paymentTerms)}
             </span>
           </div>
@@ -3883,7 +3883,7 @@ class TradeFlowApp {
 
         <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <span class="text-[11px] text-slate-400 block">Balance Receivable</span>
+            <span class="text-xs text-slate-400 block">Balance Receivable</span>
             <span class="text-base font-bold font-mono-num ${tfEscapeHtml(r.currentBalanceDue > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-300')}">
               ${tfEscapeHtml(this.formatCurrency(r.currentBalanceDue))}
             </span>
@@ -3933,7 +3933,7 @@ class TradeFlowApp {
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-2xs space-y-4">
           <div class="flex items-start justify-between">
             <div>
-              <h4 class="font-bold text-slate-900 dark:text-slate-100 text-base hover:text-amber-600 dark:hover:text-amber-400 hover:underline cursor-pointer" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(m.id))}')">${tfEscapeHtml(m.name)}</h4>
+              <h4 class="font-bold text-slate-900 dark:text-slate-100 text-base hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(m.id))}')">${tfEscapeHtml(m.name)}</h4>
               <div class="flex items-center gap-2 flex-wrap text-xs text-slate-500 dark:text-slate-400 mt-1">
                 <a href="tel:${tfEscapeHtml((m.phone || '').replace(/[^0-9+]/g, ''))}" class="inline-flex items-center gap-1.5 px-2 py-0.5 font-mono-num font-bold text-xs text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-200 dark:border-slate-700 rounded-md transition-colors" title="Call ${tfEscapeHtml(m.name)}">
                   <i data-lucide="phone" class="w-3.5 h-3.5 text-emerald-500"></i>
@@ -3944,16 +3944,16 @@ class TradeFlowApp {
             </div>
             <div class="text-right flex flex-col items-end gap-1.5">
               <div>
-                <span class="text-[11px] text-slate-400 block">Total Brokerage Generated</span>
+                <span class="text-xs text-slate-400 block">Total Brokerage Generated</span>
                 <span class="text-base font-bold font-mono-num text-emerald-600 dark:text-emerald-400">${tfEscapeHtml(this.formatCurrency(totalCommission))}</span>
               </div>
               <div class="flex items-center gap-2">
-                <button onclick="event.stopPropagation(); app.openEditContactModal('${tfEscapeHtml(tfEscapeJs(m.id))}')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-1" title="Edit Marketeer Details">
+                <button onclick="event.stopPropagation(); app.openEditContactModal('${tfEscapeHtml(tfEscapeJs(m.id))}')" class="btn-tactile px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded border border-slate-200 dark:border-slate-700 flex items-center gap-1" title="Edit Marketeer Details">
                   <i data-lucide="edit-3" class="w-3 h-3 text-amber-500"></i>
                   <span>Edit</span>
                 </button>
-                <button onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(m.id))}')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 rounded border border-amber-300 dark:border-amber-700">
-                  View Marketeer Hub ➔
+                <button onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(m.id))}')" class="btn-tactile px-2.5 py-1 text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 rounded border border-amber-300 dark:border-amber-700">
+                  View Marketeer Hub →
                 </button>
               </div>
             </div>
@@ -3965,7 +3965,7 @@ class TradeFlowApp {
               ${orders.map(o => `
                 <div onclick="app.openOrderDetailPage('${tfEscapeHtml(tfEscapeJs(o.id))}')" class="flex justify-between p-2.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-amber-500/5 rounded-lg cursor-pointer group transition-colors">
                   <div>
-                    <span class="font-mono-num font-bold text-amber-600 dark:text-amber-400 group-hover:underline">${tfEscapeHtml(o.invoiceNumber)}</span>
+                    <span class="font-mono-num font-bold text-emerald-700 dark:text-emerald-400 group-hover:underline">${tfEscapeHtml(o.invoiceNumber)}</span>
                     <span class="text-slate-500 ml-2">${tfEscapeHtml(o.retailerName)}</span>
                   </div>
                   <span class="font-mono-num font-bold text-slate-800 dark:text-slate-200">Cut: ${tfEscapeHtml(this.formatCurrency(o.marketeerCommissionAmount))}</span>
@@ -4014,7 +4014,7 @@ class TradeFlowApp {
             <div class="flex items-start justify-between gap-2 mb-2">
               <div>
                 <h4 class="font-bold text-slate-900 dark:text-slate-100 text-sm">${tfEscapeHtml(p.name)}</h4>
-                <div class="inline-block px-2 py-0.5 bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 text-[11px] font-semibold rounded mt-1">
+                <div class="inline-block px-2 py-0.5 bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 text-xs font-semibold rounded mt-1">
                   ${tfEscapeHtml(p.variant)}
                 </div>
               </div>
@@ -4023,11 +4023,11 @@ class TradeFlowApp {
 
             <div class="grid grid-cols-2 gap-2 my-3.5 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-lg text-xs">
               <div>
-                <span class="text-slate-400 block text-[11px]">Factory Mfg Cost</span>
+                <span class="text-slate-400 block text-xs">Factory Mfg Cost</span>
                 <span class="font-mono-num font-bold text-slate-800 dark:text-slate-200">${tfEscapeHtml(this.formatCurrency(p.baseMfgCost))}</span>
               </div>
               <div>
-                <span class="text-slate-400 block text-[11px]">Jar & Label Pack</span>
+                <span class="text-slate-400 block text-xs">Jar & Label Pack</span>
                 <span class="font-mono-num font-bold text-slate-800 dark:text-slate-200">${tfEscapeHtml(this.formatCurrency(p.packagingCost))}</span>
               </div>
               <div class="col-span-2 pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex justify-between items-center">
@@ -4039,12 +4039,12 @@ class TradeFlowApp {
 
           <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <div>
-              <span class="text-[11px] text-slate-400 block">Selling to Retailer</span>
+              <span class="text-xs text-slate-400 block">Selling to Retailer</span>
               <span class="text-base font-bold font-mono-num text-slate-900 dark:text-slate-100">${tfEscapeHtml(this.formatCurrency(p.standardSellingRate))}</span>
-              <span class="text-[10px] text-slate-400 block">MRP: ${tfEscapeHtml(this.formatCurrency(p.mrp))} (GST ${tfEscapeHtml(this.itemGstRate({ productId: p.id }))}%)</span>
+              <span class="text-xs text-slate-400 block">MRP: ${tfEscapeHtml(this.formatCurrency(p.mrp))} (GST ${tfEscapeHtml(this.itemGstRate({ productId: p.id }))}%)</span>
             </div>
             <div class="text-right">
-              <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold block">+${tfEscapeHtml(this.formatCurrency(profitPerJar))}/unit</span>
+              <span class="text-xs text-emerald-600 dark:text-emerald-400 font-bold block">+${tfEscapeHtml(this.formatCurrency(profitPerJar))}/unit</span>
               <span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">${tfEscapeHtml(marginPercent)}% margin</span>
             </div>
           </div>
@@ -4069,7 +4069,7 @@ class TradeFlowApp {
           class="workspace-tab-item ${tfEscapeHtml(isActive ? 'active' : '')} group"
           title="${tfEscapeHtml(tab.title)}"
         >
-          <i data-lucide="${tfEscapeHtml(tab.icon || 'file-text')}" class="w-3.5 h-3.5 ${tfEscapeHtml(isActive ? 'text-amber-500' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300')}"></i>
+          <i data-lucide="${tfEscapeHtml(tab.icon || 'file-text')}" class="w-3.5 h-3.5 ${tfEscapeHtml(isActive ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300')}"></i>
           <span class="truncate max-w-[170px] text-xs font-semibold">${tfEscapeHtml(tab.title)}</span>
           ${tab.closeable ? `
             <button 
@@ -4103,10 +4103,10 @@ class TradeFlowApp {
           id="workspace-tab-profit-calc-btn"
           type="button" 
           onclick="app.openProfitCalculatorModal()" 
-          class="btn-tactile h-8 px-3 py-1.5 text-xs font-bold rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-800 dark:bg-violet-950/40 dark:hover:bg-violet-900/60 dark:text-violet-300 border border-violet-300 dark:border-violet-800/80 shadow-2xs flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-0.5 group cursor-pointer"
+          class="btn-tactile h-8 px-3 py-1.5 text-xs font-bold rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:hover:bg-purple-900/60 dark:text-purple-300 border border-purple-300 dark:border-purple-800/80 shadow-2xs flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-0.5 group cursor-pointer"
           title="Smart Trade Margin & Profit Calculator"
         >
-          <i data-lucide="calculator" class="w-3.5 h-3.5 text-violet-600 dark:text-violet-400 group-hover:scale-110 transition-transform"></i>
+          <i data-lucide="calculator" class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform"></i>
           <span>Profit Calculator</span>
         </button>
 
@@ -4125,7 +4125,7 @@ class TradeFlowApp {
           <button 
             type="button" 
             onclick="app.closeAllAuxTabs()" 
-            class="text-[11px] font-medium text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 px-2 py-0.5 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+            class="text-xs font-medium text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 px-2 py-0.5 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
             title="Close all inspection tabs"
           >
             Close tabs
@@ -4415,7 +4415,7 @@ class TradeFlowApp {
     const nameVal = (document.getElementById('dossier-name')?.value || '').trim();
     const phoneVal = (document.getElementById('dossier-phone')?.value || '').trim();
     if (!nameVal || !phoneVal) {
-      this.showToast('⚠️ Company Name and Primary Phone are required.');
+      this.showToast('Company Name and Primary Phone are required.');
       return;
     }
 
@@ -4468,7 +4468,7 @@ class TradeFlowApp {
 
     this.saveData();
     this.isDossierEditMode = false;
-    this.showToast('✓ Partner Dossier updated & cumulatively merged!');
+    this.showToast('Partner Dossier updated & cumulatively merged!');
     this.renderContactDetailView(contactId);
     this.renderActiveView();
   }
@@ -4502,7 +4502,7 @@ class TradeFlowApp {
     contact.customSections.push({ key: key.trim(), val: val.trim() });
     contact.customTags = contact.customSections;
     this.saveData();
-    this.showToast(`✓ Added custom spec: ${key.trim()}`);
+    this.showToast(`Added custom spec: ${key.trim()}`);
     this.renderContactDetailView(contactId);
   }
 
@@ -4522,7 +4522,7 @@ class TradeFlowApp {
     const textEl = document.getElementById('dossier-ai-text-input');
     const text = textEl ? textEl.value.trim() : '';
     if (!text) {
-      this.showToast('⚠️ Please paste some text, GSTIN, visiting card details, or trade message first.');
+      this.showToast('Please paste some text, GSTIN, visiting card details, or trade message first.');
       return;
     }
 
@@ -4594,7 +4594,7 @@ class TradeFlowApp {
     }
 
     this.saveData();
-    this.showToast(`✓ AI extracted ${extractedCount} credentials and cumulatively merged!`);
+    this.showToast(`AI extracted ${extractedCount} credentials and cumulatively merged!`);
     if (textEl) textEl.value = '';
     this.renderContactDetailView(contactId);
   }
@@ -4700,7 +4700,7 @@ class TradeFlowApp {
           <i data-lucide="package-x" class="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3"></i>
           <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">Order Not Found</h3>
           <p class="text-xs text-slate-500 mt-1">The requested order does not exist or has been removed.</p>
-          <button onclick="app.activateWorkspaceTab('tab-orders')" class="mt-4 btn-tactile px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg">
+          <button onclick="app.activateWorkspaceTab('tab-orders')" class="mt-4 btn-tactile px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg">
             ← Return to Orders Pipeline
           </button>
         </div>
@@ -4760,7 +4760,7 @@ class TradeFlowApp {
           </button>
           <div class="flex items-center gap-2">
             <h2 class="text-xl font-black font-mono-num text-slate-900 dark:text-white tracking-tight">${tfEscapeHtml(order.invoiceNumber)}</h2>
-            <span class="px-2 py-0.5 text-[11px] font-bold rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 font-mono-num whitespace-nowrap">
+            <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 font-mono-num whitespace-nowrap">
               ${tfEscapeHtml(order.gstType === 'intra' ? 'Intrastate (CGST+SGST)' : `Interstate (${this.gstLabels(order, true).combined})`)}
             </span>
           </div>
@@ -4772,11 +4772,11 @@ class TradeFlowApp {
           <!-- 1. Manufacturing PO Placement Alert Button (Persistent Across All Orders) -->
           <button onclick="app.toggleOrderPoAlert()" id="order-po-alert-btn" class="btn-tactile px-3 py-1.5 text-xs font-bold ${tfEscapeHtml(order.urgentAlert ? 'text-amber-950 dark:text-amber-100 bg-amber-400 hover:bg-amber-300 dark:bg-amber-500 dark:hover:bg-amber-400 border border-amber-500 shadow-xs ring-2 ring-amber-300/70 dark:ring-amber-400/40' : 'text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 shadow-2xs')} rounded-lg flex items-center gap-1.5 transition-all" title="${tfEscapeHtml(order.urgentAlert ? 'Click to view urgent Manufacturing PO placement alert' : 'Click to view Manufacturing PO production status')}">
             <i data-lucide="alert-triangle" class="w-3.5 h-3.5 ${tfEscapeHtml(order.urgentAlert ? 'text-amber-900 dark:text-amber-950' : 'text-slate-400 dark:text-slate-400')}"></i>
-            <span>⚠️ PO Alert</span>
+            <span>PO Alert</span>
           </button>
 
           <!-- 2. Edit Order -->
-          <button onclick="app.openEditOrderModal('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-3 py-1.5 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 border border-amber-500 rounded-lg flex items-center gap-1.5 shadow-xs" title="Edit this order, quantities, and rates">
+          <button onclick="app.openEditOrderModal('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-3 py-1.5 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 border border-emerald-700 rounded-lg flex items-center gap-1.5 shadow-xs" title="Edit this order, quantities, and rates">
             <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
             <span>Edit Order</span>
           </button>
@@ -4828,7 +4828,7 @@ class TradeFlowApp {
           </div>
 
           <!-- 6. Log Payment -->
-          <button onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-3 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-950 rounded-lg flex items-center gap-1.5 shadow-xs">
+          <button onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-3 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-800 dark:text-white rounded-lg flex items-center gap-1.5 shadow-xs">
             <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
             <span>Log Payment</span>
           </button>
@@ -4848,7 +4848,7 @@ class TradeFlowApp {
         </div>
         <div class="flex items-center gap-2">
           <button onclick="app.openFactoryPOModal('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-3 py-1.5 text-xs font-bold ${tfEscapeHtml(order.urgentAlert ? 'text-slate-950 bg-amber-400 hover:bg-amber-300 border border-amber-500 shadow-sm' : 'text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 shadow-2xs')} rounded-lg whitespace-nowrap">
-            ${tfEscapeHtml(order.urgentAlert ? 'Forward PO to Factory ➔' : 'View Factory PO ➔')}
+            ${tfEscapeHtml(order.urgentAlert ? 'Forward PO to Factory →' : 'View Factory PO →')}
           </button>
           <button onclick="app.toggleOrderPoAlert()" class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="Collapse Alert">
             <i data-lucide="x" class="w-4 h-4"></i>
@@ -4868,8 +4868,8 @@ class TradeFlowApp {
           <span>Due: <strong class="font-mono-num">${tfEscapeHtml(this.formatDate(order.dueDate))}</strong></span>
           ${order.lastModifiedTimeLog ? `
             <span>•</span>
-            <span class="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-mono-num font-semibold text-[11px]">
-              ✏️ Edited: ${tfEscapeHtml(order.lastModifiedTimeLog)}
+            <span class="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-mono-num font-semibold text-xs">
+              Edited: ${tfEscapeHtml(order.lastModifiedTimeLog)}
             </span>
           ` : ''}
         </div>
@@ -4887,12 +4887,12 @@ class TradeFlowApp {
             </div>
             <div>
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-black text-amber-950 dark:text-amber-200 uppercase tracking-wide">⚠️ Attention: ${tfEscapeHtml(orderIssues.length)} Missing Document(s) Detected</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-500 text-white font-mono-num">Audit Action Needed</span>
+                <span class="font-black text-amber-950 dark:text-amber-200 uppercase tracking-wide">Attention: ${tfEscapeHtml(orderIssues.length)} Missing Document(s) Detected</span>
+                <span class="px-2 py-0.5 rounded text-xs font-black bg-rose-500 text-white font-mono-num">Audit Action Needed</span>
               </div>
               <div class="flex items-center gap-1.5 flex-wrap mt-1">
                 ${orderIssues.map(iss => `
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-white/80 dark:bg-slate-900/80 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-300">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-white/80 dark:bg-slate-900/80 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-300">
                     <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                     ${tfEscapeHtml(iss.title || iss.type.replace(/_/g, ' '))}
                   </span>
@@ -4901,9 +4901,9 @@ class TradeFlowApp {
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="app.triggerUploadForOrder('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-xs flex items-center gap-1.5">
+            <button onclick="app.triggerUploadForOrder('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white shadow-xs flex items-center gap-1.5">
               <i data-lucide="upload" class="w-3.5 h-3.5"></i>
-              <span>Upload Missing Files ➔</span>
+              <span>Upload Missing Files →</span>
             </button>
             <button onclick="app.openOrderFolder('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 shadow-2xs flex items-center gap-1">
               <i data-lucide="folder" class="w-3.5 h-3.5 text-amber-500"></i>
@@ -4925,7 +4925,7 @@ class TradeFlowApp {
           <div class="flex items-center gap-2">
             <span class="text-xs text-slate-500 dark:text-slate-400">Current Stage: <strong class="text-slate-900 dark:text-white capitalize">${tfEscapeHtml(order.status.replace(/_/g, ' '))}</strong></span>
             <button onclick="app.advanceOrderLifecycleStage('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-3.5 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-sm flex items-center gap-1.5 transition-all">
-              <span>Advance Stage ➔</span>
+              <span>Advance Stage →</span>
             </button>
           </div>
         </div>
@@ -4938,39 +4938,39 @@ class TradeFlowApp {
       <!-- Financial Metric Cards Strip -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
         <div class="tf-kpi-block py-2">
-          <span class="tf-kpi-label text-[10px]">Master Cases</span>
+          <span class="tf-kpi-label text-xs">Master Cases</span>
           <span class="tf-kpi-value text-base font-black text-amber-500">${tfEscapeHtml(totalCases)}</span>
-          <span class="tf-kpi-sub text-[10px]">Shipper Cartons</span>
+          <span class="tf-kpi-sub text-xs">Shipper Cartons</span>
         </div>
 
         <div class="tf-kpi-block py-2">
-          <span class="tf-kpi-label text-[10px]">Total Production</span>
+          <span class="tf-kpi-label text-xs">Total Production</span>
           <span class="tf-kpi-value text-base font-black text-slate-900 dark:text-white">${tfEscapeHtml(totalJars.toLocaleString('en-IN'))}</span>
-          <span class="tf-kpi-sub text-[10px]">Jars to Bottle</span>
+          <span class="tf-kpi-sub text-xs">Jars to Bottle</span>
         </div>
 
         <div class="tf-kpi-block py-2">
-          <span class="tf-kpi-label text-[10px]">Taxable Subtotal</span>
+          <span class="tf-kpi-label text-xs">Taxable Subtotal</span>
           <span class="tf-kpi-value text-base font-black text-slate-800 dark:text-slate-200">${tfEscapeHtml(this.formatCurrency(order.taxableSubtotal))}</span>
-          <span class="tf-kpi-sub text-[10px]">Before GST</span>
+          <span class="tf-kpi-sub text-xs">Before GST</span>
         </div>
 
         <div class="tf-kpi-block py-2">
-          <span class="tf-kpi-label text-[10px]">Customer Bill (GST)</span>
+          <span class="tf-kpi-label text-xs">Customer Bill (GST)</span>
           <span class="tf-kpi-value text-base font-black text-emerald-600 dark:text-emerald-400">${tfEscapeHtml(this.formatCurrency(order.totalInvoiceAmount))}</span>
-          <span class="tf-kpi-sub text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">${tfEscapeHtml(this.gstLabels(order).total)} Included</span>
+          <span class="tf-kpi-sub text-xs text-emerald-600 dark:text-emerald-400 font-semibold">${tfEscapeHtml(this.gstLabels(order).total)} Included</span>
         </div>
 
         <div class="tf-kpi-block py-2">
-          <span class="tf-kpi-label text-[10px]">Advance Received</span>
+          <span class="tf-kpi-label text-xs">Advance Received</span>
           <span class="tf-kpi-value text-base font-black text-emerald-600 dark:text-emerald-400">${tfEscapeHtml(this.formatCurrency(order.customerAdvanceReceived))}</span>
-          <span class="tf-kpi-sub text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">${tfEscapeHtml(advancePercent)}% of Invoice</span>
+          <span class="tf-kpi-sub text-xs text-emerald-600 dark:text-emerald-400 font-bold">${tfEscapeHtml(advancePercent)}% of Invoice</span>
         </div>
 
         <div class="tf-kpi-block py-2">
-          <span class="tf-kpi-label text-[10px]">Balance Due</span>
+          <span class="tf-kpi-label text-xs">Balance Due</span>
           <span class="tf-kpi-value text-base font-black ${tfEscapeHtml(order.customerBalanceDue > 0 ? 'text-amber-500' : 'text-emerald-500')}">${tfEscapeHtml(this.formatCurrency(order.customerBalanceDue))}</span>
-          <span class="tf-kpi-sub text-[10px]">Receivable Post Delivery</span>
+          <span class="tf-kpi-sub text-xs">Receivable Post Delivery</span>
         </div>
       </div>
 
@@ -4979,7 +4979,7 @@ class TradeFlowApp {
         <div class="p-4 px-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <h3 class="text-sm font-bold text-slate-900 dark:text-white">Product Line Breakdown</h3>
-            <span class="px-2 py-0.5 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 rounded text-slate-600 dark:text-slate-400 font-mono-num">
+            <span class="px-2 py-0.5 text-xs font-bold bg-slate-100 dark:bg-slate-800 rounded text-slate-600 dark:text-slate-400 font-mono-num">
               ${tfEscapeHtml((order.items || []).length)} SKUs
             </span>
           </div>
@@ -4989,7 +4989,7 @@ class TradeFlowApp {
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs border-collapse">
             <thead>
-              <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 <th class="py-3 px-4 w-10 text-center">#</th>
                 <th class="py-3 px-4 min-w-[200px]">Product</th>
                 <th class="py-3 px-4 w-32">Pack Size</th>
@@ -5006,12 +5006,12 @@ class TradeFlowApp {
                   <td class="py-3 px-4 text-center text-slate-400 font-mono-num">${tfEscapeHtml(idx + 1)}</td>
                   <td class="py-3 px-4">
                     <span class="font-bold text-slate-900 dark:text-white">${tfEscapeHtml(item.name || item.shortName)}</span>
-                    <span class="block text-[11px] text-slate-400">${tfEscapeHtml(item.variant)}</span>
+                    <span class="block text-xs text-slate-400">${tfEscapeHtml(item.variant)}</span>
                   </td>
                   <td class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">${tfEscapeHtml(item.packSize || '500g')}</td>
                   <td class="py-3 px-4 text-right font-mono-num font-bold text-amber-600 dark:text-amber-400">${tfEscapeHtml(item.cases || 0)}</td>
                   <td class="py-3 px-4 text-center">
-                    <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                    <span class="px-2 py-0.5 text-xs font-bold rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                       ${tfEscapeHtml(item.casePack || 24)} / cs
                     </span>
                   </td>
@@ -5110,10 +5110,10 @@ class TradeFlowApp {
             </span>
             <div>
               <div class="flex items-center gap-2">
-                <span class="font-black text-emerald-950 dark:text-emerald-200 uppercase tracking-wide">🎉 Full Factory PO Payment Complete!</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500 text-white">100% Settled</span>
+                <span class="font-black text-emerald-950 dark:text-emerald-200 uppercase tracking-wide">Full Factory PO Payment Complete!</span>
+                <span class="px-2 py-0.5 rounded text-xs font-black bg-emerald-500 text-white">100% Settled</span>
               </div>
-              <p class="text-emerald-800 dark:text-emerald-300 text-[11px] mt-0.5">
+              <p class="text-emerald-800 dark:text-emerald-300 text-xs mt-0.5">
                 Total ${tfEscapeHtml(this.formatCurrency(mfgPaid))} disbursed in full to ${tfEscapeHtml(mfg ? mfg.name : 'Manufacturer')}${tfEscapeHtml(mfgPayments.length > 0 ? ' across ' + mfgPayments.length + ' logged installment(s)' : '')}. Production and job-work fully funded!
               </p>
             </div>
@@ -5135,18 +5135,18 @@ class TradeFlowApp {
             </span>
             <div>
               <div class="flex items-center gap-2">
-                <span class="font-black text-amber-950 dark:text-amber-200 uppercase tracking-wide">⏳ Factory PO Installment In Progress</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-amber-400 text-slate-950">${tfEscapeHtml(mfgPercent)}% Paid</span>
+                <span class="font-black text-amber-950 dark:text-amber-200 uppercase tracking-wide">Factory PO Installment In Progress</span>
+                <span class="px-2 py-0.5 rounded text-xs font-black bg-amber-400 text-slate-950">${tfEscapeHtml(mfgPercent)}% Paid</span>
               </div>
-              <p class="text-amber-900 dark:text-amber-300 text-[11px] mt-0.5">
+              <p class="text-amber-900 dark:text-amber-300 text-xs mt-0.5">
                 Paid ${tfEscapeHtml(this.formatCurrency(mfgPaid))} in advance${tfEscapeHtml(mfgPayments.length > 1 ? ' (' + mfgPayments.length + ' installments)' : '')}. Remaining payable of <strong class="font-bold text-rose-600 dark:text-rose-400">${tfEscapeHtml(this.formatCurrency(mfgRemaining))}</strong> left to clear with factory.
               </p>
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}', '${tfEscapeHtml(tfEscapeJs(mfg ? mfg.name : ''))}', 'paid')" class="btn-tactile px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 border border-amber-500 shadow-xs flex items-center gap-1">
+            <button onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}', '${tfEscapeHtml(tfEscapeJs(mfg ? mfg.name : ''))}', 'paid')" class="btn-tactile px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white border border-emerald-700 shadow-xs flex items-center gap-1">
               <i data-lucide="send" class="w-3.5 h-3.5"></i>
-              <span>Pay Remaining ${tfEscapeHtml(this.formatCurrency(mfgRemaining))} ➔</span>
+              <span>Pay Remaining ${tfEscapeHtml(this.formatCurrency(mfgRemaining))} →</span>
             </button>
           </div>
         </div>
@@ -5165,7 +5165,7 @@ class TradeFlowApp {
               <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
                 Interactive Supply Chain & Cashflow Flowchart
               </h3>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400">
+              <p class="text-xs text-slate-500 dark:text-slate-400">
                 Live consignment lifecycle tracking factory batch compounding, freight transit, marketeer booking, and customer inward settlement
               </p>
             </div>
@@ -5187,34 +5187,34 @@ class TradeFlowApp {
           <div id="flow-box-factory" class="flex-1 min-w-[220px] bg-white dark:bg-slate-900 border ${tfEscapeHtml(isMfgFullyPaid ? 'border-emerald-300 dark:border-emerald-800/80 shadow-xs' : 'border-slate-200 dark:border-slate-800 shadow-xs')} rounded-xl p-3.5 flex flex-col justify-between transition-all hover:border-blue-400 dark:hover:border-blue-500">
             <div>
               <div class="flex items-center justify-between gap-1 mb-2">
-                <span class="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">1. Factory PO</span>
+                <span class="text-xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">1. Factory PO</span>
                 ${isMfgFullyPaid 
-                  ? '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">100% Settled ✅</span>'
-                  : '<span class="px-2 py-0.5 rounded text-[10px] font-bold ' + (mfgPaid > 0 ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-500') + ' font-mono-num">' + mfgPercent + '% Paid</span>'
+                  ? '<span class="px-2 py-0.5 rounded text-xs font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">100% Settled</span>'
+                  : '<span class="px-2 py-0.5 rounded text-xs font-bold ' + (mfgPaid > 0 ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-500') + ' font-mono-num">' + mfgPercent + '% Paid</span>'
                 }
               </div>
               <div class="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5 cursor-pointer group" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.manufacturerId))}')" title="Click to view Pickle Factory profile">
                 <i data-lucide="factory" class="w-4 h-4 text-blue-500 shrink-0"></i>
                 <span class="group-hover:text-blue-600 transition-colors">${tfEscapeHtml(mfg ? mfg.name : 'Manufacturer')}</span>
               </div>
-              <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 ${tfEscapeHtml(mfg ? mfg.contactPerson + ' · ' + mfg.phone : 'Gondal Factory')}
               </div>
 
               <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1.5 text-xs">
-                <div class="flex items-center justify-between text-[11px]">
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-slate-500 dark:text-slate-400">Batch Order:</span>
                   <strong class="font-mono-num text-slate-800 dark:text-slate-200">${tfEscapeHtml(totalCases)} Cases (${tfEscapeHtml(totalJars)} Jars)</strong>
                 </div>
-                <div class="flex items-center justify-between text-[11px]">
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-slate-500 dark:text-slate-400">PO Cost:</span>
                   <strong class="font-mono-num text-slate-800 dark:text-slate-200">${tfEscapeHtml(this.formatCurrency(mfgTotalCost))}</strong>
                 </div>
-                <div class="flex items-center justify-between text-[11px]">
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-slate-500 dark:text-slate-400">Paid to Date:</span>
                   <strong class="font-mono-num text-emerald-600 dark:text-emerald-400 font-bold">${tfEscapeHtml(this.formatCurrency(mfgPaid))}</strong>
                 </div>
-                <div class="flex items-center justify-between text-[11px]">
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-slate-500 dark:text-slate-400">Payable Left:</span>
                   <strong class="font-mono-num ${tfEscapeHtml(mfgRemaining > 0 ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-emerald-600 dark:text-emerald-400')}">${tfEscapeHtml(this.formatCurrency(mfgRemaining))}</strong>
                 </div>
@@ -5222,10 +5222,10 @@ class TradeFlowApp {
 
               <!-- Payment Slips Pill Strip -->
               <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center justify-between">
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center justify-between">
                   <span>Attached Payment Slips (${tfEscapeHtml(mfgPayments.length)}):</span>
                   ${mfgRemaining > 0 ? `
-                    <button type="button" onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}', '${tfEscapeHtml(tfEscapeJs(mfg ? mfg.name : ''))}', 'paid')" class="text-[10px] text-amber-600 dark:text-amber-400 font-bold hover:underline">+ Add Slip</button>
+                    <button type="button" onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}', '${tfEscapeHtml(tfEscapeJs(mfg ? mfg.name : ''))}', 'paid')" class="text-xs text-emerald-700 dark:text-emerald-400 font-bold hover:underline">+ Add Slip</button>
                   ` : ''}
                 </div>
                 <div class="flex flex-wrap gap-1">
@@ -5233,14 +5233,14 @@ class TradeFlowApp {
                     <button 
                       type="button" 
                       onclick="app.openDocPreviewModal('${tfEscapeHtml(tfEscapeJs(p.id))}')" 
-                      class="btn-tactile px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 flex items-center gap-1 shadow-2xs" 
+                      class="btn-tactile px-2 py-0.5 rounded text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 flex items-center gap-1 shadow-2xs" 
                       title="Inspect voucher: ${tfEscapeHtml(this.formatCurrency(p.amount))} (${tfEscapeHtml(this.formatDate(p.date))})"
                     >
                       <i data-lucide="file-text" class="w-3 h-3 text-blue-500"></i>
                       <span>Slip #${tfEscapeHtml(idx + 1)}: ${tfEscapeHtml(this.formatCurrency(p.amount))}</span>
                     </button>
                   `).join('') : `
-                    <span class="text-[10px] text-slate-400 italic">No slips attached yet</span>
+                    <span class="text-xs text-slate-400 italic">No slips attached yet</span>
                   `}
                 </div>
               </div>
@@ -5252,11 +5252,11 @@ class TradeFlowApp {
                 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
               </button>
               ${mfgRemaining > 0 ? `
-                <button onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}', '${tfEscapeHtml(tfEscapeJs(mfg ? mfg.name : ''))}', 'paid')" class="btn-tactile px-2 py-1 rounded text-[11px] font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-2xs flex items-center gap-1">
+                <button onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}', '${tfEscapeHtml(tfEscapeJs(mfg ? mfg.name : ''))}', 'paid')" class="btn-tactile px-2 py-1 rounded text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white shadow-2xs flex items-center gap-1">
                   <i data-lucide="plus" class="w-3 h-3"></i> Pay Next
                 </button>
               ` : `
-                <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
                   <i data-lucide="check" class="w-3 h-3"></i> Fully Funded
                 </span>
               `}
@@ -5265,7 +5265,7 @@ class TradeFlowApp {
 
           <!-- ================= ARROW 1: FACTORY TO LOGISTICS ================= -->
           <div id="flow-arrow-1" class="shrink-0 flex flex-col items-center justify-center py-2 xl:py-0 text-slate-400 dark:text-slate-500 self-center">
-            <span class="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full ${tfEscapeHtml(isMfgFullyPaid ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700')} text-center whitespace-nowrap mb-1">
+            <span class="text-xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full ${tfEscapeHtml(isMfgFullyPaid ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700')} text-center whitespace-nowrap mb-1">
               ${tfEscapeHtml(isMfgFullyPaid ? 'Cleared & Ready' : (order.status === 'in_production' ? 'Compounding' : 'Production'))}
             </span>
             <div class="hidden xl:flex items-center text-amber-500 animate-pulse">
@@ -5281,27 +5281,27 @@ class TradeFlowApp {
           <div id="flow-box-transport" class="flex-1 min-w-[200px] bg-white dark:bg-slate-900 border ${tfEscapeHtml(isDispatched ? 'border-purple-300 dark:border-purple-800/80 shadow-xs' : 'border-slate-200 dark:border-slate-800 shadow-xs')} rounded-xl p-3.5 flex flex-col justify-between transition-all hover:border-purple-400 dark:hover:border-purple-500">
             <div>
               <div class="flex items-center justify-between gap-1 mb-2">
-                <span class="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">2. Transport</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${tfEscapeHtml(isDispatched ? 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-500')}">${tfEscapeHtml(isDispatched ? 'On Road 🚚' : 'Loading')}</span>
+                <span class="text-xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">2. Transport</span>
+                <span class="px-2 py-0.5 rounded text-xs font-bold ${tfEscapeHtml(isDispatched ? 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-500')}">${tfEscapeHtml(isDispatched ? 'On Road' : 'Loading')}</span>
               </div>
               <div class="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5 cursor-pointer group" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.transporterId))}')" title="Click to view Transporter profile">
                 <i data-lucide="truck" class="w-4 h-4 text-purple-500 shrink-0"></i>
                 <span class="group-hover:text-purple-600 transition-colors">${tfEscapeHtml(transporter ? transporter.name : 'Logistics')}</span>
               </div>
-              <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 ${order.lrNumber ? 'LR: <strong class="font-mono-num text-slate-800 dark:text-slate-200">' + order.lrNumber + '</strong>' : 'LR: Pending Departure'}
               </div>
 
               <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1.5 text-xs">
-                <div class="flex items-center justify-between text-[11px]">
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-slate-500 dark:text-slate-400">Vehicle:</span>
                   <strong class="font-mono-num text-slate-800 dark:text-slate-200">${tfEscapeHtml(order.vehicleNumber || '')}</strong>
                 </div>
-                <div class="flex items-center justify-between text-[11px]">
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-slate-500 dark:text-slate-400">Consignment:</span>
                   <span class="text-slate-700 dark:text-slate-300 font-semibold">${tfEscapeHtml(totalCases)} Cases</span>
                 </div>
-                <div class="flex items-center justify-between text-[11px]">
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-slate-500 dark:text-slate-400">Freight Cost:</span>
                   <strong class="font-mono-num text-slate-800 dark:text-slate-200">₹4,200</strong>
                 </div>
@@ -5321,7 +5321,7 @@ class TradeFlowApp {
 
           <!-- ================= ARROW 2: LOGISTICS TO MARKETEER ================= -->
           <div id="flow-arrow-2" class="shrink-0 flex flex-col items-center justify-center py-2 xl:py-0 text-slate-400 dark:text-slate-500 self-center">
-            <span class="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-center whitespace-nowrap mb-1">
+            <span class="text-xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-center whitespace-nowrap mb-1">
               Shipped
             </span>
             <div class="hidden xl:flex items-center text-amber-500 animate-pulse">
@@ -5334,30 +5334,30 @@ class TradeFlowApp {
           </div>
 
           <!-- ================= BOX 3: SALES MARKETEER ================= -->
-          <div id="flow-box-marketeer" class="flex-1 min-w-[200px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs rounded-xl p-3.5 flex flex-col justify-between transition-all hover:border-amber-400 dark:hover:border-amber-500">
+          <div id="flow-box-marketeer" class="flex-1 min-w-[200px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs rounded-xl p-3.5 flex flex-col justify-between transition-all hover:border-emerald-600 dark:hover:border-emerald-600">
             <div>
               <div class="flex items-center justify-between gap-1 mb-2">
-                <span class="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">3. Marketeer</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">3.0% Cut</span>
+                <span class="text-xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">3. Marketeer</span>
+                <span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">3.0% Cut</span>
               </div>
               <div class="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5 cursor-pointer group" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.marketeerId))}')" title="Click to view Marketeer profile">
                 <i data-lucide="user-check" class="w-4 h-4 text-amber-500 shrink-0"></i>
-                <span class="group-hover:text-amber-600 transition-colors">${tfEscapeHtml(order.marketeerName || 'Direct Booking')}</span>
+                <span class="group-hover:text-emerald-700 transition-colors">${tfEscapeHtml(order.marketeerName || 'Direct Booking')}</span>
               </div>
-              <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 ${tfEscapeHtml(marketeer ? marketeer.phone : 'Direct Phone')}
               </div>
 
               <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1.5 text-xs">
-                <div class="flex items-center justify-between text-[11px]">
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-slate-500 dark:text-slate-400">Order Source:</span>
                   <span class="text-slate-700 dark:text-slate-300 font-semibold">WhatsApp Booking</span>
                 </div>
-                <div class="flex items-center justify-between text-[11px]">
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-slate-500 dark:text-slate-400">Commission:</span>
                   <strong class="font-mono-num text-amber-600 dark:text-amber-400">${tfEscapeHtml(this.formatCurrency(Math.round(Number(order.marketeerCommissionAmount) || (order.taxableSubtotal || 0) * (Number(order.marketeerCommissionRate ?? this.config().defaultCommissionRate) || 0) / 100)))}</strong>
                 </div>
-                <div class="flex items-center justify-between text-[11px]">
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-slate-500 dark:text-slate-400">Brokerage Status:</span>
                   <span class="text-emerald-600 dark:text-emerald-400 font-bold">Confirmed</span>
                 </div>
@@ -5377,7 +5377,7 @@ class TradeFlowApp {
 
           <!-- ================= ARROW 3: MARKETEER TO RETAILER ================= -->
           <div id="flow-arrow-3" class="shrink-0 flex flex-col items-center justify-center py-2 xl:py-0 text-slate-400 dark:text-slate-500 self-center">
-            <span class="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full ${tfEscapeHtml(isBuyerFullyPaid ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700')} text-center whitespace-nowrap mb-1">
+            <span class="text-xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full ${tfEscapeHtml(isBuyerFullyPaid ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700')} text-center whitespace-nowrap mb-1">
               ${tfEscapeHtml(isBuyerFullyPaid ? 'Delivered & Paid' : 'Delivery & Recv')}
             </span>
             <div class="hidden xl:flex items-center text-amber-500 animate-pulse">
@@ -5393,34 +5393,34 @@ class TradeFlowApp {
           <div id="flow-box-retailer" class="flex-1 min-w-[220px] bg-white dark:bg-slate-900 border ${tfEscapeHtml(isBuyerFullyPaid ? 'border-emerald-300 dark:border-emerald-800/80 shadow-xs' : 'border-slate-200 dark:border-slate-800 shadow-xs')} rounded-xl p-3.5 flex flex-col justify-between transition-all hover:border-emerald-400 dark:hover:border-emerald-500">
             <div>
               <div class="flex items-center justify-between gap-1 mb-2">
-                <span class="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">4. Retailer Inward</span>
+                <span class="text-xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">4. Retailer Inward</span>
                 ${isBuyerFullyPaid
-                  ? '<span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">100% Settled ✅</span>'
-                  : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 font-mono-num">' + buyerPercent + '% Collected</span>'
+                  ? '<span class="px-2 py-0.5 rounded text-xs font-black bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">100% Settled</span>'
+                  : '<span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 font-mono-num">' + buyerPercent + '% Collected</span>'
                 }
               </div>
               <div class="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5 cursor-pointer group" onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.retailerId))}')" title="Click to view Buyer account">
                 <i data-lucide="building-2" class="w-4 h-4 text-emerald-500 shrink-0"></i>
                 <span class="group-hover:text-emerald-600 transition-colors">${tfEscapeHtml(order.retailerName)}</span>
               </div>
-              <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 ${tfEscapeHtml(retailer ? retailer.contactPerson + ' · ' + retailer.phone : 'Customer Contact')}
               </div>
 
               <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1.5 text-xs">
-                <div class="flex items-center justify-between text-[11px]">
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-slate-500 dark:text-slate-400">Total Customer Bill:</span>
                   <strong class="font-mono-num text-slate-900 dark:text-white">${tfEscapeHtml(this.formatCurrency(buyerTotal))}</strong>
                 </div>
-                <div class="flex items-center justify-between text-[11px]">
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-slate-500 dark:text-slate-400">Advance Collected:</span>
                   <strong class="font-mono-num text-emerald-600 dark:text-emerald-400 font-bold">${tfEscapeHtml(this.formatCurrency(buyerPaid))}</strong>
                 </div>
-                <div class="flex items-center justify-between text-[11px]">
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-slate-500 dark:text-slate-400">Balance Receivable:</span>
                   <strong class="font-mono-num ${tfEscapeHtml(buyerRemaining > 0 ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-emerald-600 dark:text-emerald-400')}">${tfEscapeHtml(this.formatCurrency(buyerRemaining))}</strong>
                 </div>
-                <div class="flex items-center justify-between text-[11px]">
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-slate-500 dark:text-slate-400">Payment Terms:</span>
                   <span class="text-slate-700 dark:text-slate-300 font-semibold">${tfEscapeHtml(order.paymentTerms || this.config().defaultPaymentTerms)}</span>
                 </div>
@@ -5428,10 +5428,10 @@ class TradeFlowApp {
 
               <!-- Buyer Receipts Pill Strip -->
               <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center justify-between">
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center justify-between">
                   <span>Buyer Collection Receipts (${tfEscapeHtml(buyerPayments.length)}):</span>
                   ${buyerRemaining > 0 ? `
-                    <button type="button" onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}', '${tfEscapeHtml(tfEscapeJs(order.retailerName))}', 'received')" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold hover:underline">+ Log Receipt</button>
+                    <button type="button" onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}', '${tfEscapeHtml(tfEscapeJs(order.retailerName))}', 'received')" class="text-xs text-emerald-600 dark:text-emerald-400 font-bold hover:underline">+ Log Receipt</button>
                   ` : ''}
                 </div>
                 <div class="flex flex-wrap gap-1">
@@ -5439,14 +5439,14 @@ class TradeFlowApp {
                     <button 
                       type="button" 
                       onclick="app.openDocPreviewModal('${tfEscapeHtml(tfEscapeJs(p.id))}')" 
-                      class="btn-tactile px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 flex items-center gap-1 shadow-2xs" 
+                      class="btn-tactile px-2 py-0.5 rounded text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 flex items-center gap-1 shadow-2xs" 
                       title="Inspect receipt: ${tfEscapeHtml(this.formatCurrency(p.amount))} (${tfEscapeHtml(this.formatDate(p.date))})"
                     >
                       <i data-lucide="file-check-2" class="w-3 h-3 text-emerald-600"></i>
                       <span>Receipt #${tfEscapeHtml(idx + 1)}: ${tfEscapeHtml(this.formatCurrency(p.amount))}</span>
                     </button>
                   `).join('') : `
-                    <span class="text-[10px] text-slate-400 italic">Advance of ${tfEscapeHtml(this.formatCurrency(order.customerAdvanceReceived || 0))} recorded</span>
+                    <span class="text-xs text-slate-400 italic">Advance of ${tfEscapeHtml(this.formatCurrency(order.customerAdvanceReceived || 0))} recorded</span>
                   `}
                 </div>
               </div>
@@ -5458,11 +5458,11 @@ class TradeFlowApp {
                 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
               </button>
               ${buyerRemaining > 0 ? `
-                <button onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}', '${tfEscapeHtml(tfEscapeJs(order.retailerName))}', 'received')" class="btn-tactile px-2 py-1 rounded text-[11px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xs flex items-center gap-1">
+                <button onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}', '${tfEscapeHtml(tfEscapeJs(order.retailerName))}', 'received')" class="btn-tactile px-2 py-1 rounded text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xs flex items-center gap-1">
                   <i data-lucide="plus" class="w-3 h-3"></i> Collect ${tfEscapeHtml(this.formatCurrency(buyerRemaining))}
                 </button>
               ` : `
-                <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+                <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
                   <i data-lucide="check" class="w-3 h-3"></i> Invoice Cleared
                 </span>
               `}
@@ -5474,18 +5474,18 @@ class TradeFlowApp {
         <!-- Packaging Supplier Card (Bottom Accessory Strip) -->
         <div class="p-3 bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-xl flex items-center justify-between flex-wrap gap-2 text-xs">
           <div class="flex items-center gap-2.5">
-            <span class="p-1 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400">
+            <span class="p-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
               <i data-lucide="package" class="w-4 h-4"></i>
             </span>
             <div>
               <span class="font-bold text-slate-800 dark:text-slate-200">Packaging Vendor: </span>
               <span class="text-slate-600 dark:text-slate-300">${tfEscapeHtml(pkg ? pkg.name : 'Not assigned')}</span>
-              <span class="text-slate-400 dark:text-slate-500 text-[11px] ml-2">(${tfEscapeHtml(totalJars.toLocaleString('en-IN'))} PET Jars, Caps & Hologram Labels Supplied)</span>
+              <span class="text-slate-400 dark:text-slate-500 text-xs ml-2">(${tfEscapeHtml(totalJars.toLocaleString('en-IN'))} PET Jars, Caps & Hologram Labels Supplied)</span>
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.packagingVendorId))}')" class="btn-tactile px-2.5 py-1 rounded text-[11px] font-semibold bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 shadow-2xs">
-              View Packaging Account ➔
+            <button onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.packagingVendorId))}')" class="btn-tactile px-2.5 py-1 rounded text-xs font-semibold bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 shadow-2xs">
+              View Packaging Account →
             </button>
           </div>
         </div>
@@ -5506,7 +5506,7 @@ class TradeFlowApp {
         <div class="text-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
           <i data-lucide="package-x" class="w-12 h-12 mx-auto text-slate-300 mb-3"></i>
           <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">Order Not Found</h3>
-          <button onclick="app.activateWorkspaceTab('tab-orders')" class="mt-4 btn-tactile px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg">
+          <button onclick="app.activateWorkspaceTab('tab-orders')" class="mt-4 btn-tactile px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg">
             ← Return to Orders Pipeline
           </button>
         </div>
@@ -5554,7 +5554,7 @@ class TradeFlowApp {
     const draftBtn = document.getElementById('order-modal-submit-draft');
     if (draftBtn) draftBtn.innerText = 'Save Changes';
     const mainLabel = document.getElementById('order-modal-submit-label');
-    if (mainLabel) mainLabel.innerText = 'Save & Open Factory PO 🚀';
+    if (mainLabel) mainLabel.innerText = 'Save & Open Factory PO';
 
     // Wire back & cancel buttons to tab cancellation
     const backBtn = panel.querySelector('.modal-header-with-corner-controls button[title="Go back to previous view"]');
@@ -5682,7 +5682,7 @@ class TradeFlowApp {
           <i data-lucide="user-x" class="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3"></i>
           <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">Partner Profile Not Found</h3>
           <p class="text-xs text-slate-500 mt-1">The requested contact does not exist.</p>
-          <button onclick="app.activateWorkspaceTab('tab-orders')" class="mt-4 btn-tactile px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg">
+          <button onclick="app.activateWorkspaceTab('tab-orders')" class="mt-4 btn-tactile px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg">
             ← Return to Orders Pipeline
           </button>
         </div>
@@ -5761,7 +5761,7 @@ class TradeFlowApp {
     } else if (contact.role === 'marketeer') {
       roleBadge = '<span class="px-2.5 py-0.5 text-xs font-bold rounded-md bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">Sales Marketeer (3% Trade Broker)</span>';
     } else if (contact.role === 'packaging') {
-      roleBadge = '<span class="px-2.5 py-0.5 text-xs font-bold rounded-md bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800">Packaging, Jars & Labels Supplier</span>';
+      roleBadge = '<span class="px-2.5 py-0.5 text-xs font-bold rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">Packaging, Jars & Labels Supplier</span>';
     } else {
       roleBadge = '<span class="px-2.5 py-0.5 text-xs font-bold rounded-md bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800">Freight & Logistics Partner</span>';
     }
@@ -5777,7 +5777,7 @@ class TradeFlowApp {
           <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <button onclick="app.activateWorkspaceTab('tab-orders')" class="breadcrumb-item">Orders Pipeline</button>
             <span>/</span>
-            <span class="text-slate-400 uppercase tracking-wider text-[10px] font-bold">${tfEscapeHtml(contact.role)}</span>
+            <span class="text-slate-400 uppercase tracking-wider text-xs font-bold">${tfEscapeHtml(contact.role)}</span>
             <span>/</span>
             <span class="font-bold text-slate-900 dark:text-white">${tfEscapeHtml(contact.name)}</span>
           </div>
@@ -5819,7 +5819,7 @@ class TradeFlowApp {
               <i data-lucide="phone" class="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform"></i>
               <span>${tfEscapeHtml(contact.phone || 'No Phone')}</span>
             </a>
-            <button onclick="app.openEditContactModal('${tfEscapeHtml(tfEscapeJs(contact.id))}')" class="btn-tactile px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-amber-500/10 dark:hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 border border-slate-300 dark:border-slate-700 rounded-lg flex items-center gap-1.5 shadow-2xs" title="Edit Company Details">
+            <button onclick="app.openEditContactModal('${tfEscapeHtml(tfEscapeJs(contact.id))}')" class="btn-tactile px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-amber-500/10 dark:hover:bg-amber-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 border border-slate-300 dark:border-slate-700 rounded-lg flex items-center gap-1.5 shadow-2xs" title="Edit Company Details">
               <i data-lucide="edit-3" class="w-4 h-4 text-amber-500"></i>
               <span>Edit Details</span>
             </button>
@@ -5863,7 +5863,7 @@ class TradeFlowApp {
               <span class="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                 <i data-lucide="tag" class="w-3.5 h-3.5 text-amber-500"></i> Pre-Agreed Contract Rate Card
               </span>
-              <span class="text-[11px] text-slate-500 dark:text-slate-400">Locked Contract Rates</span>
+              <span class="text-xs text-slate-500 dark:text-slate-400">Locked Contract Rates</span>
             </div>
             <div class="grid grid-cols-3 gap-3 text-xs">
               <div class="tf-rate-card">
@@ -5929,7 +5929,7 @@ class TradeFlowApp {
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs border-collapse">
             <thead>
-              <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 <th class="py-3 px-4">Order / Invoice</th>
                 <th class="py-3 px-4">Date</th>
                 <th class="py-3 px-4">Counterparty</th>
@@ -5953,20 +5953,20 @@ class TradeFlowApp {
 
                 let oBadge = '';
                 if (o.status === 'action_needed') {
-                  oBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">Action Needed</span>';
+                  oBadge = '<span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">Action Needed</span>';
                 } else if (o.status === 'in_production') {
-                  oBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300">In Production</span>';
+                  oBadge = '<span class="px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300">In Production</span>';
                 } else if (o.status === 'in_transit') {
-                  oBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300">In Transit</span>';
+                  oBadge = '<span class="px-2 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300">In Transit</span>';
                 } else {
-                  oBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">Settled</span>';
+                  oBadge = '<span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">Settled</span>';
                 }
 
                 return `
                   <tr onclick="app.openOrderDetailPage('${tfEscapeHtml(tfEscapeJs(o.id))}', event)" class="hover:bg-amber-500/5 dark:hover:bg-amber-500/10 cursor-pointer transition-colors group">
                     <td class="py-3 px-4">
-                      <div class="font-mono-num font-bold text-amber-600 dark:text-amber-400 group-hover:underline">${tfEscapeHtml(o.invoiceNumber)}</div>
-                      <div class="text-[10px] text-slate-400 font-mono-num">${tfEscapeHtml(o.id)}</div>
+                      <div class="font-mono-num font-bold text-emerald-700 dark:text-emerald-400 group-hover:underline">${tfEscapeHtml(o.invoiceNumber)}</div>
+                      <div class="text-xs text-slate-400 font-mono-num">${tfEscapeHtml(o.id)}</div>
                     </td>
                     <td class="py-3 px-4 font-mono-num text-slate-600 dark:text-slate-400">
                       ${tfEscapeHtml(this.formatDate(o.date))}
@@ -5976,7 +5976,7 @@ class TradeFlowApp {
                     </td>
                     <td class="py-3 px-4">
                       <div class="font-bold text-slate-800 dark:text-slate-200">${tfEscapeHtml(totalOcases)} ${tfEscapeHtml(totalOcases === 1 ? 'Case' : 'Cases')} (${tfEscapeHtml(totalOjars.toLocaleString('en-IN'))} jars)</div>
-                      <div class="text-[11px] text-slate-400 truncate max-w-[220px]" title="${tfEscapeHtml(o.items.map(i => i.name).join(', '))}">${tfEscapeHtml(varietiesPreview)}</div>
+                      <div class="text-xs text-slate-400 truncate max-w-[220px]" title="${tfEscapeHtml(o.items.map(i => i.name).join(', '))}">${tfEscapeHtml(varietiesPreview)}</div>
                     </td>
                     <td class="py-3 px-4 text-right font-mono-num font-black text-slate-900 dark:text-white">
                       ${tfEscapeHtml(contact.role === 'manufacturer' ? this.formatCurrency(o.manufacturerTotalCost) : this.formatCurrency(o.totalInvoiceAmount))}
@@ -5985,7 +5985,7 @@ class TradeFlowApp {
                       ${oBadge}
                     </td>
                     <td class="py-3 px-4 text-right">
-                      <button onclick="event.stopPropagation(); app.openOrderDetailPage('${tfEscapeHtml(tfEscapeJs(o.id))}')" class="btn-tactile px-3 py-1.5 text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-700/60 rounded-lg inline-flex items-center gap-1">
+                      <button onclick="event.stopPropagation(); app.openOrderDetailPage('${tfEscapeHtml(tfEscapeJs(o.id))}')" class="btn-tactile px-3 py-1.5 text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-700/60 rounded-lg inline-flex items-center gap-1">
                         <span>Inspect</span>
                         <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                       </button>
@@ -6021,7 +6021,7 @@ class TradeFlowApp {
       alertEl.classList.remove('hidden');
       alertEl.innerHTML = `
         <div class="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2.5">
-          <span class="text-base">⚠️</span>
+          <span class="text-base"><i data-lucide="triangle-alert" class="w-4 h-4 inline-block"></i></span>
           <div>
             <strong>Advance in Hand:</strong> Customer paid ${tfEscapeHtml(this.formatCurrency(order.customerAdvanceReceived))}.
             The manufacturer and packaging vendor have not received advances yet. Initiate payments below to start bottling.
@@ -6032,7 +6032,7 @@ class TradeFlowApp {
       alertEl.classList.remove('hidden');
       alertEl.innerHTML = `
         <div class="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-900 dark:text-rose-200 flex items-start gap-2.5">
-          <span class="text-base">🚨</span>
+          <span class="text-base"><i data-lucide="octagon-alert" class="w-4 h-4 inline-block"></i></span>
           <div>
             <strong>Payment Overdue:</strong> Due date was ${tfEscapeHtml(this.formatDate(order.dueDate))}.
             Remaining balance: <strong>${tfEscapeHtml(this.formatCurrency(order.customerBalanceDue))}</strong>.
@@ -6103,19 +6103,19 @@ class TradeFlowApp {
 
     if (floatBadgeEl) {
       if (netFloatBuffer >= 0) {
-        floatBadgeEl.className = 'px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300';
+        floatBadgeEl.className = 'px-2 py-0.5 text-xs font-bold rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300';
         floatBadgeEl.innerText = 'Positive Buffer (Safe)';
       } else {
-        floatBadgeEl.className = 'px-2 py-0.5 text-[10px] font-bold rounded bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300';
+        floatBadgeEl.className = 'px-2 py-0.5 text-xs font-bold rounded bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300';
         floatBadgeEl.innerText = 'Negative Float Deficit!';
       }
     }
 
     if (floatAdviceEl) {
       if (netFloatBuffer >= 0) {
-        floatAdviceEl.innerText = `✅ Advance in hand covers all upfront production liabilities with ${this.formatCurrency(netFloatBuffer)} buffer reserve.`;
+        floatAdviceEl.innerText = `Advance in hand covers all upfront production liabilities with ${this.formatCurrency(netFloatBuffer)} buffer reserve.`;
       } else {
-        floatAdviceEl.innerText = `⚠️ Float Trap: Customer advance falls short by ${this.formatCurrency(Math.abs(netFloatBuffer))} of required supplier payouts. You must inject working capital or demand higher booking advance.`;
+        floatAdviceEl.innerText = `Float Trap: Customer advance falls short by ${this.formatCurrency(Math.abs(netFloatBuffer))} of required supplier payouts. You must inject working capital or demand higher booking advance.`;
       }
     }
 
@@ -6165,7 +6165,7 @@ class TradeFlowApp {
     this.renderKPIs();
     this.renderOrdersTable();
     this.updateDrawerProfitCard(order);
-    this.showToast('✓ Damage adjustments and margins updated successfully!');
+    this.showToast('Damage adjustments and margins updated successfully!');
   }
 
   closeOrderDrawer() {
@@ -6220,35 +6220,35 @@ class TradeFlowApp {
       if (subtitleEl) subtitleEl.innerText = 'Sec 31 CGST Act & Rule 46 • Final Dispatch & Supply';
       if (badgeEl) {
         badgeEl.innerText = 'Official Final';
-        badgeEl.className = 'px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded bg-amber-400 text-slate-950';
+        badgeEl.className = 'px-2 py-0.5 text-xs font-black uppercase tracking-wider rounded bg-amber-400 text-slate-950';
       }
     } else if (docType === 'PROFORMA INVOICE') {
       if (titleEl) titleEl.innerText = 'Proforma Invoice';
       if (subtitleEl) subtitleEl.innerText = 'Commercial Quotation & Order Booking Request • Advance Demand';
       if (badgeEl) {
         badgeEl.innerText = 'Quotation';
-        badgeEl.className = 'px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded bg-blue-500 text-white';
+        badgeEl.className = 'px-2 py-0.5 text-xs font-black uppercase tracking-wider rounded bg-blue-500 text-white';
       }
     } else if (docType === 'ADVANCE RECEIPT VOUCHER') {
       if (titleEl) titleEl.innerText = 'Advance Receipt Voucher';
       if (subtitleEl) subtitleEl.innerText = 'Rule 50 CGST Rules & Sec 31(3)(d) • Payment Acknowledgment';
       if (badgeEl) {
         badgeEl.innerText = 'Rule 50 Voucher';
-        badgeEl.className = 'px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded bg-emerald-500 text-white';
+        badgeEl.className = 'px-2 py-0.5 text-xs font-black uppercase tracking-wider rounded bg-emerald-500 text-white';
       }
     } else if (docType === 'DELIVERY CHALLAN') {
       if (titleEl) titleEl.innerText = 'Job Work Delivery Challan';
       if (subtitleEl) subtitleEl.innerText = 'Rule 55 CGST Rules & Sec 143 • Movement of Jars/Labels to Factory';
       if (badgeEl) {
         badgeEl.innerText = 'Rule 55 Job Work';
-        badgeEl.className = 'px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded bg-rose-500 text-white';
+        badgeEl.className = 'px-2 py-0.5 text-xs font-black uppercase tracking-wider rounded bg-rose-500 text-white';
       }
     } else if (docType === 'CREDIT NOTE') {
       if (titleEl) titleEl.innerText = 'GST Credit Note';
       if (subtitleEl) subtitleEl.innerText = 'Sec 34 CGST Act & Rule 53 • Transit Damage & Leakage Adjustment';
       if (badgeEl) {
         badgeEl.innerText = 'Sec 34 Credit';
-        badgeEl.className = 'px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded bg-amber-400 text-slate-950';
+        badgeEl.className = 'px-2 py-0.5 text-xs font-black uppercase tracking-wider rounded bg-amber-400 text-slate-950';
       }
     }
 
@@ -6840,7 +6840,7 @@ class TradeFlowApp {
     resizer.addEventListener('dblclick', () => {
       auditPanel.style.width = '325px';
       localStorage.setItem('tradeflow_audit_panel_width', '325px');
-      this.showToast('↔️ Panels reset to default split width (325px)');
+      this.showToast('Panels reset to default split width (325px)');
     });
   }
 
@@ -6900,7 +6900,7 @@ class TradeFlowApp {
             <td class="py-2 px-2 text-center text-xs font-mono-num text-slate-500">${tfEscapeHtml(idx + 1)}</td>
             <td class="py-2 px-2 text-xs">
               <input type="text" value="${tfEscapeHtml(item.name)}" onchange="app.onInvoiceItemChange(${tfEscapeHtml(idx)}, 'name', this.value)" class="w-full p-1 border border-amber-300 bg-amber-50/40 rounded text-xs font-bold">
-              <input type="text" value="${tfEscapeHtml(item.variant)}" onchange="app.onInvoiceItemChange(${tfEscapeHtml(idx)}, 'variant', this.value)" class="w-full p-1 border border-slate-200 rounded text-[11px] text-slate-500 mt-1">
+              <input type="text" value="${tfEscapeHtml(item.variant)}" onchange="app.onInvoiceItemChange(${tfEscapeHtml(idx)}, 'variant', this.value)" class="w-full p-1 border border-slate-200 rounded text-xs text-slate-500 mt-1">
             </td>
             <td class="py-2 px-2 text-center text-xs font-mono-num">
               <input type="text" inputmode="numeric" value="${tfEscapeHtml(this.itemHsn(item) === '—' ? '' : this.itemHsn(item))}" onchange="app.onInvoiceItemChange(${tfEscapeHtml(idx)}, 'hsn', this.value)" class="w-20 p-1 text-center border border-slate-200 rounded text-xs">
@@ -6960,7 +6960,7 @@ class TradeFlowApp {
           <i data-lucide="edit-3" class="w-4 h-4 text-amber-600"></i>
           Edit Mode Active: You can edit dates, vehicle #, LR #, quantities, rates, and terms.
         </span>
-        <span class="text-[11px] font-medium text-amber-800">Click 'Save & Sync' on the top right when done.</span>
+        <span class="text-xs font-medium text-amber-800">Click 'Save & Sync' on the top right when done.</span>
       </div>
     ` : '';
 
@@ -6975,7 +6975,7 @@ class TradeFlowApp {
           <div class="flex justify-between items-start border-b-2 border-slate-900 pb-5">
             <div>
               <div class="flex items-center gap-2">
-                <span class="p-2 bg-emerald-600 text-white rounded-lg font-bold text-xl">🧾</span>
+                <span class="p-2 bg-emerald-600 text-white rounded-lg font-bold text-xl"><i data-lucide="receipt" class="w-6 h-6 inline-block"></i></span>
                 <div>
                   <h1 class="text-2xl font-black text-slate-900 tracking-tight">${tfEscapeHtml(profile.brandName)}</h1>
                   <p class="text-xs text-slate-500 font-medium">${tfEscapeHtml(profile.legalName)}</p>
@@ -7002,7 +7002,7 @@ class TradeFlowApp {
 
           <!-- Received From Details -->
           <div class="my-5 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs">
-            <span class="font-bold text-slate-900 uppercase tracking-wider text-[11px] block mb-1">Received With Thanks From:</span>
+            <span class="font-bold text-slate-900 uppercase tracking-wider text-xs block mb-1">Received With Thanks From:</span>
             <p class="text-sm font-bold text-slate-900">${tfEscapeHtml(retailer.name)}</p>
             <p class="text-slate-600 mt-0.5">${tfEscapeHtml(retailer.billingAddress)}</p>
             <p class="mt-1"><strong>GSTIN:</strong> <span class="font-mono-num font-bold">${tfEscapeHtml(retailer.gstin)}</span> • <strong>State:</strong> ${tfEscapeHtml(retailer.state)} (${tfEscapeHtml(retailer.stateCode)})</p>
@@ -7028,13 +7028,13 @@ class TradeFlowApp {
                 <span class="text-slate-500 block">Payment Mode & Date:</span>
                 <p class="font-semibold text-slate-900">${tfEscapeHtml(order.customerAdvanceMode)} • Cleared on ${tfEscapeHtml(this.formatDate(order.customerAdvanceDate || order.date))}</p>
                 <div class="mt-2 p-2 bg-white rounded border border-emerald-200">
-                  <span class="text-slate-500 block text-[11px]">Balance Payable on Delivery:</span>
+                  <span class="text-slate-500 block text-xs">Balance Payable on Delivery:</span>
                   <strong class="font-mono-num text-sm text-rose-600">${tfEscapeHtml(this.formatCurrency(order.customerBalanceDue))}</strong>
                 </div>
               </div>
             </div>
 
-            <p class="text-[11px] text-emerald-800 pt-2 border-t border-emerald-200 leading-relaxed">
+            <p class="text-xs text-emerald-800 pt-2 border-t border-emerald-200 leading-relaxed">
               <strong>Statutory Compliance Note:</strong> In accordance with Notification No. 66/2017 - Central Tax dated 15th November 2017, registered persons making supply of goods are exempted from payment of tax on receipt of advances. Tax liability shall be discharged upon final Tax Invoice at the time of physical delivery of goods.
             </p>
           </div>
@@ -7042,14 +7042,14 @@ class TradeFlowApp {
           <!-- Footer Terms & Signatory -->
           <div class="grid grid-cols-2 gap-6 mt-8 pt-4 border-t border-slate-200 text-xs">
             <div>
-              <span class="font-bold text-slate-800 uppercase tracking-wider text-[11px] block mb-1">Bank Clearance Account:</span>
+              <span class="font-bold text-slate-800 uppercase tracking-wider text-xs block mb-1">Bank Clearance Account:</span>
               <p>${tfEscapeHtml(profile.bankName)} • A/C: <span class="font-mono-num font-bold">${tfEscapeHtml(profile.accountNumber)}</span></p>
               <p>IFSC: <span class="font-mono-num">${tfEscapeHtml(profile.ifsc)}</span> • UPI: <span class="font-mono-num text-emerald-700 font-bold">${tfEscapeHtml(profile.upiId)}</span></p>
             </div>
             <div class="text-right flex flex-col justify-end items-end">
               <p class="font-bold text-slate-800 text-xs">For ${tfEscapeHtml(profile.legalName)}</p>
               <div class="h-12"></div>
-              <p class="border-t border-slate-400 pt-1 text-[11px] text-slate-600 font-medium">Authorized Signatory</p>
+              <p class="border-t border-slate-400 pt-1 text-xs text-slate-600 font-medium">Authorized Signatory</p>
             </div>
           </div>
         </div>
@@ -7065,13 +7065,13 @@ class TradeFlowApp {
           ${editNoticeBanner}
           
           <div class="mb-4 p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-center text-xs text-blue-900 font-semibold">
-            📋 PROFORMA INVOICE / ORDER CONFIRMATION — Not a Tax Invoice for Input Tax Credit. Issued for order booking and advance transfer.
+            PROFORMA INVOICE / ORDER CONFIRMATION — Not a Tax Invoice for Input Tax Credit. Issued for order booking and advance transfer.
           </div>
 
           <div class="flex justify-between items-start border-b-2 border-slate-900 pb-5">
             <div>
               <div class="flex items-center gap-2">
-                <span class="p-2 bg-blue-600 text-white rounded-lg font-bold text-xl">🌶️</span>
+                <span class="p-2 bg-blue-600 text-white rounded-lg font-bold text-xl"><i data-lucide="flame" class="w-6 h-6 inline-block"></i></span>
                 <div>
                   <h1 class="text-2xl font-black text-slate-900 tracking-tight">${tfEscapeHtml(profile.brandName)}</h1>
                   <p class="text-xs text-slate-500 font-medium">${tfEscapeHtml(profile.legalName)}</p>
@@ -7099,17 +7099,17 @@ class TradeFlowApp {
           <!-- Receiver Details -->
           <div class="grid grid-cols-2 gap-6 py-4 border-b border-slate-200 text-xs">
             <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200/60">
-              <span class="font-bold text-slate-900 uppercase tracking-wider text-[11px] block mb-1">Details of Buyer | Quoted To:</span>
+              <span class="font-bold text-slate-900 uppercase tracking-wider text-xs block mb-1">Details of Buyer | Quoted To:</span>
               <p class="font-bold text-slate-900 text-sm">${tfEscapeHtml(retailer.name)}</p>
               <p class="text-slate-600 mt-0.5">${tfEscapeHtml(retailer.billingAddress)}</p>
               <p class="mt-1"><strong>Phone:</strong> <span class="font-mono-num font-bold">${tfEscapeHtml(currentPhone)}</span></p>
               <p class="mt-1"><strong>GSTIN:</strong> <span class="font-mono-num font-bold">${tfEscapeHtml(retailer.gstin)}</span></p>
             </div>
             <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200/60">
-              <span class="font-bold text-slate-900 uppercase tracking-wider text-[11px] block mb-1">Destination Godown:</span>
+              <span class="font-bold text-slate-900 uppercase tracking-wider text-xs block mb-1">Destination Godown:</span>
               <p class="font-bold text-slate-900 text-sm">${tfEscapeHtml(retailer.name)}</p>
               <p class="text-slate-600 mt-0.5">${tfEscapeHtml(retailer.shippingAddress)}</p>
-              <p class="mt-2 text-slate-500 italic text-[11px]">Final Tax Invoice and E-Way bill will accompany physical dispatch.</p>
+              <p class="mt-2 text-slate-500 italic text-xs">Final Tax Invoice and E-Way bill will accompany physical dispatch.</p>
             </div>
           </div>
 
@@ -7167,13 +7167,13 @@ class TradeFlowApp {
           <!-- Footer Terms -->
           <div class="grid grid-cols-2 gap-6 mt-6 pt-4 border-t border-slate-200 text-xs">
             <div>
-              <span class="font-bold text-slate-800 uppercase tracking-wider text-[11px] block mb-1">Commercial Booking Terms:</span>
-              <p class="text-slate-500 text-[11px]">1. Production and bottling will commence immediately upon advance clearance.<br>2. Final balance payment must be cleared against LR copy before handover at destination godown.<br>3. Final GST Tax Invoice with E-Way Bill will be issued at the time of loading.</p>
+              <span class="font-bold text-slate-800 uppercase tracking-wider text-xs block mb-1">Commercial Booking Terms:</span>
+              <p class="text-slate-500 text-xs">1. Production and bottling will commence immediately upon advance clearance.<br>2. Final balance payment must be cleared against LR copy before handover at destination godown.<br>3. Final GST Tax Invoice with E-Way Bill will be issued at the time of loading.</p>
             </div>
             <div class="text-right flex flex-col justify-end items-end">
               <p class="font-bold text-slate-800 text-xs">For ${tfEscapeHtml(profile.legalName)}</p>
               <div class="h-12"></div>
-              <p class="border-t border-slate-400 pt-1 text-[11px] text-slate-600 font-medium">Authorized Signatory</p>
+              <p class="border-t border-slate-400 pt-1 text-xs text-slate-600 font-medium">Authorized Signatory</p>
             </div>
           </div>
         </div>
@@ -7189,13 +7189,13 @@ class TradeFlowApp {
           ${editNoticeBanner}
           
           <div class="mb-4 p-2 bg-rose-600 text-white text-center text-xs font-black uppercase tracking-wider rounded-lg shadow-xs">
-            ⚠️ DELIVERY CHALLAN FOR JOB WORK (RULE 55 CGST RULES) — SUPPLY MEANT FOR JOB WORK PURPOSES ONLY - NOT FOR SALE
+            DELIVERY CHALLAN FOR JOB WORK (RULE 55 CGST RULES) — SUPPLY MEANT FOR JOB WORK PURPOSES ONLY - NOT FOR SALE
           </div>
 
           <div class="flex justify-between items-start border-b-2 border-slate-900 pb-5">
             <div>
               <div class="flex items-center gap-2">
-                <span class="p-2 bg-slate-900 text-white rounded-lg font-bold text-xl">📦</span>
+                <span class="p-2 bg-slate-900 text-white rounded-lg font-bold text-xl"><i data-lucide="package" class="w-6 h-6 inline-block"></i></span>
                 <div>
                   <h1 class="text-2xl font-black text-slate-900 tracking-tight">${tfEscapeHtml(profile.brandName)}</h1>
                   <p class="text-xs text-slate-500 font-medium">${tfEscapeHtml(profile.legalName)}</p>
@@ -7222,13 +7222,13 @@ class TradeFlowApp {
           <!-- Consignor & Consignee Dual Addresses -->
           <div class="grid grid-cols-2 gap-6 py-4 border-b border-slate-200 text-xs">
             <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200/60">
-              <span class="font-bold text-slate-900 uppercase tracking-wider text-[11px] block mb-1">Consignor (Principal Owner of Materials):</span>
+              <span class="font-bold text-slate-900 uppercase tracking-wider text-xs block mb-1">Consignor (Principal Owner of Materials):</span>
               <p class="font-bold text-slate-900 text-sm">${tfEscapeHtml(profile.legalName)}</p>
               <p class="text-slate-600 mt-0.5">${tfEscapeHtml(profile.address)}, ${tfEscapeHtml(profile.city)}, ${tfEscapeHtml(profile.state)}</p>
               <p class="mt-1"><strong>GSTIN:</strong> <span class="font-mono-num font-bold">${tfEscapeHtml(profile.gstin)}</span></p>
             </div>
             <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200/60">
-              <span class="font-bold text-slate-900 uppercase tracking-wider text-[11px] block mb-1">Consignee (Job Worker / Manufacturer):</span>
+              <span class="font-bold text-slate-900 uppercase tracking-wider text-xs block mb-1">Consignee (Job Worker / Manufacturer):</span>
               <p class="font-bold text-slate-900 text-sm">${tfEscapeHtml(order.manufacturerName)}</p>
               <p class="text-slate-600 mt-0.5">${tfEscapeHtml((this.data.contacts.find(c => c.id === order.manufacturerId) || {}).billingAddress || 'Address not set')}</p>
               <p class="mt-1"><strong>GSTIN:</strong> <span class="font-mono-num font-bold">${tfEscapeHtml((this.data.contacts.find(c => c.id === order.manufacturerId) || {}).gstin || 'Not set')}</span></p>
@@ -7287,7 +7287,7 @@ class TradeFlowApp {
           </div>
 
           <!-- Statutory Declaration -->
-          <div class="mt-4 p-3 bg-amber-50/60 border border-amber-200/70 rounded-lg text-[11px] text-slate-700 leading-relaxed">
+          <div class="mt-4 p-3 bg-amber-50/60 border border-amber-200/70 rounded-lg text-xs text-slate-700 leading-relaxed">
             <strong>Job Work Declaration under Section 143 CGST Act:</strong> It is certified that the packaging materials described above are sent purely for the purpose of job work processing, bottling, induction sealing, and carton packaging of pickles on our behalf. The manufactured pickles shall be returned or dispatched under our instructions as per Rule 55.
           </div>
 
@@ -7295,12 +7295,12 @@ class TradeFlowApp {
             <div>
               <p class="font-bold text-slate-800 text-xs">Factory Gate Receipt Acknowledgment</p>
               <div class="h-12"></div>
-              <p class="border-t border-slate-400 pt-1 text-[11px] text-slate-600 font-medium">Signature & Stamp of Job Worker (Factory)</p>
+              <p class="border-t border-slate-400 pt-1 text-xs text-slate-600 font-medium">Signature & Stamp of Job Worker (Factory)</p>
             </div>
             <div class="text-right flex flex-col justify-end items-end">
               <p class="font-bold text-slate-800 text-xs">For ${tfEscapeHtml(profile.legalName)}</p>
               <div class="h-12"></div>
-              <p class="border-t border-slate-400 pt-1 text-[11px] text-slate-600 font-medium">Authorized Signatory (Consignor)</p>
+              <p class="border-t border-slate-400 pt-1 text-xs text-slate-600 font-medium">Authorized Signatory (Consignor)</p>
             </div>
           </div>
         </div>
@@ -7323,13 +7323,13 @@ class TradeFlowApp {
           ${editNoticeBanner}
 
           <div class="mb-4 p-2 bg-rose-700 text-white text-center text-xs font-black uppercase tracking-wider rounded-lg shadow-xs">
-            ✂️ GST CREDIT NOTE (ISSUED UNDER SECTION 34 OF CGST ACT, 2017)
+            GST CREDIT NOTE (ISSUED UNDER SECTION 34 OF CGST ACT, 2017)
           </div>
 
           <div class="flex justify-between items-start border-b-2 border-slate-900 pb-5">
             <div>
               <div class="flex items-center gap-2">
-                <span class="p-2 bg-rose-600 text-white rounded-lg font-bold text-xl">🌶️</span>
+                <span class="p-2 bg-rose-600 text-white rounded-lg font-bold text-xl"><i data-lucide="flame" class="w-6 h-6 inline-block"></i></span>
                 <div>
                   <h1 class="text-2xl font-black text-slate-900 tracking-tight">${tfEscapeHtml(profile.brandName)}</h1>
                   <p class="text-xs text-slate-500 font-medium">${tfEscapeHtml(profile.legalName)}</p>
@@ -7357,7 +7357,7 @@ class TradeFlowApp {
 
           <!-- Recipient Details -->
           <div class="my-5 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs">
-            <span class="font-bold text-slate-900 uppercase tracking-wider text-[11px] block mb-1">Details of Recipient (Customer):</span>
+            <span class="font-bold text-slate-900 uppercase tracking-wider text-xs block mb-1">Details of Recipient (Customer):</span>
             <p class="text-sm font-bold text-slate-900">${tfEscapeHtml(retailer.name)}</p>
             <p class="text-slate-600 mt-0.5">${tfEscapeHtml(retailer.billingAddress)}</p>
             <p class="mt-1"><strong>GSTIN:</strong> <span class="font-mono-num font-bold">${tfEscapeHtml(retailer.gstin)}</span> • <strong>State:</strong> ${tfEscapeHtml(retailer.state)} (${tfEscapeHtml(retailer.stateCode)})</p>
@@ -7381,7 +7381,7 @@ class TradeFlowApp {
                   <td class="py-2.5 px-3 text-center font-mono-num">1</td>
                   <td class="py-2.5 px-3">
                     <strong>Transit Breakage / Seal Leakage Adjustment</strong>
-                    <p class="text-slate-500 text-[11px] mt-0.5">${tfEscapeHtml(order.damageNote || '')}</p>
+                    <p class="text-slate-500 text-xs mt-0.5">${tfEscapeHtml(order.damageNote || '')}</p>
                   </td>
                   <td class="py-2.5 px-3 text-center font-mono-num">${tfEscapeHtml([...new Set((order.items || []).map(i => this.itemHsn(i)))].join(', ') || '—')}</td>
                   <td class="py-2.5 px-3 text-right font-mono-num font-semibold text-slate-900">${tfEscapeHtml(this.formatCurrency(damageTaxable))}</td>
@@ -7414,7 +7414,7 @@ class TradeFlowApp {
               </div>
             </div>
 
-            <div class="p-3 bg-amber-50/60 border border-amber-200/70 rounded-lg text-[11px] text-slate-700 leading-relaxed">
+            <div class="p-3 bg-amber-50/60 border border-amber-200/70 rounded-lg text-xs text-slate-700 leading-relaxed">
               <strong>Statutory Effect u/s 34(2) CGST Act:</strong>
               This Credit Note formally reverses the corresponding output tax liability of the supplier and input tax credit claimed by the buyer. It will be reported in Table 9B of GSTR-1 for the relevant tax period.
             </div>
@@ -7422,12 +7422,12 @@ class TradeFlowApp {
 
           <div class="grid grid-cols-2 gap-6 mt-8 pt-4 border-t border-slate-200 text-xs">
             <div>
-              <p class="text-[11px] text-slate-500 italic">Adjusted in customer ledger balance automatically.</p>
+              <p class="text-xs text-slate-500 italic">Adjusted in customer ledger balance automatically.</p>
             </div>
             <div class="text-right flex flex-col justify-end items-end">
               <p class="font-bold text-slate-800 text-xs">For ${tfEscapeHtml(profile.legalName)}</p>
               <div class="h-12"></div>
-              <p class="border-t border-slate-400 pt-1 text-[11px] text-slate-600 font-medium">Authorized Signatory</p>
+              <p class="border-t border-slate-400 pt-1 text-xs text-slate-600 font-medium">Authorized Signatory</p>
             </div>
           </div>
         </div>
@@ -7445,7 +7445,7 @@ class TradeFlowApp {
         <div class="flex justify-between items-start border-b-2 border-slate-900 pb-5">
           <div>
             <div class="flex items-center gap-2">
-              <span class="p-2 bg-amber-500 text-white rounded-lg font-bold text-xl">🌶️</span>
+              <span class="p-2 bg-amber-500 text-white rounded-lg font-bold text-xl"><i data-lucide="flame" class="w-6 h-6 inline-block"></i></span>
               <div>
                 <h1 class="text-2xl font-black text-slate-900 tracking-tight">${tfEscapeHtml(profile.brandName)}</h1>
                 <p class="text-xs text-slate-500 font-medium">${tfEscapeHtml(profile.legalName)}</p>
@@ -7463,7 +7463,7 @@ class TradeFlowApp {
             <span class="inline-block px-3 py-1.5 bg-slate-900 text-white text-xs font-black uppercase tracking-wider rounded-lg shadow-xs">
               TAX INVOICE
             </span>
-            <span class="block text-[10px] text-slate-400 mt-0.5">Original for Recipient • Sec 31 CGST</span>
+            <span class="block text-xs text-slate-400 mt-0.5">Original for Recipient • Sec 31 CGST</span>
             
             <div class="mt-3 space-y-1.5 text-xs">
               <p>
@@ -7501,7 +7501,7 @@ class TradeFlowApp {
         <!-- Bill To / Ship To Dual Addresses -->
         <div class="grid grid-cols-2 gap-6 py-4 border-b border-slate-200 text-xs">
           <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200/60">
-            <span class="font-bold text-slate-900 uppercase tracking-wider text-[11px] block mb-1">Details of Receiver | Billed To:</span>
+            <span class="font-bold text-slate-900 uppercase tracking-wider text-xs block mb-1">Details of Receiver | Billed To:</span>
             <p class="font-bold text-slate-900 text-sm">${tfEscapeHtml(retailer.name)}</p>
             <p class="text-slate-600 mt-0.5">${tfEscapeHtml(retailer.billingAddress)}</p>
             <p class="mt-1"><strong>Phone / WA:</strong> <span class="font-mono-num font-bold text-slate-800">${tfEscapeHtml(currentPhone)}</span></p>
@@ -7510,7 +7510,7 @@ class TradeFlowApp {
           </div>
 
           <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200/60">
-            <span class="font-bold text-slate-900 uppercase tracking-wider text-[11px] block mb-1">Details of Consignee | Shipped To:</span>
+            <span class="font-bold text-slate-900 uppercase tracking-wider text-xs block mb-1">Details of Consignee | Shipped To:</span>
             <p class="font-bold text-slate-900 text-sm">${tfEscapeHtml(retailer.name)}</p>
             <p class="text-slate-600 mt-0.5">${tfEscapeHtml(retailer.shippingAddress)}</p>
             
@@ -7532,7 +7532,7 @@ class TradeFlowApp {
                 ${order.lrNumber ? `<p><strong>Transport / LR No:</strong> <span class="font-mono-num font-semibold">${tfEscapeHtml(order.lrNumber)}</span> (${tfEscapeHtml(order.transporterName || '')})</p>` : ''}
                 ${order.vehicleNumber ? `<p><strong>Vehicle No:</strong> <span class="font-mono-num font-semibold">${tfEscapeHtml(order.vehicleNumber)}</span></p>` : ''}
                 ${order.ewayBillNumber ? `<p><strong>E-Way Bill No:</strong> <span class="font-mono-num font-bold text-amber-700">${tfEscapeHtml(order.ewayBillNumber)}</span></p>` : ''}
-                ${!order.lrNumber && !order.vehicleNumber ? `<p class="text-slate-400 italic text-[11px] no-print">Dispatch details not yet assigned</p>` : ''}
+                ${!order.lrNumber && !order.vehicleNumber ? `<p class="text-slate-400 italic text-xs no-print">Dispatch details not yet assigned</p>` : ''}
               `}
             </div>
           </div>
@@ -7560,28 +7560,28 @@ class TradeFlowApp {
           <div class="mt-2 p-2.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-4">
               <div>
-                <span class="text-[10px] text-slate-400 uppercase font-bold block">Batch No:</span>
+                <span class="text-xs text-slate-400 uppercase font-bold block">Batch No:</span>
                 ${isEdit ? 
                   `<input type="text" value="${tfEscapeHtml(order.batchNumber || '')}" placeholder="e.g. MNG-26/B1" onchange="app.invoiceDraftData.batchNumber = this.value" class="p-1 border border-amber-300 rounded font-mono-num font-bold text-xs w-28">` : 
                   `<span class="font-mono-num font-bold text-slate-800">${tfEscapeHtml(order.batchNumber || 'Assigned at Bottling')}</span>`
                 }
               </div>
               <div>
-                <span class="text-[10px] text-slate-400 uppercase font-bold block">Mfg / Packing Date:</span>
+                <span class="text-xs text-slate-400 uppercase font-bold block">Mfg / Packing Date:</span>
                 ${isEdit ? 
                   `<input type="text" value="${tfEscapeHtml(order.mfgDate || '')}" placeholder="e.g. 09/2026" onchange="app.invoiceDraftData.mfgDate = this.value" class="p-1 border border-amber-300 rounded font-mono-num text-xs w-24">` : 
                   `<span class="font-mono-num text-slate-800">${tfEscapeHtml(order.mfgDate || this.formatDate(order.date))}</span>`
                 }
               </div>
               <div>
-                <span class="text-[10px] text-slate-400 uppercase font-bold block">Best Before:</span>
+                <span class="text-xs text-slate-400 uppercase font-bold block">Best Before:</span>
                 ${isEdit ? 
                   `<input type="text" value="${tfEscapeHtml(order.bestBefore || '12 Months')}" onchange="app.invoiceDraftData.bestBefore = this.value" class="p-1 border border-amber-300 rounded font-medium text-xs w-24">` : 
                   `<span class="font-medium text-slate-800">${tfEscapeHtml(order.bestBefore || '12 Months from Packing')}</span>`
                 }
               </div>
             </div>
-            <span class="text-[10px] font-mono-num text-slate-500 bg-white px-2 py-1 rounded border border-slate-200">
+            <span class="text-xs font-mono-num text-slate-500 bg-white px-2 py-1 rounded border border-slate-200">
               FSSAI Lic: ${tfEscapeHtml(profile.fssai)}
             </span>
           </div>
@@ -7598,7 +7598,7 @@ class TradeFlowApp {
               <p>IFSC Code: <strong class="font-mono-num">${tfEscapeHtml(profile.ifsc)}</strong></p>
               <p>UPI ID: <strong class="font-mono-num text-amber-800 font-bold">${tfEscapeHtml(profile.upiId)}</strong></p>
             </div>
-            <p class="text-[10px] text-slate-400">Scan & pay using any UPI app (GPay, PhonePe, Paytm)</p>
+            <p class="text-xs text-slate-400">Scan & pay using any UPI app (GPay, PhonePe, Paytm)</p>
           </div>
 
           <div class="space-y-1.5">
@@ -7628,17 +7628,17 @@ class TradeFlowApp {
         <!-- Footer Terms & Signature -->
         <div class="grid grid-cols-2 gap-6 mt-6 pt-4 border-t border-slate-200 text-xs">
           <div>
-            <span class="font-bold text-slate-800 uppercase tracking-wider text-[11px] block mb-1">Terms & Conditions:</span>
+            <span class="font-bold text-slate-800 uppercase tracking-wider text-xs block mb-1">Terms & Conditions:</span>
             ${isEdit ? 
               `<textarea rows="3" onchange="app.invoiceDraftData.customNotes = this.value" class="w-full p-2 border border-slate-300 rounded text-xs font-mono-num">${tfEscapeHtml(order.customNotes || this.defaultInvoiceNotes())}</textarea>` : 
-              `<p class="text-slate-500 whitespace-pre-line text-[11px]">${tfEscapeHtml(order.customNotes || this.defaultInvoiceNotes())}</p>`
+              `<p class="text-slate-500 whitespace-pre-line text-xs">${tfEscapeHtml(order.customNotes || this.defaultInvoiceNotes())}</p>`
             }
           </div>
 
           <div class="text-right flex flex-col justify-end items-end">
             <p class="font-bold text-slate-800 text-xs">For ${tfEscapeHtml(profile.legalName)}</p>
             <div class="h-14"></div>
-            <p class="border-t border-slate-400 pt-1 text-[11px] text-slate-600 font-medium">Authorized Signatory</p>
+            <p class="border-t border-slate-400 pt-1 text-xs text-slate-600 font-medium">Authorized Signatory</p>
           </div>
         </div>
 
@@ -7727,7 +7727,7 @@ class TradeFlowApp {
     this.toggleInvoiceEditMode(); // switch back to view mode
 
     // Show feedback toast
-    this.showToast(`✓ Invoice ${this.currentInvoiceOrder.invoiceNumber} saved successfully! All tables, balances, and Excel sync state updated.`);
+    this.showToast(`Invoice ${this.currentInvoiceOrder.invoiceNumber} saved successfully! All tables, balances, and Excel sync state updated.`);
   }
 
   closeInvoiceModal() {
@@ -7749,7 +7749,7 @@ class TradeFlowApp {
       const validation = this.validateInvoice(order);
       if (!validation.isValid) {
         this.openValidationModal(`Invoice Blocked: ${order.invoiceNumber || order.id || 'Draft'}`, validation, null);
-        this.showToast('🛑 Invoice cannot be printed: statutory issues detected.');
+        this.showToast('Invoice cannot be printed: statutory issues detected.');
         return;
       }
       if (validation.warnings.length > 0) {
@@ -7773,7 +7773,7 @@ class TradeFlowApp {
       const validation = this.validateInvoice(order);
       if (!validation.isValid) {
         this.openValidationModal(`Invoice Blocked: ${order.invoiceNumber || order.id || 'Draft'}`, validation, null);
-        this.showToast('🛑 Invoice download blocked: statutory issues detected.');
+        this.showToast('Invoice download blocked: statutory issues detected.');
         return;
       }
       if (validation.warnings.length > 0) {
@@ -7808,7 +7808,7 @@ class TradeFlowApp {
 
       html2pdf().set(opt).from(container).save().then(() => {
         if (showToast) {
-          this.showToast(`📥 Downloaded ${filename} successfully!`);
+          this.showToast(`Downloaded ${filename} successfully!`);
         }
       });
     } else {
@@ -8007,7 +8007,7 @@ class TradeFlowApp {
   openInvoiceStudioModal(orderId = null) {
     const select = document.getElementById('studio-order-select');
     if (select) {
-      let optionsHtml = `<option value="draft">✨ Freeform Custom Invoice (Blank Draft)</option>`;
+      let optionsHtml = `<option value="draft">Freeform Custom Invoice (Blank Draft)</option>`;
       if (this.data && this.data.orders) {
         optionsHtml += this.data.orders.map(o => `
           <option value="${tfEscapeHtml(o.id)}">${tfEscapeHtml(o.invoiceNumber || o.id)} • ${tfEscapeHtml(o.retailerName)} (${tfEscapeHtml(this.formatCurrency(o.totalInvoiceAmount))})</option>
@@ -8268,10 +8268,10 @@ class TradeFlowApp {
       const subspan = typeof el.querySelector === 'function' ? el.querySelector('span:last-child') : null;
       if (isMatch) {
         el.className = 'studio-nav-tab px-3 py-1.5 rounded-lg font-black text-xs bg-emerald-600 text-white flex flex-col items-center leading-none whitespace-nowrap shadow-sm border border-emerald-700 cursor-pointer transition-all active';
-        if (subspan) subspan.className = 'text-[8.5px] font-bold text-emerald-100 mt-0.5';
+        if (subspan) subspan.className = 'text-xs font-bold text-emerald-100 mt-0.5';
       } else {
         el.className = 'studio-nav-tab px-3 py-1.5 rounded-lg font-extrabold text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white hover:text-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 shadow-2xs flex flex-col items-center leading-none whitespace-nowrap cursor-pointer transition-all';
-        if (subspan) subspan.className = 'text-[8.5px] font-bold text-slate-600 dark:text-slate-300 mt-0.5';
+        if (subspan) subspan.className = 'text-xs font-bold text-slate-600 dark:text-slate-300 mt-0.5';
       }
     });
 
@@ -8352,15 +8352,15 @@ class TradeFlowApp {
       }`;
 
       const numBadge = isCompleted
-        ? `<span class="step-num w-5 h-5 rounded-full bg-emerald-600 border border-emerald-700 text-white flex items-center justify-center text-[10px] font-black shrink-0 shadow-xs">✓</span>`
-        : `<span class="step-num w-5 h-5 rounded-full ${tfEscapeHtml(isActive ? 'bg-emerald-700 text-white border-emerald-800 font-black' : 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-400 dark:border-slate-600 font-black')} border flex items-center justify-center text-[10px] shrink-0 font-mono-num">${tfEscapeHtml(idx + 1)}</span>`;
+        ? `<span class="step-num w-5 h-5 rounded-full bg-emerald-600 border border-emerald-700 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-xs">✓</span>`
+        : `<span class="step-num w-5 h-5 rounded-full ${tfEscapeHtml(isActive ? 'bg-emerald-700 text-white border-emerald-800 font-black' : 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-400 dark:border-slate-600 font-black')} border flex items-center justify-center text-xs shrink-0 font-mono-num">${tfEscapeHtml(idx + 1)}</span>`;
 
       return `
         <button type="button" onclick="app.goToStudioStep(${tfEscapeHtml(idx)})" class="${tfEscapeHtml(stepClasses)}">
           ${numBadge}
           <div class="min-w-0 flex-1">
             <p class="text-xs truncate leading-tight font-extrabold text-slate-900 dark:text-white">${tfEscapeHtml(s.name)}</p>
-            <span class="text-[9.5px] text-slate-700 dark:text-slate-300 font-bold flex items-center gap-1 mt-0.5">
+            <span class="text-xs text-slate-700 dark:text-slate-300 font-bold flex items-center gap-1 mt-0.5">
               <i data-lucide="${tfEscapeHtml(s.icon)}" class="w-3 h-3 text-slate-600 dark:text-slate-400"></i>
               <span>Step ${tfEscapeHtml(idx + 1)}</span>
             </span>
@@ -8371,14 +8371,14 @@ class TradeFlowApp {
 
     sidebar.innerHTML = `
       <div class="mb-2.5 px-1 flex items-center justify-between">
-        <span class="text-[10.5px] font-black uppercase tracking-wider text-slate-900 dark:text-white">Workflow Steps</span>
-        <span class="text-[9.5px] font-black text-slate-900 dark:text-emerald-300 px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 border border-emerald-500/40">${tfEscapeHtml(activeStep + 1)} of ${tfEscapeHtml(steps.length)}</span>
+        <span class="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">Workflow Steps</span>
+        <span class="text-xs font-black text-slate-900 dark:text-emerald-300 px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 border border-emerald-500/40">${tfEscapeHtml(activeStep + 1)} of ${tfEscapeHtml(steps.length)}</span>
       </div>
       <div class="flex-1 overflow-y-auto space-y-0.5 pr-0.5">
         ${stepsHtml}
       </div>
-      <div class="mt-auto pt-2.5 border-t border-slate-200 dark:border-slate-800 text-[10px] text-slate-700 dark:text-slate-300 px-1 font-bold">
-        <div class="flex items-center justify-between text-[9.5px] text-slate-800 dark:text-slate-200 mb-1 font-extrabold">
+      <div class="mt-auto pt-2.5 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 px-1 font-bold">
+        <div class="flex items-center justify-between text-xs text-slate-800 dark:text-slate-200 mb-1 font-extrabold">
           <span>Completion</span>
           <span class="font-mono-num text-slate-900 dark:text-white font-black">${tfEscapeHtml(Math.round(((activeStep + 1) / steps.length) * 100))}%</span>
         </div>
@@ -8418,13 +8418,13 @@ class TradeFlowApp {
       <div class="mb-3.5 pb-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
         <div>
           <div class="flex items-center gap-2">
-            <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Step ${tfEscapeHtml(step + 1)} of ${tfEscapeHtml(steps.length)}</span>
+            <span class="px-2 py-0.5 rounded text-xs font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">Step ${tfEscapeHtml(step + 1)} of ${tfEscapeHtml(steps.length)}</span>
             <h4 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
               <i data-lucide="${tfEscapeHtml(stepInfo.icon)}" class="w-4 h-4 text-emerald-500"></i>
               <span>${tfEscapeHtml(stepInfo.name)}</span>
             </h4>
           </div>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Customize fields for ${tfEscapeHtml(docType.toLowerCase())} — updates live on A4 sheet preview.</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Customize fields for ${tfEscapeHtml(docType.toLowerCase())} — updates live on A4 sheet preview.</p>
         </div>
       </div>
     `;
@@ -8478,7 +8478,7 @@ class TradeFlowApp {
                 <span>Gross Invoice Total:</span>
                 <span class="font-mono text-emerald-600 dark:text-emerald-400 font-black text-sm">${tfEscapeHtml(this.formatCurrency(o.totalInvoiceAmount))}</span>
               </div>
-              <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11px] pt-1 border-t border-slate-200 dark:border-slate-700">
+              <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs pt-1 border-t border-slate-200 dark:border-slate-700">
                 <span>Tax Breakdown:</span>
                 <span class="font-mono font-semibold">${tfEscapeHtml(this.gstLabels(o).combined)} (${tfEscapeHtml(this.formatCurrency((o.cgstAmount || 0) + (o.sgstAmount || 0) + (o.igstAmount || 0)))})</span>
               </div>
@@ -8527,7 +8527,7 @@ class TradeFlowApp {
         const rowsHtml = o.items.map((it, idx) => `
           <div class="p-3 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2 mb-2">
             <div class="flex items-center justify-between gap-2">
-              <span class="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold flex items-center justify-center">${tfEscapeHtml(idx + 1)}</span>
+              <span class="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold flex items-center justify-center">${tfEscapeHtml(idx + 1)}</span>
               <input type="text" value="${tfEscapeHtml(it.name)}" oninput="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'name', this.value); app.studioIsDirty = true;" placeholder="Product Name" class="flex-1 p-1.5 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-xs font-bold text-slate-900 dark:text-white">
               <input type="text" value="${tfEscapeHtml(it.variant)}" oninput="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'variant', this.value); app.studioIsDirty = true;" placeholder="Variant (e.g. 500g Jar)" class="w-28 p-1.5 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-xs text-slate-600 dark:text-slate-300">
               <button type="button" onclick="app.removeStudioItem(${tfEscapeHtml(idx)})" class="text-rose-500 hover:text-rose-600 p-1" title="Delete product">
@@ -8536,19 +8536,19 @@ class TradeFlowApp {
             </div>
             <div class="grid grid-cols-4 gap-2 text-xs">
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium">Cases</label>
+                <label class="block text-xs text-slate-400 font-medium">Cases</label>
                 <input type="number" min="1" value="${tfEscapeHtml(it.cases || Math.ceil(it.quantity / (it.casePack || 24)))}" oninput="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'cases', this.value); app.studioIsDirty = true;" class="w-full p-1 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-center font-mono font-bold text-slate-900 dark:text-white">
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium">Jars Qty</label>
+                <label class="block text-xs text-slate-400 font-medium">Jars Qty</label>
                 <input type="number" min="1" value="${tfEscapeHtml(it.quantity)}" oninput="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'quantity', this.value); app.studioIsDirty = true;" class="w-full p-1 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-right font-mono font-bold text-slate-900 dark:text-white">
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium">Rate (₹)</label>
+                <label class="block text-xs text-slate-400 font-medium">Rate (₹)</label>
                 <input type="number" step="0.5" value="${tfEscapeHtml(it.unitRate)}" oninput="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'unitRate', this.value); app.studioIsDirty = true;" class="w-full p-1 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-right font-mono font-bold text-slate-900 dark:text-white">
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium">Amount (₹)</label>
+                <label class="block text-xs text-slate-400 font-medium">Amount (₹)</label>
                 <div class="p-1 font-mono font-bold text-right text-emerald-500">${tfEscapeHtml(this.formatCurrency(it.totalAmount))}</div>
               </div>
             </div>
@@ -8667,10 +8667,10 @@ class TradeFlowApp {
                 <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Price Validity (Days)</label>
                 <input id="studio-input-validity" type="number" value="${tfEscapeHtml(o.validityDays || 15)}" oninput="app.studioDraftData.validityDays = parseInt(this.value) || 15; app.studioIsDirty = true; app.renderStudioInvoiceContent();" class="w-full p-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono text-slate-900 dark:text-white">
                 <div class="flex items-center gap-1.5 mt-1.5">
-                  <span class="text-[10px] text-slate-400 font-semibold">Quick:</span>
-                  <button type="button" onclick="app.setStudioValidity(7)" class="px-2 py-0.5 text-[10px] font-bold rounded cursor-pointer ${tfEscapeHtml(o.validityDays == 7 ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 border border-slate-300 dark:border-slate-700')}">7d</button>
-                  <button type="button" onclick="app.setStudioValidity(15)" class="px-2 py-0.5 text-[10px] font-bold rounded cursor-pointer ${tfEscapeHtml(o.validityDays == 15 ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 border border-slate-300 dark:border-slate-700')}">15d</button>
-                  <button type="button" onclick="app.setStudioValidity(30)" class="px-2 py-0.5 text-[10px] font-bold rounded cursor-pointer ${tfEscapeHtml(o.validityDays == 30 ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 border border-slate-300 dark:border-slate-700')}">30d</button>
+                  <span class="text-xs text-slate-400 font-semibold">Quick:</span>
+                  <button type="button" onclick="app.setStudioValidity(7)" class="px-2 py-0.5 text-xs font-bold rounded cursor-pointer ${tfEscapeHtml(o.validityDays == 7 ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 border border-slate-300 dark:border-slate-700')}">7d</button>
+                  <button type="button" onclick="app.setStudioValidity(15)" class="px-2 py-0.5 text-xs font-bold rounded cursor-pointer ${tfEscapeHtml(o.validityDays == 15 ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 border border-slate-300 dark:border-slate-700')}">15d</button>
+                  <button type="button" onclick="app.setStudioValidity(30)" class="px-2 py-0.5 text-xs font-bold rounded cursor-pointer ${tfEscapeHtml(o.validityDays == 30 ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 border border-slate-300 dark:border-slate-700')}">30d</button>
                 </div>
               </div>
               <div>
@@ -8687,8 +8687,8 @@ class TradeFlowApp {
                 <span>Estimated Quotation Value:</span>
                 <span class="font-mono text-emerald-600 dark:text-emerald-400 font-black text-sm">${tfEscapeHtml(this.formatCurrency(o.totalInvoiceAmount))}</span>
               </div>
-              <p class="text-[10.5px] text-slate-500 dark:text-slate-400 italic pt-1 border-t border-slate-200 dark:border-slate-700">
-                💡 Proforma invoices serve as commercial price quotations before final tax billing. Convert to official Tax Invoice at Step 5.
+              <p class="text-xs text-slate-500 dark:text-slate-400 italic pt-1 border-t border-slate-200 dark:border-slate-700">
+                Proforma invoices serve as commercial price quotations before final tax billing. Convert to official Tax Invoice at Step 5.
               </p>
             </div>
           </div>
@@ -8720,10 +8720,10 @@ class TradeFlowApp {
         const rowsHtml = o.items.map((it, idx) => `
           <div class="p-3 bg-white dark:bg-slate-800/80 border ${tfEscapeHtml(it.isOptional ? 'border-amber-400/60 bg-amber-500/5' : 'border-slate-200 dark:border-slate-700')} rounded-xl space-y-2 mb-2">
             <div class="flex items-center justify-between gap-2">
-              <span class="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold flex items-center justify-center">${tfEscapeHtml(idx + 1)}</span>
+              <span class="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold flex items-center justify-center">${tfEscapeHtml(idx + 1)}</span>
               <input type="text" value="${tfEscapeHtml(it.name)}" oninput="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'name', this.value); app.studioIsDirty = true;" placeholder="Item Name" class="flex-1 p-1.5 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-xs font-bold text-slate-900 dark:text-white">
-              <label class="flex items-center gap-1.5 text-[10px] font-bold ${tfEscapeHtml(it.isOptional ? 'text-amber-500' : 'text-slate-400')} cursor-pointer px-2 py-1 rounded bg-slate-100 dark:bg-slate-700">
-                <input type="checkbox" ${tfEscapeHtml(it.isOptional ? 'checked' : '')} onchange="app.studioDraftData.items[${tfEscapeHtml(idx)}].isOptional = this.checked; app.studioIsDirty = true; app.recalculateStudioFinancials(); app.renderStudioEditor(); app.renderStudioInvoiceContent();" class="accent-amber-500 rounded">
+              <label class="flex items-center gap-1.5 text-xs font-bold ${tfEscapeHtml(it.isOptional ? 'text-amber-500' : 'text-slate-400')} cursor-pointer px-2 py-1 rounded bg-slate-100 dark:bg-slate-700">
+                <input type="checkbox" ${tfEscapeHtml(it.isOptional ? 'checked' : '')} onchange="app.studioDraftData.items[${tfEscapeHtml(idx)}].isOptional = this.checked; app.studioIsDirty = true; app.recalculateStudioFinancials(); app.renderStudioEditor(); app.renderStudioInvoiceContent();" class="accent-emerald-700 rounded">
                 <span>Optional</span>
               </label>
               <button type="button" onclick="app.removeStudioItem(${tfEscapeHtml(idx)})" class="text-rose-500 hover:text-rose-600 p-1">
@@ -8732,22 +8732,22 @@ class TradeFlowApp {
             </div>
             <div class="grid grid-cols-4 gap-2 text-xs">
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium">Cases</label>
+                <label class="block text-xs text-slate-400 font-medium">Cases</label>
                 <input type="number" min="1" value="${tfEscapeHtml(it.cases || Math.ceil(it.quantity / (it.casePack || 24)))}" oninput="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'cases', this.value); app.studioIsDirty = true;" class="w-full p-1 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-center font-mono font-bold text-slate-900 dark:text-white">
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium">Units (Jars)</label>
+                <label class="block text-xs text-slate-400 font-medium">Units (Jars)</label>
                 <input type="number" min="1" value="${tfEscapeHtml(it.quantity)}" oninput="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'quantity', this.value); app.studioIsDirty = true;" class="w-full p-1 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-right font-mono font-bold text-slate-900 dark:text-white">
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium">Quoted Rate (₹)</label>
+                <label class="block text-xs text-slate-400 font-medium">Quoted Rate (₹)</label>
                 <input type="number" step="0.5" value="${tfEscapeHtml(it.unitRate)}" oninput="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'unitRate', this.value); app.studioIsDirty = true;" class="w-full p-1 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-right font-mono font-bold text-slate-900 dark:text-white">
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium">Total (₹)</label>
+                <label class="block text-xs text-slate-400 font-medium">Total (₹)</label>
                 <div class="p-1 font-mono font-bold text-right ${tfEscapeHtml(it.isOptional ? 'text-amber-500' : 'text-emerald-500')}">
                   ${tfEscapeHtml(this.formatCurrency(it.totalAmount))}
-                  ${it.isOptional ? '<span class="text-[9px] block text-amber-500/80 font-normal">(Excluded)</span>' : ''}
+                  ${it.isOptional ? '<span class="text-xs block text-amber-500/80 font-normal">(Excluded)</span>' : ''}
                 </div>
               </div>
             </div>
@@ -8795,11 +8795,11 @@ class TradeFlowApp {
                 <span>Total Estimated Order Value:</span>
                 <span class="font-mono text-base text-emerald-500 font-black">${tfEscapeHtml(this.formatCurrency(o.totalInvoiceAmount))}</span>
               </div>
-              <p class="text-[11px] text-slate-400">Proforma estimates are non-taxable commercial quotes. Convert directly to official Tax Invoice once customer approves.</p>
+              <p class="text-xs text-slate-400">Proforma estimates are non-taxable commercial quotes. Convert directly to official Tax Invoice once customer approves.</p>
             </div>
             <button type="button" onclick="app.convertProformaToTaxInvoice()" class="btn-tactile w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg">
               <i data-lucide="zap" class="w-4 h-4"></i>
-              <span>Convert this Proforma to Official Tax Invoice 🚀</span>
+              <span>Convert this Proforma to Official Tax Invoice</span>
             </button>
           </div>
         `;
@@ -8848,7 +8848,7 @@ class TradeFlowApp {
         formHtml = `
           <div class="space-y-4">
             <div class="p-4 bg-emerald-500/10 border-2 border-emerald-500/40 rounded-2xl text-center space-y-1">
-              <label class="block text-[11px] font-black uppercase tracking-wider text-emerald-400">Amount Received in Advance (₹) *</label>
+              <label class="block text-xs font-black uppercase tracking-wider text-emerald-400">Amount Received in Advance (₹) *</label>
               <div class="flex items-center justify-center gap-1">
                 <span class="text-2xl font-black text-emerald-500">₹</span>
                 <input type="number" step="1" value="${tfEscapeHtml(amt)}" oninput="app.onStudioAdvAmountChange(this.value)" class="w-56 text-center text-3xl font-black font-mono text-emerald-400 bg-transparent border-b-2 border-emerald-500/50 outline-none focus:border-emerald-400">
@@ -8952,21 +8952,21 @@ class TradeFlowApp {
         const rowsHtml = o.items.map((it, idx) => `
           <div class="p-3 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2 mb-2">
             <div class="flex items-center justify-between gap-2">
-              <span class="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold flex items-center justify-center">${tfEscapeHtml(idx + 1)}</span>
+              <span class="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold flex items-center justify-center">${tfEscapeHtml(idx + 1)}</span>
               <input type="text" value="${tfEscapeHtml(it.name)}" oninput="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'name', this.value); app.studioIsDirty = true;" class="flex-1 p-1.5 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-xs font-bold text-slate-900 dark:text-white">
               <input type="text" value="${tfEscapeHtml(it.variant)}" oninput="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'variant', this.value); app.studioIsDirty = true;" class="w-28 p-1.5 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-xs text-slate-600 dark:text-slate-300">
             </div>
             <div class="grid grid-cols-3 gap-2 text-xs">
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium">Cases</label>
+                <label class="block text-xs text-slate-400 font-medium">Cases</label>
                 <input type="number" min="1" value="${tfEscapeHtml(it.cases || Math.ceil(it.quantity / (it.casePack || 24)))}" oninput="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'cases', this.value); app.studioIsDirty = true;" class="w-full p-1 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-center font-mono font-bold text-slate-900 dark:text-white">
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium">Total Jars</label>
+                <label class="block text-xs text-slate-400 font-medium">Total Jars</label>
                 <input type="number" min="1" value="${tfEscapeHtml(it.quantity)}" oninput="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'quantity', this.value); app.studioIsDirty = true;" class="w-full p-1 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-right font-mono font-bold text-slate-900 dark:text-white">
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium">Net Weight (kg)</label>
+                <label class="block text-xs text-slate-400 font-medium">Net Weight (kg)</label>
                 <div class="p-1 font-mono font-bold text-right text-slate-700 dark:text-slate-300">${tfEscapeHtml((it.quantity * 0.5).toFixed(1))} kg</div>
               </div>
             </div>
@@ -9012,7 +9012,7 @@ class TradeFlowApp {
             <div class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
               <div class="flex justify-between">
                 <span class="text-slate-500">Nature of Movement:</span>
-                <span class="font-bold text-sky-500">${tfEscapeHtml(o.movementPurpose || 'Job Work / Supply')}</span>
+                <span class="font-bold text-blue-500">${tfEscapeHtml(o.movementPurpose || 'Job Work / Supply')}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-slate-500">Consignee:</span>
@@ -9065,14 +9065,14 @@ class TradeFlowApp {
         `;
       } else if (step === 1) {
         const reasons = [
-          { name: 'Damaged Goods in Transit', emoji: '📦', desc: 'Jars cracked or leakage in transit' },
-          { name: 'Rate Difference / Price Correction', emoji: '📉', desc: 'Invoiced at higher rate than agreed' },
-          { name: 'Shortage in Delivery', emoji: '🚚', desc: 'Fewer cases received than invoiced' },
-          { name: 'Sales Return (Defective)', emoji: '🔄', desc: 'Goods returned by buyer' },
-          { name: 'Post-Sale Volume Discount', emoji: '🏷️', desc: 'Turnover or quarterly rebate' },
-          { name: 'Broken Packaging / Seal Leak', emoji: '🛑', desc: 'Factory seal compromised' },
-          { name: 'Billing / Calculation Error', emoji: '📝', desc: 'Clerical error in invoice' },
-          { name: 'Order Cancellation', emoji: '❌', desc: 'Non-delivery / cancellation' }
+          { name: 'Damaged Goods in Transit', icon: 'package', desc: 'Jars cracked or leakage in transit' },
+          { name: 'Rate Difference / Price Correction', icon: 'trending-down', desc: 'Invoiced at higher rate than agreed' },
+          { name: 'Shortage in Delivery', icon: 'truck', desc: 'Fewer cases received than invoiced' },
+          { name: 'Sales Return (Defective)', icon: 'refresh-cw', desc: 'Goods returned by buyer' },
+          { name: 'Post-Sale Volume Discount', icon: 'tag', desc: 'Turnover or quarterly rebate' },
+          { name: 'Broken Packaging / Seal Leak', icon: 'octagon', desc: 'Factory seal compromised' },
+          { name: 'Billing / Calculation Error', icon: 'pencil', desc: 'Clerical error in invoice' },
+          { name: 'Order Cancellation', icon: 'circle-x', desc: 'Non-delivery / cancellation' }
         ];
 
         const selectedReason = o.creditReason || this.studioCreditReason || reasons[0].name;
@@ -9087,10 +9087,10 @@ class TradeFlowApp {
                     ? 'active bg-rose-500/15 border-rose-500 text-white font-bold shadow-xs ring-1 ring-rose-500/50' 
                     : 'bg-slate-800/40 border-slate-700/60 text-slate-300 hover:bg-slate-800')
                 }">
-                  <span class="text-base">${tfEscapeHtml(r.emoji)}</span>
+                  <i data-lucide="${tfEscapeHtml(r.icon)}" class="w-4 h-4 inline-block"></i>
                   <div class="min-w-0 flex-1">
                     <p class="truncate leading-tight text-xs font-bold">${tfEscapeHtml(r.name)}</p>
-                    <span class="text-[9px] text-slate-400 block mt-0.5">${tfEscapeHtml(r.desc)}</span>
+                    <span class="text-xs text-slate-400 block mt-0.5">${tfEscapeHtml(r.desc)}</span>
                   </div>
                 </button>
               `).join('')}
@@ -9102,19 +9102,19 @@ class TradeFlowApp {
           <div class="p-3 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2 mb-2">
             <div class="flex items-center justify-between">
               <span class="font-bold text-xs text-slate-900 dark:text-white">${tfEscapeHtml(it.name)} (${tfEscapeHtml(it.variant)})</span>
-              <span class="text-[10px] text-slate-400">Orig Qty: <strong class="font-mono">${tfEscapeHtml(it.quantity)}</strong></span>
+              <span class="text-xs text-slate-400">Orig Qty: <strong class="font-mono">${tfEscapeHtml(it.quantity)}</strong></span>
             </div>
             <div class="grid grid-cols-3 gap-2 text-xs">
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium">Credit Qty (Jars)</label>
+                <label class="block text-xs text-slate-400 font-medium">Credit Qty (Jars)</label>
                 <input type="number" min="0" max="${tfEscapeHtml(it.quantity)}" value="${tfEscapeHtml(it.creditQty !== undefined ? it.creditQty : 0)}" oninput="app.studioDraftData.items[${tfEscapeHtml(idx)}].creditQty = Math.min(${tfEscapeHtml(it.quantity)}, parseInt(this.value) || 0); app.studioIsDirty = true; app.recalculateStudioFinancials(); app.renderStudioInvoiceContent();" class="w-full p-1 border border-slate-300 dark:border-slate-600 rounded bg-transparent text-center font-mono font-bold text-rose-500">
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium">Unit Rate (₹)</label>
+                <label class="block text-xs text-slate-400 font-medium">Unit Rate (₹)</label>
                 <div class="p-1 font-mono text-right font-bold text-slate-700 dark:text-slate-300">${tfEscapeHtml(this.formatCurrency(it.unitRate))}</div>
               </div>
               <div>
-                <label class="block text-[10px] text-slate-400 font-medium">Credit Amount</label>
+                <label class="block text-xs text-slate-400 font-medium">Credit Amount</label>
                 <div class="p-1 font-mono font-bold text-right text-rose-500">
                   ${tfEscapeHtml(this.formatCurrency((it.creditQty !== undefined ? it.creditQty : 0) * it.unitRate))}
                 </div>
@@ -9266,7 +9266,7 @@ class TradeFlowApp {
     this.updateStudioValidation();
     this.renderStudioInvoiceContent();
 
-    this.showToast(`🚀 Converted Proforma to Tax Invoice #${newInvNo}! Review and issue.`);
+    this.showToast(`Converted Proforma to Tax Invoice #${newInvNo}! Review and issue.`);
   }
 
   updateStudioValidation() {
@@ -9322,7 +9322,7 @@ class TradeFlowApp {
             <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
             <span>Prev</span>
           </button>
-          <span class="text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400 px-1.5 whitespace-nowrap">
+          <span class="text-xs font-mono font-bold text-slate-600 dark:text-slate-400 px-1.5 whitespace-nowrap">
             ${tfEscapeHtml(curStep + 1)} / ${tfEscapeHtml(steps.length)}
           </span>
           ${!isLastStep ? `
@@ -9344,7 +9344,7 @@ class TradeFlowApp {
         bar.innerHTML = `
           <div class="flex items-center gap-2 font-bold min-w-0">
             <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-            <span class="truncate">✓ All required fields valid — Ready to issue ${tfEscapeHtml(docType.toLowerCase())}</span>
+            <span class="truncate">All required fields valid — Ready to issue ${tfEscapeHtml(docType.toLowerCase())}</span>
           </div>
           ${navHtml}
         `;
@@ -9353,7 +9353,7 @@ class TradeFlowApp {
         bar.innerHTML = `
           <div class="flex items-center gap-2 font-semibold min-w-0">
             <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0 animate-pulse"></span>
-            <span class="truncate">⚠️ ${tfEscapeHtml(issues.length)} field(s) need attention: <strong class="text-amber-800 dark:text-amber-300 font-bold">${tfEscapeHtml(issues.join(', '))}</strong></span>
+            <span class="truncate">${tfEscapeHtml(issues.length)} field(s) need attention: <strong class="text-amber-800 dark:text-amber-300 font-bold">${tfEscapeHtml(issues.join(', '))}</strong></span>
           </div>
           ${navHtml}
         `;
@@ -9410,7 +9410,7 @@ class TradeFlowApp {
       if (statusText) statusText.textContent = 'Issued';
       if (statusBadge) statusBadge.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-600 text-white border border-emerald-500';
       this.downloadStudioInvoicePDF(false);
-      this.showToast(`✅ Tax Invoice #${o.invoiceNumber} issued & saved!`);
+      this.showToast(`Tax Invoice #${o.invoiceNumber} issued & saved!`);
     } else if (docType === 'ADVANCE RECEIPT' || docType === 'ADVANCE RECEIPT VOUCHER') {
       const amt = Number(o.amountReceived || o.customerAdvanceReceived || 0);
       if (this.studioSelectedOrderId && this.studioSelectedOrderId !== 'draft') {
@@ -9422,22 +9422,22 @@ class TradeFlowApp {
       }
       this.studioIsDirty = false;
       this.downloadStudioInvoicePDF(false);
-      this.showToast(`🧾 Advance Receipt Voucher #${o.invoiceNumber} issued for ${this.formatCurrency(amt)}!`);
+      this.showToast(`Advance Receipt Voucher #${o.invoiceNumber} issued for ${this.formatCurrency(amt)}!`);
     } else if (docType === 'DELIVERY CHALLAN') {
       this.studioIsDirty = false;
       this.downloadStudioInvoicePDF(false);
-      this.showToast(`📦 Delivery Challan #${o.invoiceNumber} generated & ready for dispatch!`);
+      this.showToast(`Delivery Challan #${o.invoiceNumber} generated & ready for dispatch!`);
     } else if (docType === 'CREDIT NOTE') {
       this.studioIsDirty = false;
       this.downloadStudioInvoicePDF(false);
-      this.showToast(`✂️ Credit Note #${o.invoiceNumber} issued against ${o.originalInvoiceNumber || 'original invoice'}!`);
+      this.showToast(`Credit Note #${o.invoiceNumber} issued against ${o.originalInvoiceNumber || 'original invoice'}!`);
     }
   }
 
   saveStudioDraft() {
     this.studioIsDirty = false;
     this.updateStudioValidation();
-    this.showToast(`💾 Draft changes saved for ${this.studioDraftData ? this.studioDraftData.invoiceNumber : 'document'}`);
+    this.showToast(`Draft changes saved for ${this.studioDraftData ? this.studioDraftData.invoiceNumber : 'document'}`);
   }
 
   toggleStudioQr(checked) {
@@ -9519,7 +9519,7 @@ class TradeFlowApp {
 
   removeStudioItem(idx) {
     if (!this.studioDraftData || this.studioDraftData.items.length <= 1) {
-      this.showToast('⚠️ Must have at least 1 item in the document.');
+      this.showToast('Must have at least 1 item in the document.');
       return;
     }
     this.studioDraftData.items.splice(idx, 1);
@@ -9572,30 +9572,30 @@ class TradeFlowApp {
     const hideHsn = !!this.studioHideHsn;
 
     const totalItems = order.items.length;
-    let descFont = 'text-[10px]';
-    let numFont = 'text-[10px]';
+    let descFont = 'text-xs';
+    let numFont = 'text-xs';
     let rowPad = 'py-1.5 px-2';
     let sealSize = '56px';
     let sealInnerSize = '48px';
     let qrSize = '62px';
 
     if (totalItems > 12) {
-      descFont = 'text-[9.5px]';
-      numFont = 'text-[9.5px]';
+      descFont = 'text-xs';
+      numFont = 'text-xs';
       rowPad = 'py-1.2 px-2';
       sealSize = '50px';
       sealInnerSize = '42px';
       qrSize = '56px';
     } else if (totalItems > 7) {
-      descFont = 'text-[10px]';
-      numFont = 'text-[10px]';
+      descFont = 'text-xs';
+      numFont = 'text-xs';
       rowPad = 'py-1.5 px-2';
       sealSize = '56px';
       sealInnerSize = '46px';
       qrSize = '62px';
     } else {
-      descFont = 'text-[10.5px]';
-      numFont = 'text-[10px]';
+      descFont = 'text-xs';
+      numFont = 'text-xs';
       rowPad = 'py-2 px-2.5';
       sealSize = '62px';
       sealInnerSize = '52px';
@@ -9606,7 +9606,7 @@ class TradeFlowApp {
       <div class="relative mx-auto my-1 flex items-center justify-center rounded-full border-2 border-dashed border-emerald-700 text-emerald-800 rotate-[-5deg] select-none pointer-events-none opacity-90" style="width: ${tfEscapeHtml(sealSize)}; height: ${tfEscapeHtml(sealSize)};">
         <div class="rounded-full border border-emerald-600 flex flex-col items-center justify-center text-center bg-emerald-50/30" style="width: ${tfEscapeHtml(sealInnerSize)}; height: ${tfEscapeHtml(sealInnerSize)};">
           <span class="text-[6.5px] font-black uppercase tracking-tighter text-emerald-900 leading-none">MAGIC ROOTS</span>
-          <span class="text-[5.5px] font-bold text-emerald-700 leading-none my-0.5">★ SEAL ★</span>
+          <span class="text-[5.5px] font-bold text-emerald-700 leading-none my-0.5">SEAL</span>
           <span class="text-[6px] font-black uppercase tracking-wider text-emerald-950 border-y border-emerald-600 py-0.5">AUTHORIZED</span>
         </div>
       </div>
@@ -9623,8 +9623,8 @@ class TradeFlowApp {
             <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num text-slate-500">${tfEscapeHtml(idx + 1)}</td>
             <td class="${tfEscapeHtml(rowPad)} text-left ${tfEscapeHtml(descFont)} leading-tight">
               <span class="font-bold text-slate-900">${tfEscapeHtml(item.name)}</span>
-              ${varLabel ? `<span class="text-slate-500 font-medium text-[8.5px] ml-1">(${tfEscapeHtml(varLabel)})</span>` : ''}
-              ${item.isOptional ? '<span class="ml-1.5 px-1.5 py-0.2 text-[8px] font-black uppercase bg-amber-100 text-amber-900 rounded border border-amber-300">Optional</span>' : ''}
+              ${varLabel ? `<span class="text-slate-500 font-medium text-xs ml-1">(${tfEscapeHtml(varLabel)})</span>` : ''}
+              ${item.isOptional ? '<span class="ml-1.5 px-1.5 py-0.2 text-xs font-black uppercase bg-amber-100 text-amber-900 rounded border border-amber-300">Optional</span>' : ''}
             </td>
             ${!hideHsn ? `<td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num text-slate-600">${tfEscapeHtml(this.itemHsn(item))}</td>` : ''}
             ${showCases ? `<td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num font-bold text-slate-900">${tfEscapeHtml(cs)} ${tfEscapeHtml(cs === 1 ? 'case' : 'cases')}</td>` : ''}
@@ -9641,22 +9641,22 @@ class TradeFlowApp {
           <div class="flex justify-between items-start border-b-2 border-slate-900 pb-2">
             <div>
               <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-sm font-bold">🌿</div>
+                <div class="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-sm font-bold"><i data-lucide="leaf" class="w-4 h-4 inline-block"></i></div>
                 <div>
                   <h1 class="text-xl font-black text-slate-900 leading-none">${tfEscapeHtml(profile.brandName)}</h1>
-                  <p class="text-[10px] text-slate-600 font-bold mt-0.5">${tfEscapeHtml(profile.legalName)}</p>
+                  <p class="text-xs text-slate-600 font-bold mt-0.5">${tfEscapeHtml(profile.legalName)}</p>
                 </div>
               </div>
-              <div class="text-[9px] text-slate-600 mt-1 leading-snug">
+              <div class="text-xs text-slate-600 mt-1 leading-snug">
                 <p>${tfEscapeHtml(profile.address)}, ${tfEscapeHtml(profile.city)} - ${tfEscapeHtml(profile.pincode)}</p>
                 <p><strong>GSTIN:</strong> ${tfEscapeHtml(profile.gstin)} | <strong>FSSAI:</strong> ${tfEscapeHtml(profile.fssai)}</p>
                 <p><strong>Phone:</strong> ${tfEscapeHtml(profile.phone)} • ${tfEscapeHtml(profile.email)}</p>
               </div>
             </div>
             <div class="text-right">
-              <span class="inline-block px-3 py-1 bg-amber-500 text-slate-950 text-[11px] font-black uppercase tracking-wider rounded shadow-xs">PROFORMA INVOICE</span>
-              <span class="block text-[8.5px] text-slate-500 font-medium mt-0.5">Commercial Estimation • Pre-Shipment Quotation</span>
-              <div class="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] text-right">
+              <span class="inline-block px-3 py-1 bg-amber-500 text-slate-950 text-xs font-black uppercase tracking-wider rounded shadow-xs">PROFORMA INVOICE</span>
+              <span class="block text-xs text-slate-500 font-medium mt-0.5">Commercial Estimation • Pre-Shipment Quotation</span>
+              <div class="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-right">
                 <span class="text-slate-500">Estimate No:</span>
                 <strong class="font-mono-num text-slate-900">${tfEscapeHtml(order.invoiceNumber)}</strong>
                 <span class="text-slate-500">Date:</span>
@@ -9668,21 +9668,21 @@ class TradeFlowApp {
           </div>
 
           <!-- Mandatory Estimate Banner -->
-          <div class="my-1.5 py-1 px-3 bg-amber-50 border border-amber-300 rounded text-center text-[9px] font-black uppercase tracking-wider text-amber-900 flex items-center justify-center gap-1.5">
-            <span>⚠️</span>
+          <div class="my-1.5 py-1 px-3 bg-amber-50 border border-amber-300 rounded text-center text-xs font-black uppercase tracking-wider text-amber-900 flex items-center justify-center gap-1.5">
+            <span><i data-lucide="triangle-alert" class="w-4 h-4 inline-block"></i></span>
             <span>COMMERCIAL ESTIMATE ONLY — NOT A TAX INVOICE (NO INPUT TAX CREDIT VALIDITY)</span>
           </div>
 
           <!-- Quoted For -->
-          <div class="grid grid-cols-2 gap-2.5 py-1.5 border-b border-slate-200 text-[9px]">
+          <div class="grid grid-cols-2 gap-2.5 py-1.5 border-b border-slate-200 text-xs">
             <div class="bg-slate-50 p-2 rounded-lg border border-slate-200">
-              <span class="font-bold uppercase tracking-wider text-[8px] block text-slate-500 mb-0.5">Quotation Prepared For:</span>
-              <p class="font-black text-slate-900 text-[11px]">${tfEscapeHtml(retailer.name)}</p>
+              <span class="font-bold uppercase tracking-wider text-xs block text-slate-500 mb-0.5">Quotation Prepared For:</span>
+              <p class="font-black text-slate-900 text-xs">${tfEscapeHtml(retailer.name)}</p>
               <p class="text-slate-600 truncate mt-0.5">${tfEscapeHtml(retailer.billingAddress)}</p>
               <p class="mt-0.5"><strong>Phone / WA:</strong> ${tfEscapeHtml(retailer.phone || order.customerPhone)}</p>
             </div>
             <div class="bg-slate-50 p-2 rounded-lg border border-slate-200">
-              <span class="font-bold uppercase tracking-wider text-[8px] block text-slate-500 mb-0.5">Commercial Dispatch Terms:</span>
+              <span class="font-bold uppercase tracking-wider text-xs block text-slate-500 mb-0.5">Commercial Dispatch Terms:</span>
               <p><strong>Advance Required:</strong> ${tfEscapeHtml(order.advancePercent || 50)}% with Purchase Confirmation</p>
               <p class="mt-0.5"><strong>Est. Dispatch:</strong> ${tfEscapeHtml(order.dispatchDays || '5-7 Working Days')}</p>
               <p class="mt-0.5"><strong>Freight:</strong> ${tfEscapeHtml(order.freightTerms || this.config().defaultFreightTerms || '—')}</p>
@@ -9691,8 +9691,8 @@ class TradeFlowApp {
 
           <!-- Table -->
           <div class="mt-1.5">
-            <table class="w-full border border-slate-200 text-[9.5px]">
-              <thead class="bg-slate-100 text-slate-800 uppercase font-bold text-[9px] border-b border-slate-300">
+            <table class="w-full border border-slate-200 text-xs">
+              <thead class="bg-slate-100 text-slate-800 uppercase font-bold text-xs border-b border-slate-300">
                 <tr>
                   <th class="py-1 px-1 text-center w-7">#</th>
                   <th class="py-1 px-2 text-left">Proposed Goods Description</th>
@@ -9711,14 +9711,14 @@ class TradeFlowApp {
 
           <!-- Financials -->
           <div class="grid grid-cols-12 gap-3 mt-2 pt-2 border-t border-slate-200">
-            <div class="col-span-7 space-y-1 text-[8.5px]">
+            <div class="col-span-7 space-y-1 text-xs">
               <div class="p-1.5 bg-slate-50 border border-slate-200 rounded leading-relaxed">
-                <span class="text-[8px] uppercase font-bold text-slate-400 block">Total Quotation Value in Words:</span>
+                <span class="text-xs uppercase font-bold text-slate-400 block">Total Quotation Value in Words:</span>
                 <p class="font-bold text-slate-900">${tfEscapeHtml(this.numberToIndianWords(order.totalInvoiceAmount))}</p>
               </div>
-              <p class="text-[8px] text-slate-400 italic">Prices valid for 15 days. GST rates apply as statutory on final sale invoice.</p>
+              <p class="text-xs text-slate-400 italic">Prices valid for 15 days. GST rates apply as statutory on final sale invoice.</p>
             </div>
-            <div class="col-span-5 space-y-1 text-[9px]">
+            <div class="col-span-5 space-y-1 text-xs">
               <div class="flex justify-between text-slate-600">
                 <span>Proposed Subtotal:</span>
                 <span class="font-mono font-medium">${tfEscapeHtml(this.formatCurrency(order.taxableSubtotal))}</span>
@@ -9727,7 +9727,7 @@ class TradeFlowApp {
                 <span>Estimated GST (${tfEscapeHtml(this.gstLabels(order).combined)}):</span>
                 <span class="font-mono font-medium">${tfEscapeHtml(this.formatCurrency((order.cgstAmount || 0) + (order.sgstAmount || 0) + (order.igstAmount || 0)))}</span>
               </div>
-              <div class="flex justify-between py-1 border-t-2 border-slate-900 font-bold text-[10.5px]">
+              <div class="flex justify-between py-1 border-t-2 border-slate-900 font-bold text-xs">
                 <span class="font-black text-slate-900">Total Estimated Value:</span>
                 <span class="font-mono font-black text-slate-900">${tfEscapeHtml(this.formatCurrency(order.totalInvoiceAmount))}</span>
               </div>
@@ -9735,15 +9735,15 @@ class TradeFlowApp {
           </div>
 
           <!-- Signatures -->
-          <div class="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-slate-200 text-[8.5px]">
+          <div class="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-slate-200 text-xs">
             <div>
-              <span class="font-bold text-slate-800 uppercase tracking-wider text-[8px] block mb-0.5">Commercial Terms:</span>
-              <p class="text-slate-500 text-[8px] leading-relaxed">Standard production schedule starts upon advance receipt. Final GST invoice issued upon dispatch.</p>
+              <span class="font-bold text-slate-800 uppercase tracking-wider text-xs block mb-0.5">Commercial Terms:</span>
+              <p class="text-slate-500 text-xs leading-relaxed">Standard production schedule starts upon advance receipt. Final GST invoice issued upon dispatch.</p>
             </div>
             <div class="text-right flex flex-col justify-end items-end">
-              <p class="font-bold text-slate-800 text-[9px]">For ${tfEscapeHtml(profile.legalName)}</p>
+              <p class="font-bold text-slate-800 text-xs">For ${tfEscapeHtml(profile.legalName)}</p>
               ${digitalSealHtml}
-              <p class="border-t border-slate-400 pt-0.5 text-[8.5px] text-slate-600 font-medium">Commercial Executive</p>
+              <p class="border-t border-slate-400 pt-0.5 text-xs text-slate-600 font-medium">Commercial Executive</p>
             </div>
           </div>
         </div>
@@ -9761,22 +9761,22 @@ class TradeFlowApp {
           <div class="flex justify-between items-start border-b-2 border-slate-900 pb-2">
             <div>
               <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-sm font-bold">🌿</div>
+                <div class="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-sm font-bold"><i data-lucide="leaf" class="w-4 h-4 inline-block"></i></div>
                 <div>
                   <h1 class="text-xl font-black text-slate-900 leading-none">${tfEscapeHtml(profile.brandName)}</h1>
-                  <p class="text-[10px] text-slate-600 font-bold mt-0.5">${tfEscapeHtml(profile.legalName)}</p>
+                  <p class="text-xs text-slate-600 font-bold mt-0.5">${tfEscapeHtml(profile.legalName)}</p>
                 </div>
               </div>
-              <div class="text-[9px] text-slate-600 mt-1 leading-snug">
+              <div class="text-xs text-slate-600 mt-1 leading-snug">
                 <p>${tfEscapeHtml(profile.address)}, ${tfEscapeHtml(profile.city)} - ${tfEscapeHtml(profile.pincode)}</p>
                 <p><strong>GSTIN:</strong> ${tfEscapeHtml(profile.gstin)} | <strong>FSSAI:</strong> ${tfEscapeHtml(profile.fssai)}</p>
                 <p><strong>Phone:</strong> ${tfEscapeHtml(profile.phone)} • ${tfEscapeHtml(profile.email)}</p>
               </div>
             </div>
             <div class="text-right">
-              <span class="inline-block px-3 py-1 bg-emerald-700 text-white text-[11px] font-black uppercase tracking-wider rounded shadow-xs">ADVANCE RECEIPT VOUCHER</span>
-              <span class="block text-[8.5px] text-slate-500 font-medium mt-0.5">Statutory Receipt Voucher • Rule 50 CGST Rules</span>
-              <div class="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] text-right">
+              <span class="inline-block px-3 py-1 bg-emerald-700 text-white text-xs font-black uppercase tracking-wider rounded shadow-xs">ADVANCE RECEIPT VOUCHER</span>
+              <span class="block text-xs text-slate-500 font-medium mt-0.5">Statutory Receipt Voucher • Rule 50 CGST Rules</span>
+              <div class="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-right">
                 <span class="text-slate-500">Voucher No:</span>
                 <strong class="font-mono-num text-slate-900">${tfEscapeHtml(order.invoiceNumber)}</strong>
                 <span class="text-slate-500">Receipt Date:</span>
@@ -9790,26 +9790,26 @@ class TradeFlowApp {
           <!-- Prominent Amount Card -->
           <div class="my-3 p-3 bg-emerald-50 border-2 border-emerald-500 rounded-xl flex items-center justify-between">
             <div>
-              <span class="text-[8.5px] uppercase font-bold text-emerald-800 tracking-wider">Amount Received in Advance:</span>
+              <span class="text-xs uppercase font-bold text-emerald-800 tracking-wider">Amount Received in Advance:</span>
               <h2 class="text-2xl font-black text-emerald-950 font-mono-num leading-tight">${tfEscapeHtml(this.formatCurrency(advAmt))}</h2>
-              <p class="text-[9px] font-bold text-emerald-800 mt-0.5">${tfEscapeHtml(this.numberToIndianWords(advAmt))}</p>
+              <p class="text-xs font-bold text-emerald-800 mt-0.5">${tfEscapeHtml(this.numberToIndianWords(advAmt))}</p>
             </div>
             <div class="text-right space-y-1">
-              <span class="px-2.5 py-1 rounded-md bg-emerald-700 text-white font-black text-[9.5px] uppercase tracking-wider shadow-2xs">${tfEscapeHtml(order.paymentMode || 'UPI')}</span>
-              <p class="text-[8.5px] text-slate-600 font-mono-num mt-1 font-bold">UTR / Ref: ${tfEscapeHtml(order.utrNumber || '')}</p>
+              <span class="px-2.5 py-1 rounded-md bg-emerald-700 text-white font-black text-xs uppercase tracking-wider shadow-2xs">${tfEscapeHtml(order.paymentMode || 'UPI')}</span>
+              <p class="text-xs text-slate-600 font-mono-num mt-1 font-bold">UTR / Ref: ${tfEscapeHtml(order.utrNumber || '')}</p>
             </div>
           </div>
 
           <!-- Payer & Allocation Cards -->
-          <div class="grid grid-cols-2 gap-3 py-2 border-y border-slate-200 text-[9px]">
+          <div class="grid grid-cols-2 gap-3 py-2 border-y border-slate-200 text-xs">
             <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-              <span class="font-bold uppercase tracking-wider text-[8px] block text-slate-500 mb-0.5">Received With Thanks From:</span>
-              <p class="font-black text-slate-900 text-[11px]">${tfEscapeHtml(retailer.name)}</p>
+              <span class="font-bold uppercase tracking-wider text-xs block text-slate-500 mb-0.5">Received With Thanks From:</span>
+              <p class="font-black text-slate-900 text-xs">${tfEscapeHtml(retailer.name)}</p>
               <p class="text-slate-600 truncate mt-0.5">${tfEscapeHtml(retailer.billingAddress)}</p>
               <p class="mt-0.5"><strong>GSTIN:</strong> ${tfEscapeHtml(retailer.gstin)} | <strong>Phone:</strong> ${tfEscapeHtml(retailer.phone || order.customerPhone)}</p>
             </div>
             <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-              <span class="font-bold uppercase tracking-wider text-[8px] block text-slate-500 mb-0.5">Allocation &amp; Bank Account:</span>
+              <span class="font-bold uppercase tracking-wider text-xs block text-slate-500 mb-0.5">Allocation &amp; Bank Account:</span>
               <p><strong>Allocated Against:</strong> ${tfEscapeHtml(order.allocationRef || 'Supply Order #' + order.invoiceNumber)}</p>
               <p class="mt-0.5"><strong>Deposited Bank:</strong> ${tfEscapeHtml(profile.bankName)} (A/C: ${tfEscapeHtml(profile.accountNumber)})</p>
               <p class="mt-0.5"><strong>IFSC Code:</strong> ${tfEscapeHtml(profile.ifsc)}</p>
@@ -9817,20 +9817,20 @@ class TradeFlowApp {
           </div>
 
           <!-- Statutory Declaration -->
-          <div class="my-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[8.5px] text-slate-600 leading-relaxed">
+          <div class="my-3 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600 leading-relaxed">
             <p class="font-bold text-slate-800">Statutory GST Declaration (Rule 50 CGST Rules, 2017):</p>
             <p>This voucher legally acknowledges receipt of advance consideration toward taxable supply of packaged foods. A regular GST Tax Invoice will be issued at the time of dispatch, and the advance amount will be adjusted therein.</p>
           </div>
 
           <!-- Signatures -->
-          <div class="grid grid-cols-2 gap-3 mt-4 pt-2 border-t border-slate-200 text-[8.5px]">
+          <div class="grid grid-cols-2 gap-3 mt-4 pt-2 border-t border-slate-200 text-xs">
             <div class="flex flex-col justify-end">
-              <p class="text-slate-500 text-[8px]">System-authenticated digital receipt record.</p>
+              <p class="text-slate-500 text-xs">System-authenticated digital receipt record.</p>
             </div>
             <div class="text-right flex flex-col justify-end items-end">
-              <p class="font-bold text-slate-800 text-[9px]">For ${tfEscapeHtml(profile.legalName)}</p>
+              <p class="font-bold text-slate-800 text-xs">For ${tfEscapeHtml(profile.legalName)}</p>
               ${digitalSealHtml}
-              <p class="border-t border-slate-400 pt-0.5 text-[8.5px] text-slate-600 font-medium">Authorized Cashier / Accountant</p>
+              <p class="border-t border-slate-400 pt-0.5 text-xs text-slate-600 font-medium">Authorized Cashier / Accountant</p>
             </div>
           </div>
         </div>
@@ -9853,7 +9853,7 @@ class TradeFlowApp {
             <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num text-slate-500">${tfEscapeHtml(idx + 1)}</td>
             <td class="${tfEscapeHtml(rowPad)} text-left ${tfEscapeHtml(descFont)}">
               <span class="font-bold text-slate-900">${tfEscapeHtml(item.name)}</span>
-              ${varLabel ? `<span class="text-slate-500 text-[8.5px] ml-1">(${tfEscapeHtml(varLabel)})</span>` : ''}
+              ${varLabel ? `<span class="text-slate-500 text-xs ml-1">(${tfEscapeHtml(varLabel)})</span>` : ''}
             </td>
             <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num text-slate-700">${tfEscapeHtml(order.batchNumber || '')}</td>
             <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num font-bold text-slate-900">${tfEscapeHtml(cs)} ${tfEscapeHtml(cs === 1 ? 'case' : 'cases')} (${tfEscapeHtml(cPack)}/case)</td>
@@ -9870,21 +9870,21 @@ class TradeFlowApp {
           <div class="flex justify-between items-start border-b-2 border-slate-900 pb-2">
             <div>
               <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-sm font-bold">🌿</div>
+                <div class="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-sm font-bold"><i data-lucide="leaf" class="w-4 h-4 inline-block"></i></div>
                 <div>
                   <h1 class="text-xl font-black text-slate-900 leading-none">${tfEscapeHtml(profile.brandName)}</h1>
-                  <p class="text-[10px] text-slate-600 font-bold mt-0.5">${tfEscapeHtml(profile.legalName)}</p>
+                  <p class="text-xs text-slate-600 font-bold mt-0.5">${tfEscapeHtml(profile.legalName)}</p>
                 </div>
               </div>
-              <div class="text-[9px] text-slate-600 mt-1 leading-snug">
+              <div class="text-xs text-slate-600 mt-1 leading-snug">
                 <p>${tfEscapeHtml(profile.address)}, ${tfEscapeHtml(profile.city)} - ${tfEscapeHtml(profile.pincode)}</p>
                 <p><strong>GSTIN:</strong> ${tfEscapeHtml(profile.gstin)} | <strong>FSSAI:</strong> ${tfEscapeHtml(profile.fssai)}</p>
               </div>
             </div>
             <div class="text-right">
-              <span class="inline-block px-3 py-1 bg-sky-700 text-white text-[11px] font-black uppercase tracking-wider rounded shadow-xs">DELIVERY CHALLAN</span>
-              <span class="block text-[8.5px] text-slate-500 font-medium mt-0.5">Goods Movement • Rule 55 CGST Rules</span>
-              <div class="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] text-right">
+              <span class="inline-block px-3 py-1 bg-blue-700 text-white text-xs font-black uppercase tracking-wider rounded shadow-xs">DELIVERY CHALLAN</span>
+              <span class="block text-xs text-slate-500 font-medium mt-0.5">Goods Movement • Rule 55 CGST Rules</span>
+              <div class="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-right">
                 <span class="text-slate-500">Challan No:</span>
                 <strong class="font-mono-num text-slate-900">${tfEscapeHtml(order.invoiceNumber)}</strong>
                 <span class="text-slate-500">Dispatch Date:</span>
@@ -9894,21 +9894,21 @@ class TradeFlowApp {
           </div>
 
           <!-- Nature of Movement Banner -->
-          <div class="my-1.5 py-1 px-3 bg-sky-50 border border-sky-300 rounded text-center text-[9px] font-black uppercase tracking-wider text-sky-950 flex items-center justify-center gap-1.5">
-            <span>📦 NATURE OF MOVEMENT:</span>
-            <span class="text-sky-800">${tfEscapeHtml(order.movementPurpose || 'JOB WORK / SUPPLY TO PROCESSOR')}</span>
+          <div class="my-1.5 py-1 px-3 bg-blue-50 border border-blue-300 rounded text-center text-xs font-black uppercase tracking-wider text-blue-950 flex items-center justify-center gap-1.5">
+            <span>NATURE OF MOVEMENT:</span>
+            <span class="text-blue-800">${tfEscapeHtml(order.movementPurpose || 'JOB WORK / SUPPLY TO PROCESSOR')}</span>
           </div>
 
           <!-- Consignee & Transport 2-Column Strip -->
-          <div class="grid grid-cols-2 gap-2.5 py-1.5 border-b border-slate-200 text-[9px]">
+          <div class="grid grid-cols-2 gap-2.5 py-1.5 border-b border-slate-200 text-xs">
             <div class="bg-slate-50 p-2 rounded-lg border border-slate-200">
-              <span class="font-bold uppercase tracking-wider text-[8px] block text-slate-500 mb-0.5">Consignee (Shipped To):</span>
-              <p class="font-black text-slate-900 text-[11px]">${tfEscapeHtml(retailer.name)}</p>
+              <span class="font-bold uppercase tracking-wider text-xs block text-slate-500 mb-0.5">Consignee (Shipped To):</span>
+              <p class="font-black text-slate-900 text-xs">${tfEscapeHtml(retailer.name)}</p>
               <p class="text-slate-600 truncate mt-0.5">${tfEscapeHtml(retailer.shippingAddress || retailer.billingAddress)}</p>
               <p class="mt-0.5"><strong>Phone:</strong> ${tfEscapeHtml(retailer.phone || order.customerPhone)}</p>
             </div>
             <div class="bg-slate-50 p-2 rounded-lg border border-slate-200">
-              <span class="font-bold uppercase tracking-wider text-[8px] block text-slate-500 mb-0.5">Transport &amp; Vehicle Details:</span>
+              <span class="font-bold uppercase tracking-wider text-xs block text-slate-500 mb-0.5">Transport &amp; Vehicle Details:</span>
               <p><strong>Vehicle No:</strong> <span class="font-mono-num font-bold text-slate-900">${tfEscapeHtml(order.vehicleNumber || '')}</span></p>
               <p class="mt-0.5"><strong>Fleet / Transporter:</strong> ${tfEscapeHtml(order.transporterName || '')}</p>
               <p class="mt-0.5"><strong>Driver:</strong> ${tfEscapeHtml(order.driverName || '')} (${tfEscapeHtml(order.driverPhone || '')})</p>
@@ -9917,8 +9917,8 @@ class TradeFlowApp {
 
           <!-- Goods Table (Strictly NO PRICES, NO RATES, NO GST) -->
           <div class="mt-1.5">
-            <table class="w-full border border-slate-200 text-[9.5px]">
-              <thead class="bg-slate-100 text-slate-800 uppercase font-bold text-[9px] border-b border-slate-300">
+            <table class="w-full border border-slate-200 text-xs">
+              <thead class="bg-slate-100 text-slate-800 uppercase font-bold text-xs border-b border-slate-300">
                 <tr>
                   <th class="py-1 px-1 text-center w-7">#</th>
                   <th class="py-1 px-2 text-left">Description of Goods</th>
@@ -9936,12 +9936,12 @@ class TradeFlowApp {
           </div>
 
           <!-- Statutory Declaration -->
-          <div class="my-2 p-2 bg-slate-50 border border-slate-200 rounded text-[8px] text-slate-600 leading-relaxed">
+          <div class="my-2 p-2 bg-slate-50 border border-slate-200 rounded text-xs text-slate-600 leading-relaxed">
             <p><strong>Statutory Note (Rule 55 CGST Rules):</strong> Goods dispatched strictly for movement / job work under Rule 55. Value declared for transit insurance only and does not constitute a sale. Not valid for claiming GST Input Tax Credit.</p>
           </div>
 
           <!-- 3-Way Acknowledgment Slip -->
-          <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-200 text-[8px]">
+          <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-200 text-xs">
             <div class="border border-dashed border-slate-300 p-2 rounded text-center">
               <span class="text-slate-400 block mb-4">Driver's Signature</span>
               <p class="font-bold text-slate-700">${tfEscapeHtml(order.driverName || '')}</p>
@@ -9951,9 +9951,9 @@ class TradeFlowApp {
               <p class="font-bold text-slate-700">Acknowledgment of Receipt</p>
             </div>
             <div class="text-right flex flex-col justify-end items-end">
-              <p class="font-bold text-slate-800 text-[8.5px]">For ${tfEscapeHtml(profile.legalName)}</p>
+              <p class="font-bold text-slate-800 text-xs">For ${tfEscapeHtml(profile.legalName)}</p>
               ${digitalSealHtml}
-              <p class="border-t border-slate-400 pt-0.5 text-[8px] text-slate-600 font-medium">Authorized Dispatcher</p>
+              <p class="border-t border-slate-400 pt-0.5 text-xs text-slate-600 font-medium">Authorized Dispatcher</p>
             </div>
           </div>
         </div>
@@ -9973,7 +9973,7 @@ class TradeFlowApp {
             <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num text-slate-500">${tfEscapeHtml(idx + 1)}</td>
             <td class="${tfEscapeHtml(rowPad)} text-left ${tfEscapeHtml(descFont)}">
               <span class="font-bold text-slate-900">${tfEscapeHtml(item.name)}</span>
-              ${item.variant && item.variant !== 'undefined' ? `<span class="text-slate-500 text-[8.5px] ml-1">(${tfEscapeHtml(item.variant)})</span>` : ''}
+              ${item.variant && item.variant !== 'undefined' ? `<span class="text-slate-500 text-xs ml-1">(${tfEscapeHtml(item.variant)})</span>` : ''}
             </td>
             <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num text-slate-500">${tfEscapeHtml(item.quantity)}</td>
             <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num font-bold text-rose-600">${tfEscapeHtml(cQty)}</td>
@@ -9995,21 +9995,21 @@ class TradeFlowApp {
           <div class="flex justify-between items-start border-b-2 border-slate-900 pb-2">
             <div>
               <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-sm font-bold">🌿</div>
+                <div class="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-sm font-bold"><i data-lucide="leaf" class="w-4 h-4 inline-block"></i></div>
                 <div>
                   <h1 class="text-xl font-black text-slate-900 leading-none">${tfEscapeHtml(profile.brandName)}</h1>
-                  <p class="text-[10px] text-slate-600 font-bold mt-0.5">${tfEscapeHtml(profile.legalName)}</p>
+                  <p class="text-xs text-slate-600 font-bold mt-0.5">${tfEscapeHtml(profile.legalName)}</p>
                 </div>
               </div>
-              <div class="text-[9px] text-slate-600 mt-1 leading-snug">
+              <div class="text-xs text-slate-600 mt-1 leading-snug">
                 <p>${tfEscapeHtml(profile.address)}, ${tfEscapeHtml(profile.city)} - ${tfEscapeHtml(profile.pincode)}</p>
                 <p><strong>GSTIN:</strong> ${tfEscapeHtml(profile.gstin)} | <strong>FSSAI:</strong> ${tfEscapeHtml(profile.fssai)}</p>
               </div>
             </div>
             <div class="text-right">
-              <span class="inline-block px-3 py-1 bg-rose-600 text-white text-[11px] font-black uppercase tracking-wider rounded shadow-xs">CREDIT NOTE</span>
-              <span class="block text-[8.5px] text-slate-500 font-medium mt-0.5">Statutory Credit Adjustment • Sec 34 CGST Act</span>
-              <div class="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] text-right">
+              <span class="inline-block px-3 py-1 bg-rose-600 text-white text-xs font-black uppercase tracking-wider rounded shadow-xs">CREDIT NOTE</span>
+              <span class="block text-xs text-slate-500 font-medium mt-0.5">Statutory Credit Adjustment • Sec 34 CGST Act</span>
+              <div class="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-right">
                 <span class="text-slate-500">Credit Note No:</span>
                 <strong class="font-mono-num text-slate-900">CN-${tfEscapeHtml(order.invoiceNumber.replace(/[^0-9]/g, '').slice(-4) || '0101')}</strong>
                 <span class="text-slate-500">Date:</span>
@@ -10019,22 +10019,22 @@ class TradeFlowApp {
           </div>
 
           <!-- Original Invoice Link Box -->
-          <div class="my-1.5 p-2 bg-rose-50/90 border border-rose-200 rounded-lg flex items-center justify-between text-[9px]">
+          <div class="my-1.5 p-2 bg-rose-50/90 border border-rose-200 rounded-lg flex items-center justify-between text-xs">
             <div>
-              <span class="text-[8px] font-bold uppercase text-rose-800 tracking-wider">Adjustment Against Original Tax Invoice:</span>
-              <p class="font-black text-[11px] text-slate-900 font-mono-num leading-tight">${tfEscapeHtml(order.originalInvoiceNumber || order.invoiceNumber)}</p>
+              <span class="text-xs font-bold uppercase text-rose-800 tracking-wider">Adjustment Against Original Tax Invoice:</span>
+              <p class="font-black text-xs text-slate-900 font-mono-num leading-tight">${tfEscapeHtml(order.originalInvoiceNumber || order.invoiceNumber)}</p>
               <p class="text-slate-600 mt-0.5">Original Date: ${tfEscapeHtml(this.formatDate(order.originalInvoiceDate || order.date))} • Invoiced Value: ${tfEscapeHtml(this.formatCurrency(order.originalInvoiceAmount || order.totalInvoiceAmount))}</p>
             </div>
             <div class="text-right">
-              <span class="px-2 py-0.5 rounded bg-rose-600 text-white font-bold uppercase text-[8.5px] shadow-2xs">${tfEscapeHtml(order.creditReason || this.studioCreditReason || '')}</span>
-              <p class="text-[8px] text-rose-700 font-medium mt-1">Sec 34(1) CGST Act</p>
+              <span class="px-2 py-0.5 rounded bg-rose-600 text-white font-bold uppercase text-xs shadow-2xs">${tfEscapeHtml(order.creditReason || this.studioCreditReason || '')}</span>
+              <p class="text-xs text-rose-700 font-medium mt-1">Sec 34(1) CGST Act</p>
             </div>
           </div>
 
           <!-- Credited Items Table -->
           <div class="mt-1.5">
-            <table class="w-full border border-slate-200 text-[9.5px]">
-              <thead class="bg-slate-100 text-slate-800 uppercase font-bold text-[9px] border-b border-slate-300">
+            <table class="w-full border border-slate-200 text-xs">
+              <thead class="bg-slate-100 text-slate-800 uppercase font-bold text-xs border-b border-slate-300">
                 <tr>
                   <th class="py-1 px-1 text-center w-7">#</th>
                   <th class="py-1 px-2 text-left">Description of Goods</th>
@@ -10052,14 +10052,14 @@ class TradeFlowApp {
 
           <!-- Credit Financials -->
           <div class="grid grid-cols-12 gap-3 mt-2 pt-2 border-t border-slate-200">
-            <div class="col-span-7 space-y-1 text-[8.5px]">
+            <div class="col-span-7 space-y-1 text-xs">
               <div class="p-1.5 bg-slate-50 border border-slate-200 rounded leading-relaxed">
-                <span class="text-[8px] uppercase font-bold text-slate-400 block">Total Credit in Words:</span>
+                <span class="text-xs uppercase font-bold text-slate-400 block">Total Credit in Words:</span>
                 <p class="font-bold text-slate-900">${tfEscapeHtml(this.numberToIndianWords(creditTotal))}</p>
               </div>
-              <p class="text-[8px] text-slate-500"><strong>Settlement Method:</strong> ${tfEscapeHtml(order.settlementMode || 'Adjust directly against outstanding invoice balance')}</p>
+              <p class="text-xs text-slate-500"><strong>Settlement Method:</strong> ${tfEscapeHtml(order.settlementMode || 'Adjust directly against outstanding invoice balance')}</p>
             </div>
-            <div class="col-span-5 space-y-1 text-[9px]">
+            <div class="col-span-5 space-y-1 text-xs">
               <div class="flex justify-between text-slate-600">
                 <span>Taxable Credit:</span>
                 <span class="font-mono font-medium text-rose-600">-${tfEscapeHtml(this.formatCurrency(creditSubtotal))}</span>
@@ -10068,7 +10068,7 @@ class TradeFlowApp {
                 <span>GST Reversal (${tfEscapeHtml(this.gstLabels(order).combined)}):</span>
                 <span class="font-mono font-medium text-rose-600">-${tfEscapeHtml(this.formatCurrency(creditGst))}</span>
               </div>
-              <div class="flex justify-between py-1 border-t-2 border-slate-900 font-bold text-[10.5px]">
+              <div class="flex justify-between py-1 border-t-2 border-slate-900 font-bold text-xs">
                 <span class="font-black text-rose-700">Total Credit Note Value:</span>
                 <span class="font-mono font-black text-rose-700">${tfEscapeHtml(this.formatCurrency(creditTotal))}</span>
               </div>
@@ -10076,15 +10076,15 @@ class TradeFlowApp {
           </div>
 
           <!-- Signatures -->
-          <div class="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-slate-200 text-[8.5px]">
+          <div class="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-slate-200 text-xs">
             <div>
-              <span class="font-bold text-slate-800 uppercase tracking-wider text-[8px] block mb-0.5">Statutory Declaration:</span>
-              <p class="text-slate-500 text-[8px] leading-relaxed">Issued under Section 34 of the CGST Act. The recipient agrees to reverse the corresponding Input Tax Credit.</p>
+              <span class="font-bold text-slate-800 uppercase tracking-wider text-xs block mb-0.5">Statutory Declaration:</span>
+              <p class="text-slate-500 text-xs leading-relaxed">Issued under Section 34 of the CGST Act. The recipient agrees to reverse the corresponding Input Tax Credit.</p>
             </div>
             <div class="text-right flex flex-col justify-end items-end">
-              <p class="font-bold text-slate-800 text-[9px]">For ${tfEscapeHtml(profile.legalName)}</p>
+              <p class="font-bold text-slate-800 text-xs">For ${tfEscapeHtml(profile.legalName)}</p>
               ${digitalSealHtml}
-              <p class="border-t border-slate-400 pt-0.5 text-[8.5px] text-slate-600 font-medium">Authorized Signatory</p>
+              <p class="border-t border-slate-400 pt-0.5 text-xs text-slate-600 font-medium">Authorized Signatory</p>
             </div>
           </div>
         </div>
@@ -10107,21 +10107,21 @@ class TradeFlowApp {
           <tr class="border-b border-slate-200">
             <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num text-slate-500">${tfEscapeHtml(idx + 1)}</td>
             <td class="${tfEscapeHtml(rowPad)} text-left ${tfEscapeHtml(descFont)}">
-              <input type="text" value="${tfEscapeHtml(item.name)}" onchange="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'name', this.value)" class="w-full p-0.5 border border-amber-300 bg-amber-50/50 rounded font-bold text-[9.5px]">
-              <input type="text" value="${tfEscapeHtml(varLabel)}" onchange="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'variant', this.value)" class="w-full p-0.5 border border-slate-200 rounded text-[8.5px] text-slate-500 mt-0.5">
+              <input type="text" value="${tfEscapeHtml(item.name)}" onchange="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'name', this.value)" class="w-full p-0.5 border border-amber-300 bg-amber-50/50 rounded font-bold text-xs">
+              <input type="text" value="${tfEscapeHtml(varLabel)}" onchange="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'variant', this.value)" class="w-full p-0.5 border border-slate-200 rounded text-xs text-slate-500 mt-0.5">
             </td>
             ${!hideHsn ? `<td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num">${tfEscapeHtml(this.itemHsn(item))}</td>` : ''}
             ${showCases ? `
               <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num whitespace-nowrap">
-                <input type="number" value="${tfEscapeHtml(cs)}" min="1" onchange="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'cases', this.value)" class="w-12 p-0.5 text-center border border-amber-300 bg-amber-50/50 rounded font-bold text-[9.5px]">
-                <span class="text-[8px] text-slate-400 block">×${tfEscapeHtml(cPack)}</span>
+                <input type="number" value="${tfEscapeHtml(cs)}" min="1" onchange="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'cases', this.value)" class="w-12 p-0.5 text-center border border-amber-300 bg-amber-50/50 rounded font-bold text-xs">
+                <span class="text-xs text-slate-400 block">×${tfEscapeHtml(cPack)}</span>
               </td>
             ` : ''}
             <td class="${tfEscapeHtml(rowPad)} text-right ${tfEscapeHtml(numFont)}">
-              <input type="number" value="${tfEscapeHtml(item.quantity)}" min="1" onchange="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'quantity', this.value)" class="w-14 p-0.5 text-right border border-amber-300 bg-amber-50/50 rounded font-mono-num font-bold text-[9.5px]">
+              <input type="number" value="${tfEscapeHtml(item.quantity)}" min="1" onchange="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'quantity', this.value)" class="w-14 p-0.5 text-right border border-amber-300 bg-amber-50/50 rounded font-mono-num font-bold text-xs">
             </td>
             <td class="${tfEscapeHtml(rowPad)} text-right ${tfEscapeHtml(numFont)}">
-              <input type="number" step="0.5" value="${tfEscapeHtml(item.unitRate)}" onchange="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'unitRate', this.value)" class="w-14 p-0.5 text-right border border-amber-300 bg-amber-50/50 rounded font-mono-num font-bold text-[9.5px]">
+              <input type="number" step="0.5" value="${tfEscapeHtml(item.unitRate)}" onchange="app.onStudioItemChange(${tfEscapeHtml(idx)}, 'unitRate', this.value)" class="w-14 p-0.5 text-right border border-amber-300 bg-amber-50/50 rounded font-mono-num font-bold text-xs">
             </td>
             <td class="${tfEscapeHtml(rowPad)} text-right ${tfEscapeHtml(numFont)} font-mono-num font-bold text-slate-900 whitespace-nowrap">${tfEscapeHtml(this.formatCurrency(item.totalAmount))}</td>
           </tr>
@@ -10133,13 +10133,13 @@ class TradeFlowApp {
           <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num text-slate-500">${tfEscapeHtml(idx + 1)}</td>
           <td class="${tfEscapeHtml(rowPad)} text-left ${tfEscapeHtml(descFont)} leading-tight">
             <span class="font-bold text-slate-900">${tfEscapeHtml(item.name)}</span>
-            ${varLabel ? `<span class="text-slate-500 font-medium text-[8.5px] ml-1.5 whitespace-nowrap">(${tfEscapeHtml(varLabel)})</span>` : ''}
+            ${varLabel ? `<span class="text-slate-500 font-medium text-xs ml-1.5 whitespace-nowrap">(${tfEscapeHtml(varLabel)})</span>` : ''}
           </td>
           ${!hideHsn ? `<td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num text-slate-600 whitespace-nowrap">${tfEscapeHtml(this.itemHsn(item))}</td>` : ''}
           ${showCases ? `
             <td class="${tfEscapeHtml(rowPad)} text-center ${tfEscapeHtml(numFont)} font-mono-num whitespace-nowrap">
               <span class="font-bold text-slate-900">${tfEscapeHtml(cs)} ${tfEscapeHtml(cs === 1 ? 'case' : 'cases')}</span>
-              <span class="text-[8px] text-slate-400 ml-0.5">(${tfEscapeHtml(cPack)}/case)</span>
+              <span class="text-xs text-slate-400 ml-0.5">(${tfEscapeHtml(cPack)}/case)</span>
             </td>
           ` : ''}
           <td class="${tfEscapeHtml(rowPad)} text-right ${tfEscapeHtml(numFont)} font-mono-num font-semibold text-slate-900 whitespace-nowrap">${tfEscapeHtml(Number(item.quantity ?? item.units ?? 0).toLocaleString('en-IN'))}</td>
@@ -10151,8 +10151,8 @@ class TradeFlowApp {
 
     const hsnTableHtml = `
       <div class="mt-1.5">
-        <table class="w-full border border-slate-200 text-[9px]">
-          <thead class="bg-slate-100 text-slate-700 uppercase font-bold text-[8.5px]">
+        <table class="w-full border border-slate-200 text-xs">
+          <thead class="bg-slate-100 text-slate-700 uppercase font-bold text-xs">
             <tr>
               <th class="py-1 px-2 text-left">HSN / SAC</th>
               <th class="py-1 px-2 text-right">Taxable Value</th>
@@ -10196,13 +10196,13 @@ class TradeFlowApp {
         <div class="flex justify-between items-start border-b-2 border-slate-900 pb-2">
           <div>
             <div class="flex items-center gap-2.5">
-              <div class="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-sm shadow-xs font-bold shrink-0">🌿</div>
+              <div class="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-sm shadow-xs font-bold shrink-0"><i data-lucide="leaf" class="w-4 h-4 inline-block"></i></div>
               <div>
                 <h1 class="text-xl font-black text-slate-900 tracking-tight leading-none">${tfEscapeHtml(profile.brandName)}</h1>
-                <p class="text-[10px] text-slate-600 font-bold mt-0.5">${tfEscapeHtml(profile.legalName)}</p>
+                <p class="text-xs text-slate-600 font-bold mt-0.5">${tfEscapeHtml(profile.legalName)}</p>
               </div>
             </div>
-            <div class="text-[9px] text-slate-600 mt-1.5 leading-snug">
+            <div class="text-xs text-slate-600 mt-1.5 leading-snug">
               <p>${tfEscapeHtml(profile.address)}, ${tfEscapeHtml(profile.city)}, ${tfEscapeHtml(profile.state)} - ${tfEscapeHtml(profile.pincode)}</p>
               <p><strong>GSTIN:</strong> <span class="font-mono-num font-bold text-slate-900">${tfEscapeHtml(profile.gstin)}</span> (State: ${tfEscapeHtml(profile.stateCode)}) | <strong>FSSAI Lic:</strong> <span class="font-mono-num font-semibold text-slate-900">${tfEscapeHtml(profile.fssai)}</span></p>
               <p><strong>Contact:</strong> ${tfEscapeHtml(profile.phone)} • ${tfEscapeHtml(profile.email)}</p>
@@ -10210,10 +10210,10 @@ class TradeFlowApp {
           </div>
 
           <div class="text-right">
-            <span class="inline-block px-3 py-1 bg-slate-900 text-white text-[11px] font-black uppercase tracking-wider rounded shadow-xs">TAX INVOICE</span>
-            <span class="block text-[8.5px] text-slate-500 font-medium mt-1">Original for Recipient • Sec 31 CGST / Rule 46</span>
+            <span class="inline-block px-3 py-1 bg-slate-900 text-white text-xs font-black uppercase tracking-wider rounded shadow-xs">TAX INVOICE</span>
+            <span class="block text-xs text-slate-500 font-medium mt-1">Original for Recipient • Sec 31 CGST / Rule 46</span>
             
-            <div class="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 text-[9px] text-right">
+            <div class="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-right">
               <span class="text-slate-500">Document No:</span>
               <strong class="font-mono-num text-slate-900">${tfEscapeHtml(order.invoiceNumber)}</strong>
               <span class="text-slate-500">Date:</span>
@@ -10227,18 +10227,18 @@ class TradeFlowApp {
         </div>
 
         <!-- Parties Strip -->
-        <div class="grid grid-cols-2 gap-2.5 py-2 border-b border-slate-200 text-[9px]">
+        <div class="grid grid-cols-2 gap-2.5 py-2 border-b border-slate-200 text-xs">
           <div class="bg-slate-50/80 p-2 rounded-lg border border-slate-200/90">
-            <span class="font-bold uppercase tracking-wider text-[8.5px] block text-slate-500 mb-0.5">Billed To (Receiver):</span>
-            <p class="font-black text-slate-900 text-[11px] leading-snug">${tfEscapeHtml(retailer.name)}</p>
+            <span class="font-bold uppercase tracking-wider text-xs block text-slate-500 mb-0.5">Billed To (Receiver):</span>
+            <p class="font-black text-slate-900 text-xs leading-snug">${tfEscapeHtml(retailer.name)}</p>
             <p class="text-slate-600 leading-snug mt-0.5 truncate">${tfEscapeHtml(retailer.billingAddress)}</p>
             <p class="mt-0.5"><strong>GSTIN:</strong> <span class="font-mono-num font-bold text-slate-900">${tfEscapeHtml(retailer.gstin)}</span> (State: ${tfEscapeHtml(retailer.state)} - ${tfEscapeHtml(retailer.stateCode)})</p>
             <p><strong>Phone / WA:</strong> <span class="font-mono-num font-semibold">${tfEscapeHtml(retailer.whatsappPhone || retailer.phone || order.customerPhone)}</span></p>
           </div>
 
           <div class="bg-slate-50/80 p-2 rounded-lg border border-slate-200/90">
-            <span class="font-bold uppercase tracking-wider text-[8.5px] block text-slate-500 mb-0.5">Shipped To &amp; Dispatch:</span>
-            <p class="font-black text-slate-900 text-[11px] leading-snug">${tfEscapeHtml(retailer.shippingAddress === retailer.billingAddress ? 'Same as Billed Address' : retailer.name)}</p>
+            <span class="font-bold uppercase tracking-wider text-xs block text-slate-500 mb-0.5">Shipped To &amp; Dispatch:</span>
+            <p class="font-black text-slate-900 text-xs leading-snug">${tfEscapeHtml(retailer.shippingAddress === retailer.billingAddress ? 'Same as Billed Address' : retailer.name)}</p>
             ${retailer.shippingAddress !== retailer.billingAddress ? `<p class="text-slate-600 leading-snug mt-0.5 truncate">${tfEscapeHtml(retailer.shippingAddress)}</p>` : ''}
             <div class="mt-0.5 space-y-0.5">
               <p><strong>Transport:</strong> ${tfEscapeHtml(order.transporterName || '')} ${order.lrNumber ? `(LR: <span class="font-mono-num font-semibold">${tfEscapeHtml(order.lrNumber)}</span>)` : ''}</p>
@@ -10249,7 +10249,7 @@ class TradeFlowApp {
         </div>
 
         <!-- Quality Strip -->
-        <div class="my-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-md text-[8.5px] flex items-center justify-between text-slate-600">
+        <div class="my-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-md text-xs flex items-center justify-between text-slate-600">
           <div class="flex items-center gap-3">
             <span><strong>Batch:</strong> <span class="font-mono-num font-bold text-slate-800">${tfEscapeHtml(order.batchNumber || '')}</span></span>
             <span><strong>Mfg:</strong> <span class="font-mono-num">${tfEscapeHtml(order.mfgDate || this.formatDate(order.date))}</span></span>
@@ -10260,8 +10260,8 @@ class TradeFlowApp {
 
         <!-- Line Items Table -->
         <div class="mt-1.5">
-          <table class="w-full border border-slate-200 text-[9.5px] table-auto">
-            <thead class="bg-slate-100 text-slate-800 uppercase font-bold text-[9px] border-b border-slate-300">
+          <table class="w-full border border-slate-200 text-xs table-auto">
+            <thead class="bg-slate-100 text-slate-800 uppercase font-bold text-xs border-b border-slate-300">
               <tr>
                 <th class="py-1 px-1 text-center w-7">#</th>
                 <th class="py-1 px-2 text-left">Description of Goods</th>
@@ -10282,14 +10282,14 @@ class TradeFlowApp {
         <!-- Financial Breakdown -->
         <div class="grid grid-cols-12 gap-3 mt-2 pt-2 border-t border-slate-200">
           <div class="col-span-7 space-y-1.5">
-            <div class="p-1.5 bg-slate-50 border border-slate-200 rounded text-[8.5px] leading-relaxed">
-              <span class="text-[8px] uppercase font-bold text-slate-400 block">Total Amount in Words:</span>
+            <div class="p-1.5 bg-slate-50 border border-slate-200 rounded text-xs leading-relaxed">
+              <span class="text-xs uppercase font-bold text-slate-400 block">Total Amount in Words:</span>
               <p class="font-bold text-slate-900 mt-0.5">${tfEscapeHtml(amountInWords)}</p>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 p-2 bg-amber-50/40 border border-amber-200/60 rounded text-[8.5px]">
+            <div class="grid grid-cols-2 gap-2 p-2 bg-amber-50/40 border border-amber-200/60 rounded text-xs">
               <div class="leading-relaxed space-y-0.5">
-                <span class="font-bold text-amber-900 block text-[9px]">Bank Settlement:</span>
+                <span class="font-bold text-amber-900 block text-xs">Bank Settlement:</span>
                 <p>Bank: <strong>${tfEscapeHtml(profile.bankName)}</strong></p>
                 <p>A/C: <strong class="font-mono-num">${tfEscapeHtml(profile.accountNumber)}</strong></p>
                 <p>IFSC: <strong class="font-mono-num">${tfEscapeHtml(profile.ifsc)}</strong></p>
@@ -10299,14 +10299,14 @@ class TradeFlowApp {
               ${showQr && upiQrUrl ? `
                 <div class="flex flex-col items-center justify-center text-center pl-2 border-l border-amber-200/80">
                   <img src="${tfEscapeHtml(tfSafeUrl(upiQrUrl))}" alt="UPI QR Code" class="rounded border border-amber-300 shadow-2xs bg-white p-0.5" style="width: ${tfEscapeHtml(qrSize)}; height: ${tfEscapeHtml(qrSize)};">
-                  <span class="text-[8px] font-bold text-amber-900 mt-0.5 block leading-none">Scan to Pay UPI</span>
+                  <span class="text-xs font-bold text-amber-900 mt-0.5 block leading-none">Scan to Pay UPI</span>
                   <span class="text-[7.5px] text-slate-500 font-mono-num leading-none mt-0.5">GPay • PhonePe • Paytm</span>
                 </div>
               ` : ''}
             </div>
           </div>
 
-          <div class="col-span-5 space-y-1 text-[9px]">
+          <div class="col-span-5 space-y-1 text-xs">
             <div class="flex justify-between py-0.5 text-slate-600">
               <span>Taxable Subtotal:</span>
               <span class="font-mono-num font-medium text-slate-800">${tfEscapeHtml(this.formatCurrency(order.taxableSubtotal))}</span>
@@ -10326,15 +10326,15 @@ class TradeFlowApp {
                 <span class="font-mono-num">${tfEscapeHtml(this.formatCurrency(order.igstAmount))}</span>
               </div>
             `}
-            <div class="flex justify-between py-1 border-t-2 border-slate-900 font-bold text-[10px]">
+            <div class="flex justify-between py-1 border-t-2 border-slate-900 font-bold text-xs">
               <span class="text-slate-900 font-black">Total Amount:</span>
               <span class="font-mono-num text-[12px] font-black text-slate-900">${tfEscapeHtml(this.formatCurrency(order.totalInvoiceAmount))}</span>
             </div>
-            <div class="flex justify-between py-0.5 px-1.5 text-[8.5px] text-emerald-800 font-semibold bg-emerald-50 rounded border border-emerald-200">
+            <div class="flex justify-between py-0.5 px-1.5 text-xs text-emerald-800 font-semibold bg-emerald-50 rounded border border-emerald-200">
               <span>Less Advance Paid:</span>
               <span class="font-mono-num font-bold">${tfEscapeHtml(this.formatCurrency(order.customerAdvanceReceived))}</span>
             </div>
-            <div class="flex justify-between py-1 px-2 text-[10px] text-rose-700 font-black bg-rose-50 rounded border border-rose-200">
+            <div class="flex justify-between py-1 px-2 text-xs text-rose-700 font-black bg-rose-50 rounded border border-rose-200">
               <span>Balance Due:</span>
               <span class="font-mono-num text-[12px]">${tfEscapeHtml(this.formatCurrency(order.customerBalanceDue))}</span>
             </div>
@@ -10342,15 +10342,15 @@ class TradeFlowApp {
         </div>
 
         <!-- Footer -->
-        <div class="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-slate-200 text-[8.5px]">
+        <div class="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-slate-200 text-xs">
           <div>
-            <span class="font-bold text-slate-800 uppercase tracking-wider text-[8px] block mb-0.5">Terms &amp; Conditions:</span>
-            <p class="text-slate-500 whitespace-pre-line text-[8px] leading-relaxed">${tfEscapeHtml(order.customNotes || this.defaultInvoiceNotes())}</p>
+            <span class="font-bold text-slate-800 uppercase tracking-wider text-xs block mb-0.5">Terms &amp; Conditions:</span>
+            <p class="text-slate-500 whitespace-pre-line text-xs leading-relaxed">${tfEscapeHtml(order.customNotes || this.defaultInvoiceNotes())}</p>
           </div>
           <div class="text-right flex flex-col justify-end items-end">
-            <p class="font-bold text-slate-800 text-[9px]">For ${tfEscapeHtml(profile.legalName)}</p>
+            <p class="font-bold text-slate-800 text-xs">For ${tfEscapeHtml(profile.legalName)}</p>
             ${digitalSealHtml}
-            <p class="border-t border-slate-400 pt-0.5 text-[8.5px] text-slate-600 font-medium">Authorized Signatory</p>
+            <p class="border-t border-slate-400 pt-0.5 text-xs text-slate-600 font-medium">Authorized Signatory</p>
           </div>
         </div>
       </div>
@@ -10400,7 +10400,7 @@ class TradeFlowApp {
       html2pdf().set(opt).from(clone).save().then(() => {
         offscreen.remove();
         if (showToast) {
-          this.showToast(`📥 Downloaded ${filename} (Strict 1-Page A4) successfully!`);
+          this.showToast(`Downloaded ${filename} (Strict 1-Page A4) successfully!`);
         }
       }).catch(err => {
         offscreen.remove();
@@ -10546,7 +10546,7 @@ class TradeFlowApp {
     if (!order) return;
 
     this.downloadStudioInvoicePDF(false);
-    this.showToast(`💾 Invoice saved to documents vault for order ${order.invoiceNumber}!`);
+    this.showToast(`Invoice saved to documents vault for order ${order.invoiceNumber}!`);
   }
 
   /* =========================================================================
@@ -10645,7 +10645,7 @@ class TradeFlowApp {
     if (elMonthProfit) {
       const sign = stats.monthProfit >= 0 ? '+' : '';
       elMonthProfit.innerText = `${sign}${this.formatCurrency(stats.monthProfit)} net`;
-      elMonthProfit.className = stats.monthProfit >= 0 ? 'text-[10px] font-bold text-teal-400' : 'text-[10px] font-bold text-rose-400';
+      elMonthProfit.className = stats.monthProfit >= 0 ? 'text-xs font-bold text-emerald-400' : 'text-xs font-bold text-rose-400';
     }
     if (elMonthLabel) elMonthLabel.innerText = `${stats.monthLabel} P&L`;
     if (elMonthSub) {
@@ -10721,33 +10721,33 @@ class TradeFlowApp {
 
     container.innerHTML = `
       <!-- Executive Workspace Hero Card -->
-      <div class="relative rounded-2xl bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 text-white p-6 shadow-xl border border-emerald-500/40 overflow-hidden">
+      <div class="relative rounded-2xl bg-gradient-to-r from-emerald-800 via-emerald-800 to-slate-900 text-white p-6 shadow-xl border border-emerald-500/40 overflow-hidden">
         <div class="absolute -right-8 -bottom-8 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute right-1/3 -top-12 w-48 h-48 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="absolute right-1/3 -top-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
         <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div class="flex items-center gap-4">
             <div class="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-3xl shadow-lg shrink-0">
-              🌿
+              <i data-lucide="leaf" class="w-5 h-5"></i>
             </div>
             <div>
               <div class="flex items-center gap-2.5 flex-wrap">
                 <h2 id="hub-brand-header-title" class="text-xl sm:text-2xl font-black text-white tracking-tight">
                   ${tfEscapeHtml(p.brandName || this.config().brand)} • ${tfEscapeHtml(p.legalName || '')}
                 </h2>
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-400 text-emerald-950 shadow-xs">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-400 text-emerald-950 shadow-xs">
                   Executive Hub
                 </span>
-                <span id="hub-profile-mode-badge" class="text-[10px] font-bold text-emerald-200 px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30">
+                <span id="hub-profile-mode-badge" class="text-xs font-bold text-emerald-200 px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30">
                   ${tfEscapeHtml(this.isCompanyProfileEditing ? 'Edit Mode Active' : 'View Mode')}
                 </span>
               </div>
               <p class="text-xs text-emerald-100/90 mt-1 font-medium">
                 Master Company Identity, Statutory Registrations &amp; Live Commercial Analytics
               </p>
-              <div class="flex items-center gap-2 mt-2 flex-wrap text-[11px] font-bold">
+              <div class="flex items-center gap-2 mt-2 flex-wrap text-xs font-bold">
                 <span class="px-2 py-0.5 rounded bg-white/10 text-emerald-200 border border-white/15">${tfEscapeHtml(p.cin ? `CIN/LLPIN: ${p.cin}` : 'CIN/LLPIN not set')}</span>
-                ${p.gstin ? `<span class="px-2 py-0.5 rounded bg-white/10 text-teal-100 border border-white/15">GSTIN ${tfEscapeHtml(p.gstin)}</span>` : '<span class="px-2 py-0.5 rounded bg-white/10 text-amber-100 border border-white/15">GSTIN not set</span>'}
+                ${p.gstin ? `<span class="px-2 py-0.5 rounded bg-white/10 text-emerald-100 border border-white/15">GSTIN ${tfEscapeHtml(p.gstin)}</span>` : '<span class="px-2 py-0.5 rounded bg-white/10 text-amber-100 border border-white/15">GSTIN not set</span>'}
                 ${p.fssai ? `<span class="px-2 py-0.5 rounded bg-white/10 text-amber-100 border border-white/15">FSSAI ${tfEscapeHtml(p.fssai)}</span>` : ''}
               </div>
             </div>
@@ -10804,16 +10804,16 @@ class TradeFlowApp {
               <span class="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">1</span>
               <span>Statutory Registrations &amp; Tax Credentials</span>
             </h3>
-            <span class="text-[11px] font-bold text-slate-400">Government of India &amp; State Authorities</span>
+            <span class="text-xs font-bold text-slate-400">Government of India &amp; State Authorities</span>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
             <!-- GSTIN Card -->
             <div class="p-3.5 rounded-xl bg-gradient-to-br from-emerald-50/50 to-slate-50 dark:from-emerald-950/20 dark:to-slate-900 border border-emerald-500/30 flex items-start justify-between shadow-2xs group hover:border-emerald-500/60 transition-all">
               <div class="min-w-0 pr-2">
-                <span class="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block mb-1">GSTIN Number</span>
+                <span class="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block mb-1">GSTIN Number</span>
                 <span id="hub-view-gstin" class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">—</span>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">State: <strong>${tfEscapeHtml([p.stateCode, p.state].filter(Boolean).join(' ') || 'Not set')}</strong></p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">State: <strong>${tfEscapeHtml([p.stateCode, p.state].filter(Boolean).join(' ') || 'Not set')}</strong></p>
               </div>
               <button type="button" onclick="app.copyStudioValue('hub-view-gstin', 'GSTIN')" class="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition-colors shrink-0" title="Copy GSTIN">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
@@ -10821,61 +10821,61 @@ class TradeFlowApp {
             </div>
 
             <!-- PAN Card -->
-            <div class="p-3.5 rounded-xl bg-gradient-to-br from-indigo-50/50 to-slate-50 dark:from-indigo-950/20 dark:to-slate-900 border border-indigo-500/30 flex items-start justify-between shadow-2xs group hover:border-indigo-500/60 transition-all">
+            <div class="p-3.5 rounded-xl bg-gradient-to-br from-blue-50/50 to-slate-50 dark:from-blue-950/20 dark:to-slate-900 border border-blue-500/30 flex items-start justify-between shadow-2xs group hover:border-blue-500/60 transition-all">
               <div class="min-w-0 pr-2">
-                <span class="text-[10px] font-black uppercase tracking-wider text-indigo-800 dark:text-indigo-300 block mb-1">Income Tax PAN</span>
+                <span class="text-xs font-black uppercase tracking-wider text-blue-800 dark:text-blue-300 block mb-1">Income Tax PAN</span>
                 <span id="hub-view-pan" class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">—</span>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Entity: <strong>${tfEscapeHtml(({ P: 'Individual / Proprietor', C: 'Company', H: 'HUF', F: 'Firm / LLP', A: 'Association of Persons', T: 'Trust', B: 'Body of Individuals', L: 'Local Authority', J: 'Artificial Juridical Person', G: 'Government' })[String(p.pan || '')[3]] || 'Not set')}</strong></p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Entity: <strong>${tfEscapeHtml(({ P: 'Individual / Proprietor', C: 'Company', H: 'HUF', F: 'Firm / LLP', A: 'Association of Persons', T: 'Trust', B: 'Body of Individuals', L: 'Local Authority', J: 'Artificial Juridical Person', G: 'Government' })[String(p.pan || '')[3]] || 'Not set')}</strong></p>
               </div>
-              <button type="button" onclick="app.copyStudioValue('hub-view-pan', 'PAN')" class="p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 transition-colors shrink-0" title="Copy PAN">
+              <button type="button" onclick="app.copyStudioValue('hub-view-pan', 'PAN')" class="p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-700 dark:text-blue-300 transition-colors shrink-0" title="Copy PAN">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
               </button>
             </div>
 
             <!-- FSSAI License -->
-            <div class="p-3.5 rounded-xl bg-gradient-to-br from-amber-50/50 to-slate-50 dark:from-amber-950/20 dark:to-slate-900 border border-amber-500/30 flex items-start justify-between shadow-2xs group hover:border-amber-500/60 transition-all">
+            <div class="p-3.5 rounded-xl bg-gradient-to-br from-amber-50/50 to-slate-50 dark:from-amber-950/20 dark:to-slate-900 border border-amber-500/30 flex items-start justify-between shadow-2xs group hover:border-emerald-600/60 transition-all">
               <div class="min-w-0 pr-2">
-                <span class="text-[10px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 block mb-1">FSSAI Central License #</span>
+                <span class="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 block mb-1">FSSAI Central License #</span>
                 <span id="hub-view-fssai" class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">—</span>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Food Safety &amp; Standards Authority</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Food Safety &amp; Standards Authority</p>
               </div>
-              <button type="button" onclick="app.copyStudioValue('hub-view-fssai', 'FSSAI')" class="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 transition-colors shrink-0" title="Copy FSSAI">
+              <button type="button" onclick="app.copyStudioValue('hub-view-fssai', 'FSSAI')" class="p-1.5 rounded-lg bg-emerald-700/10 hover:bg-emerald-800/20 text-amber-700 dark:text-amber-300 transition-colors shrink-0" title="Copy FSSAI">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
               </button>
             </div>
 
             <!-- MSME / Udyam -->
-            <div class="p-3.5 rounded-xl bg-gradient-to-br from-violet-50/50 to-slate-50 dark:from-violet-950/20 dark:to-slate-900 border border-violet-500/30 flex items-start justify-between shadow-2xs group hover:border-violet-500/60 transition-all">
+            <div class="p-3.5 rounded-xl bg-gradient-to-br from-purple-50/50 to-slate-50 dark:from-purple-950/20 dark:to-slate-900 border border-purple-500/30 flex items-start justify-between shadow-2xs group hover:border-purple-500/60 transition-all">
               <div class="min-w-0 pr-2">
-                <span class="text-[10px] font-black uppercase tracking-wider text-violet-800 dark:text-violet-300 block mb-1">MSME / Udyam Registration</span>
+                <span class="text-xs font-black uppercase tracking-wider text-purple-800 dark:text-purple-300 block mb-1">MSME / Udyam Registration</span>
                 <span class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">${tfEscapeHtml(p.udyam || 'Not set')}</span>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Udyam Registration Portal (MSME)</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Udyam Registration Portal (MSME)</p>
               </div>
-              <button type="button" onclick="app.copyToClipboard('${tfEscapeHtml(tfEscapeJs(p.udyam || ''))}', 'MSME Udyam number')" class="p-1.5 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 text-violet-700 dark:text-violet-300 transition-colors shrink-0" title="Copy MSME">
+              <button type="button" onclick="app.copyToClipboard('${tfEscapeHtml(tfEscapeJs(p.udyam || ''))}', 'MSME Udyam number')" class="p-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 transition-colors shrink-0" title="Copy MSME">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
               </button>
             </div>
 
             <!-- IEC Code -->
-            <div class="p-3.5 rounded-xl bg-gradient-to-br from-sky-50/50 to-slate-50 dark:from-sky-950/20 dark:to-slate-900 border border-sky-500/30 flex items-start justify-between shadow-2xs group hover:border-sky-500/60 transition-all">
+            <div class="p-3.5 rounded-xl bg-gradient-to-br from-blue-50/50 to-slate-50 dark:from-blue-950/20 dark:to-slate-900 border border-blue-500/30 flex items-start justify-between shadow-2xs group hover:border-blue-500/60 transition-all">
               <div class="min-w-0 pr-2">
-                <span class="text-[10px] font-black uppercase tracking-wider text-sky-800 dark:text-sky-300 block mb-1">Import Export Code (IEC)</span>
+                <span class="text-xs font-black uppercase tracking-wider text-blue-800 dark:text-blue-300 block mb-1">Import Export Code (IEC)</span>
                 <span class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">${tfEscapeHtml(p.iec || 'Not set')}</span>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">DGFT Ministry of Commerce &amp; Industry</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">DGFT Ministry of Commerce &amp; Industry</p>
               </div>
-              <button type="button" onclick="app.copyToClipboard('${tfEscapeHtml(tfEscapeJs(p.iec || ''))}', 'IEC')" class="p-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-700 dark:text-sky-300 transition-colors shrink-0" title="Copy IEC">
+              <button type="button" onclick="app.copyToClipboard('${tfEscapeHtml(tfEscapeJs(p.iec || ''))}', 'IEC')" class="p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-700 dark:text-blue-300 transition-colors shrink-0" title="Copy IEC">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
               </button>
             </div>
 
             <!-- Legal Form -->
-            <div class="p-3.5 rounded-xl bg-gradient-to-br from-teal-50/50 to-slate-50 dark:from-teal-950/20 dark:to-slate-900 border border-teal-500/30 flex items-start justify-between shadow-2xs group hover:border-teal-500/60 transition-all">
+            <div class="p-3.5 rounded-xl bg-gradient-to-br from-emerald-50/50 to-slate-50 dark:from-emerald-950/20 dark:to-slate-900 border border-emerald-500/30 flex items-start justify-between shadow-2xs group hover:border-emerald-500/60 transition-all">
               <div class="min-w-0 pr-2">
-                <span class="text-[10px] font-black uppercase tracking-wider text-teal-800 dark:text-teal-300 block mb-1">Legal Constitution &amp; Form</span>
+                <span class="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block mb-1">Legal Constitution &amp; Form</span>
                 <span id="hub-view-legalName" class="font-black text-sm text-slate-900 dark:text-white block truncate">—</span>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Trade Brand: <strong id="hub-view-brandName" class="text-emerald-600">${tfEscapeHtml(this.config().brand)}</strong></p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Trade Brand: <strong id="hub-view-brandName" class="text-emerald-600">${tfEscapeHtml(this.config().brand)}</strong></p>
               </div>
-              <button type="button" onclick="app.copyStudioValue('hub-view-legalName', 'Legal Name')" class="p-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 transition-colors shrink-0" title="Copy Legal Name">
+              <button type="button" onclick="app.copyStudioValue('hub-view-legalName', 'Legal Name')" class="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition-colors shrink-0" title="Copy Legal Name">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
               </button>
             </div>
@@ -10885,75 +10885,75 @@ class TradeFlowApp {
         <!-- 2. BANKING COORDINATES & SETTLEMENTS -->
         <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
           <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-            <h3 class="text-xs font-black uppercase tracking-wider text-teal-700 dark:text-teal-400 flex items-center gap-2">
-              <span class="w-6 h-6 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold text-xs">2</span>
+            <h3 class="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs">2</span>
               <span>Corporate Banking Coordinates &amp; Instant Digital Settlements</span>
             </h3>
-            <span class="text-[11px] font-bold text-slate-400">RTGS / NEFT / IMPS &amp; Dynamic UPI VPA</span>
+            <span class="text-xs font-bold text-slate-400">RTGS / NEFT / IMPS &amp; Dynamic UPI VPA</span>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
             <!-- Primary HDFC Bank -->
-            <div class="p-4 rounded-xl bg-gradient-to-br from-teal-50/60 to-slate-50 dark:from-teal-950/20 dark:to-slate-900 border border-teal-500/30 space-y-2.5 shadow-2xs group hover:border-teal-500/60 transition-all">
+            <div class="p-4 rounded-xl bg-gradient-to-br from-emerald-50/60 to-slate-50 dark:from-emerald-950/20 dark:to-slate-900 border border-emerald-500/30 space-y-2.5 shadow-2xs group hover:border-emerald-500/60 transition-all">
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-black uppercase tracking-wider text-teal-800 dark:text-teal-300 flex items-center gap-1.5">
-                  <i data-lucide="credit-card" class="w-3.5 h-3.5 text-teal-600"></i>
+                <span class="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                  <i data-lucide="credit-card" class="w-3.5 h-3.5 text-emerald-600"></i>
                   <span>Primary Bank${p.bankName ? ` (${tfEscapeHtml(p.bankName)})` : ''}</span>
                 </span>
-                <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-700 dark:text-teal-300">Active Current A/C</span>
+                <span class="text-xs font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">Active Current A/C</span>
               </div>
               <div>
-                <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Bank &amp; Account Number:</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400 block">Bank &amp; Account Number:</span>
                 <div class="flex items-center justify-between mt-0.5">
                   <div>
                     <span id="hub-view-bankName" class="font-extrabold text-xs text-slate-900 dark:text-white block">—</span>
-                    <span id="hub-view-accountNumber" class="font-mono-num font-black text-base text-teal-600 dark:text-teal-400 block tracking-wide">—</span>
+                    <span id="hub-view-accountNumber" class="font-mono-num font-black text-base text-emerald-600 dark:text-emerald-400 block tracking-wide">—</span>
                   </div>
-                  <button type="button" onclick="app.copyStudioValue('hub-view-accountNumber', 'Account Number')" class="p-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 transition-colors" title="Copy Account #">
+                  <button type="button" onclick="app.copyStudioValue('hub-view-accountNumber', 'Account Number')" class="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition-colors" title="Copy Account #">
                     <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                   </button>
                 </div>
               </div>
-              <div class="pt-2 border-t border-teal-200/50 dark:border-teal-900/50 flex items-center justify-between text-xs">
+              <div class="pt-2 border-t border-emerald-200/50 dark:border-emerald-900/50 flex items-center justify-between text-xs">
                 <div>
-                  <span class="text-[10px] text-slate-400 block">IFSC Code:</span>
+                  <span class="text-xs text-slate-400 block">IFSC Code:</span>
                   <span id="hub-view-ifsc" class="font-mono-num font-bold text-slate-900 dark:text-white">—</span>
                 </div>
                 <div class="text-right">
-                  <span class="text-[10px] text-slate-400 block">Branch:</span>
+                  <span class="text-xs text-slate-400 block">Branch:</span>
                   <span id="hub-view-branch" class="text-slate-700 dark:text-slate-300 font-medium">—</span>
                 </div>
               </div>
             </div>
 
             <!-- Secondary ICICI Bank -->
-            <div class="p-4 rounded-xl bg-gradient-to-br from-violet-50/60 to-slate-50 dark:from-violet-950/20 dark:to-slate-900 border border-violet-500/30 space-y-2.5 shadow-2xs group hover:border-violet-500/60 transition-all">
+            <div class="p-4 rounded-xl bg-gradient-to-br from-purple-50/60 to-slate-50 dark:from-purple-950/20 dark:to-slate-900 border border-purple-500/30 space-y-2.5 shadow-2xs group hover:border-purple-500/60 transition-all">
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-black uppercase tracking-wider text-violet-800 dark:text-violet-300 flex items-center gap-1.5">
-                  <i data-lucide="landmark" class="w-3.5 h-3.5 text-violet-600"></i>
+                <span class="text-xs font-black uppercase tracking-wider text-purple-800 dark:text-purple-300 flex items-center gap-1.5">
+                  <i data-lucide="landmark" class="w-3.5 h-3.5 text-purple-600"></i>
                   <span>Secondary Bank${p.secondaryBankName ? ` (${tfEscapeHtml(p.secondaryBankName)})` : ''}</span>
                 </span>
-                <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-700 dark:text-violet-300">Escrow Reserve</span>
+                <span class="text-xs font-extrabold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-700 dark:text-purple-300">Escrow Reserve</span>
               </div>
               <div>
-                <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Bank &amp; Account Number:</span>
+                <span class="text-xs text-slate-500 dark:text-slate-400 block">Bank &amp; Account Number:</span>
                 <div class="flex items-center justify-between mt-0.5">
                   <div>
                     <span class="font-extrabold text-xs text-slate-900 dark:text-white block">${tfEscapeHtml(p.secondaryBankName || 'Not set')}</span>
-                    <span class="font-mono-num font-black text-base text-violet-600 dark:text-violet-400 block tracking-wide">${tfEscapeHtml(p.secondaryAccountNumber || 'Not set')}</span>
+                    <span class="font-mono-num font-black text-base text-purple-600 dark:text-purple-400 block tracking-wide">${tfEscapeHtml(p.secondaryAccountNumber || 'Not set')}</span>
                   </div>
-                  <button type="button" onclick="app.copyToClipboard('${tfEscapeHtml(tfEscapeJs(p.secondaryAccountNumber || ''))}', 'Secondary account number')" class="p-1.5 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 text-violet-700 dark:text-violet-300 transition-colors" title="Copy secondary account number">
+                  <button type="button" onclick="app.copyToClipboard('${tfEscapeHtml(tfEscapeJs(p.secondaryAccountNumber || ''))}', 'Secondary account number')" class="p-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 transition-colors" title="Copy secondary account number">
                     <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                   </button>
                 </div>
               </div>
-              <div class="pt-2 border-t border-violet-200/50 dark:border-violet-900/50 flex items-center justify-between text-xs">
+              <div class="pt-2 border-t border-purple-200/50 dark:border-purple-900/50 flex items-center justify-between text-xs">
                 <div>
-                  <span class="text-[10px] text-slate-400 block">IFSC Code:</span>
+                  <span class="text-xs text-slate-400 block">IFSC Code:</span>
                   <span class="font-mono-num font-bold text-slate-900 dark:text-white">${tfEscapeHtml(p.secondaryIfsc || 'Not set')}</span>
                 </div>
                 <div class="text-right">
-                  <span class="text-[10px] text-slate-400 block">Branch:</span>
+                  <span class="text-xs text-slate-400 block">Branch:</span>
                   <span class="text-slate-700 dark:text-slate-300 font-medium">${tfEscapeHtml(p.secondaryBranch || 'Not set')}</span>
                 </div>
               </div>
@@ -10963,14 +10963,14 @@ class TradeFlowApp {
             <div class="p-4 rounded-xl bg-gradient-to-br from-emerald-50/60 to-slate-50 dark:from-emerald-950/20 dark:to-slate-900 border border-emerald-500/30 space-y-2.5 shadow-2xs group hover:border-emerald-500/60 transition-all flex flex-col justify-between">
               <div>
                 <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                  <span class="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
                     <i data-lucide="qr-code" class="w-3.5 h-3.5 text-emerald-600"></i>
                     <span>Official UPI Merchant VPA</span>
                   </span>
-                  <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">Instant UPI QR</span>
+                  <span class="text-xs font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300">Instant UPI QR</span>
                 </div>
                 <div class="mt-2">
-                  <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Merchant VPA Address:</span>
+                  <span class="text-xs text-slate-500 dark:text-slate-400 block">Merchant VPA Address:</span>
                   <div class="flex items-center justify-between mt-0.5">
                     <span id="hub-view-upiId" class="font-mono-num font-black text-sm text-emerald-600 dark:text-emerald-400 block select-all tracking-wide">—</span>
                     <button type="button" onclick="app.copyStudioValue('hub-view-upiId', 'UPI VPA')" class="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 transition-colors" title="Copy UPI VPA">
@@ -10979,7 +10979,7 @@ class TradeFlowApp {
                   </div>
                 </div>
               </div>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-emerald-200/50 dark:border-emerald-900/50">
+              <p class="text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-emerald-200/50 dark:border-emerald-900/50">
                 Directly connected to dynamic QR generation on Tax Invoices &amp; Receipts.
               </p>
             </div>
@@ -10993,19 +10993,19 @@ class TradeFlowApp {
               <span class="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs">3</span>
               <span>Facilities, Headquarters &amp; Operational Logistics</span>
             </h3>
-            <span class="text-[11px] font-bold text-slate-400">Warehouse Dispatches &amp; Helpline Contacts</span>
+            <span class="text-xs font-bold text-slate-400">Warehouse Dispatches &amp; Helpline Contacts</span>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
             <!-- Facility Address -->
-            <div class="p-4 rounded-xl bg-gradient-to-br from-amber-50/50 to-slate-50 dark:from-amber-950/20 dark:to-slate-900 border border-amber-500/30 space-y-2 shadow-2xs group hover:border-amber-500/60 transition-all flex flex-col justify-between">
+            <div class="p-4 rounded-xl bg-gradient-to-br from-amber-50/50 to-slate-50 dark:from-amber-950/20 dark:to-slate-900 border border-amber-500/30 space-y-2 shadow-2xs group hover:border-emerald-600/60 transition-all flex flex-col justify-between">
               <div>
                 <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                  <span class="text-xs font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
                     <i data-lucide="map-pin" class="w-3.5 h-3.5 text-amber-600"></i>
                     <span>Head Office &amp; Facility</span>
                   </span>
-                  <button type="button" onclick="app.copyStudioValue('hub-view-address', 'Address')" class="p-1 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20" title="Copy Address">
+                  <button type="button" onclick="app.copyStudioValue('hub-view-address', 'Address')" class="p-1 rounded bg-emerald-700/10 text-amber-700 dark:text-amber-300 hover:bg-emerald-800/20" title="Copy Address">
                     <i data-lucide="copy" class="w-3 h-3"></i>
                   </button>
                 </div>
@@ -11013,31 +11013,31 @@ class TradeFlowApp {
                   ${tfEscapeHtml([p.address, p.city, p.state].filter(Boolean).join(', ') + (p.pincode ? ' - ' + p.pincode : '') || 'Not set')}
                 </p>
               </div>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-amber-200/50 dark:border-amber-900/50">
+              <p class="text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-amber-200/50 dark:border-amber-900/50">
                 Primary Manufacturing, Batch Curing &amp; Dispatch Warehouse
               </p>
             </div>
 
             <!-- Invoicing Email & Contact -->
-            <div class="p-4 rounded-xl bg-gradient-to-br from-sky-50/50 to-slate-50 dark:from-sky-950/20 dark:to-slate-900 border border-sky-500/30 space-y-2.5 shadow-2xs group hover:border-sky-500/60 transition-all">
-              <span class="text-[10px] font-black uppercase tracking-wider text-sky-800 dark:text-sky-300 flex items-center gap-1.5">
-                <i data-lucide="mail" class="w-3.5 h-3.5 text-sky-600"></i>
+            <div class="p-4 rounded-xl bg-gradient-to-br from-blue-50/50 to-slate-50 dark:from-blue-950/20 dark:to-slate-900 border border-blue-500/30 space-y-2.5 shadow-2xs group hover:border-blue-500/60 transition-all">
+              <span class="text-xs font-black uppercase tracking-wider text-blue-800 dark:text-blue-300 flex items-center gap-1.5">
+                <i data-lucide="mail" class="w-3.5 h-3.5 text-blue-600"></i>
                 <span>Executive Helpline &amp; Billing</span>
               </span>
               <div>
-                <span class="text-[10px] text-slate-400 block">Commercial Billing Email:</span>
+                <span class="text-xs text-slate-400 block">Commercial Billing Email:</span>
                 <div class="flex items-center justify-between mt-0.5">
                   <span id="hub-view-email" class="font-bold text-xs text-slate-900 dark:text-white select-all">—</span>
-                  <button type="button" onclick="app.copyStudioValue('hub-view-email', 'Email')" class="p-1 rounded bg-sky-500/10 text-sky-700 dark:text-sky-300 hover:bg-sky-500/20" title="Copy Email">
+                  <button type="button" onclick="app.copyStudioValue('hub-view-email', 'Email')" class="p-1 rounded bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20" title="Copy Email">
                     <i data-lucide="copy" class="w-3 h-3"></i>
                   </button>
                 </div>
               </div>
-              <div class="pt-2 border-t border-sky-200/50 dark:border-sky-900/50">
-                <span class="text-[10px] text-slate-400 block">Executive Contact Phone:</span>
+              <div class="pt-2 border-t border-blue-200/50 dark:border-blue-900/50">
+                <span class="text-xs text-slate-400 block">Executive Contact Phone:</span>
                 <div class="flex items-center justify-between mt-0.5">
                   <span id="hub-view-phone" class="font-mono-num font-black text-sm text-slate-900 dark:text-white select-all">—</span>
-                  <button type="button" onclick="app.copyStudioValue('hub-view-phone', 'Phone')" class="p-1 rounded bg-sky-500/10 text-sky-700 dark:text-sky-300 hover:bg-sky-500/20" title="Copy Phone">
+                  <button type="button" onclick="app.copyStudioValue('hub-view-phone', 'Phone')" class="p-1 rounded bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20" title="Copy Phone">
                     <i data-lucide="copy" class="w-3 h-3"></i>
                   </button>
                 </div>
@@ -11045,17 +11045,17 @@ class TradeFlowApp {
             </div>
 
             <!-- Factory Dispatch Desk -->
-            <div class="p-4 rounded-xl bg-gradient-to-br from-indigo-50/50 to-slate-50 dark:from-indigo-950/20 dark:to-slate-900 border border-indigo-500/30 space-y-2.5 shadow-2xs group hover:border-indigo-500/60 transition-all">
-              <span class="text-[10px] font-black uppercase tracking-wider text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5">
-                <i data-lucide="truck" class="w-3.5 h-3.5 text-indigo-600"></i>
+            <div class="p-4 rounded-xl bg-gradient-to-br from-blue-50/50 to-slate-50 dark:from-blue-950/20 dark:to-slate-900 border border-blue-500/30 space-y-2.5 shadow-2xs group hover:border-blue-500/60 transition-all">
+              <span class="text-xs font-black uppercase tracking-wider text-blue-800 dark:text-blue-300 flex items-center gap-1.5">
+                <i data-lucide="truck" class="w-3.5 h-3.5 text-blue-600"></i>
                 <span>Factory Dispatch &amp; Operating Timings</span>
               </span>
               <div>
-                <span class="text-[10px] text-slate-400 block">Factory Bilty &amp; Logistics Desk:</span>
+                <span class="text-xs text-slate-400 block">Factory Bilty &amp; Logistics Desk:</span>
                 <span class="font-bold text-xs text-slate-900 dark:text-white block mt-0.5">${tfEscapeHtml([this.data.businessProfile?.email, this.data.businessProfile?.phone].filter(Boolean).join(' • ') || 'Not set')}</span>
               </div>
-              <div class="pt-2 border-t border-indigo-200/50 dark:border-indigo-900/50">
-                <span class="text-[10px] text-slate-400 block">Dispatch Operating Shifts:</span>
+              <div class="pt-2 border-t border-blue-200/50 dark:border-blue-900/50">
+                <span class="text-xs text-slate-400 block">Dispatch Operating Shifts:</span>
                 <span class="font-bold text-xs text-slate-800 dark:text-slate-200 block mt-0.5">Mon - Sat: 9:00 AM - 7:30 PM IST (Warehouse: 10:00 AM - 6:00 PM)</span>
               </div>
             </div>
@@ -11065,11 +11065,11 @@ class TradeFlowApp {
         <!-- 4. FINANCIAL PERFORMANCE & COMMERCIAL TURNOVERS -->
         <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
           <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-            <h3 class="text-xs font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
-              <span class="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xs">4</span>
+            <h3 class="text-xs font-black uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">4</span>
               <span>Financial Performance &amp; Real-Time Commercial Turnovers</span>
             </h3>
-            <span class="text-[11px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Live Real-Time Financials</span>
+            <span class="text-xs font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Live Real-Time Financials</span>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
@@ -11080,29 +11080,29 @@ class TradeFlowApp {
                   <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
                   <span>${tfEscapeHtml(stats.monthLabel)}</span>
                 </span>
-                <span class="text-[10px] font-bold text-emerald-600 group-hover:underline flex items-center gap-0.5">Inspect <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
+                <span class="text-xs font-bold text-emerald-600 group-hover:underline flex items-center gap-0.5">Inspect <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
               </div>
               <span id="hub-stat-cur-month-rev" class="font-mono-num font-black text-2xl text-slate-900 dark:text-white block tracking-tight my-1">
                 ${tfEscapeHtml(this.formatCurrency(stats.monthRevenue))}
               </span>
               <div class="flex items-center justify-between text-xs mt-1">
-                <span id="hub-stat-cur-month-profit" class="font-bold ${tfEscapeHtml(stats.monthProfit >= 0 ? 'text-teal-600 dark:text-teal-400' : 'text-rose-600')}">
+                <span id="hub-stat-cur-month-profit" class="font-bold ${tfEscapeHtml(stats.monthProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600')}">
                   ${tfEscapeHtml(stats.monthProfit >= 0 ? '+' : '')}${tfEscapeHtml(this.formatCurrency(stats.monthProfit))} net
                 </span>
               </div>
-              <p id="hub-stat-cur-month-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 pt-1.5 border-t border-emerald-200/50 dark:border-emerald-900/50">
+              <p id="hub-stat-cur-month-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-1 pt-1.5 border-t border-emerald-200/50 dark:border-emerald-900/50">
                 ${tfEscapeHtml(stats.monthTaxable > 0 ? ((stats.monthProfit / stats.monthTaxable) * 100).toFixed(1) : '0.0')}% net margin · ${tfEscapeHtml(stats.monthCount)} batches
               </p>
             </div>
 
             <!-- Card 2: Last Month -->
-            <div onclick="app.openStudioMetricsDrilldownModal('monthly')" class="p-4 rounded-xl bg-gradient-to-br from-sky-50/70 to-slate-50 dark:from-sky-950/30 dark:to-slate-900 border border-sky-500/40 hover:border-sky-500 shadow-2xs hover:shadow-md transition-all cursor-pointer group">
+            <div onclick="app.openStudioMetricsDrilldownModal('monthly')" class="p-4 rounded-xl bg-gradient-to-br from-blue-50/70 to-slate-50 dark:from-blue-950/30 dark:to-slate-900 border border-blue-500/40 hover:border-blue-500 shadow-2xs hover:shadow-md transition-all cursor-pointer group">
               <div class="flex items-center justify-between mb-1.5">
-                <span id="hub-stat-last-month-label" class="text-xs font-extrabold text-sky-800 dark:text-sky-300 flex items-center gap-1">
+                <span id="hub-stat-last-month-label" class="text-xs font-extrabold text-blue-800 dark:text-blue-300 flex items-center gap-1">
                   <i data-lucide="history" class="w-3.5 h-3.5"></i>
                   <span>${tfEscapeHtml(stats.lastMonthLabel || 'Last Month')}</span>
                 </span>
-                <span class="text-[10px] font-bold text-sky-600 group-hover:underline flex items-center gap-0.5">Inspect <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
+                <span class="text-xs font-bold text-blue-600 group-hover:underline flex items-center gap-0.5">Inspect <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
               </div>
               <span id="hub-stat-last-month-rev" class="font-mono-num font-black text-2xl text-slate-900 dark:text-white block tracking-tight my-1">
                 ${tfEscapeHtml(this.formatCurrency(stats.lastMonthRevenue || 0))}
@@ -11112,19 +11112,19 @@ class TradeFlowApp {
                   ${tfEscapeHtml((stats.lastMonthProfit || 0) >= 0 ? '+' : '')}${tfEscapeHtml(this.formatCurrency(stats.lastMonthProfit || 0))} net
                 </span>
               </div>
-              <p id="hub-stat-last-month-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 pt-1.5 border-t border-sky-200/50 dark:border-sky-900/50">
+              <p id="hub-stat-last-month-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-1 pt-1.5 border-t border-blue-200/50 dark:border-blue-900/50">
                 ${tfEscapeHtml((stats.lastMonthTaxable || 0) > 0 ? (((stats.lastMonthProfit || 0) / stats.lastMonthTaxable) * 100).toFixed(1) : '0.0')}% net margin · ${tfEscapeHtml(stats.lastMonthCount || 0)} batches
               </p>
             </div>
 
             <!-- Card 3: Financial Year -->
-            <div onclick="app.openStudioMetricsDrilldownModal('yearly')" class="p-4 rounded-xl bg-gradient-to-br from-indigo-50/70 to-slate-50 dark:from-indigo-950/30 dark:to-slate-900 border border-indigo-500/40 hover:border-indigo-500 shadow-2xs hover:shadow-md transition-all cursor-pointer group">
+            <div onclick="app.openStudioMetricsDrilldownModal('yearly')" class="p-4 rounded-xl bg-gradient-to-br from-blue-50/70 to-slate-50 dark:from-blue-950/30 dark:to-slate-900 border border-blue-500/40 hover:border-blue-500 shadow-2xs hover:shadow-md transition-all cursor-pointer group">
               <div class="flex items-center justify-between mb-1.5">
-                <span id="hub-stat-fy-label" class="text-xs font-extrabold text-indigo-800 dark:text-indigo-300 flex items-center gap-1">
+                <span id="hub-stat-fy-label" class="text-xs font-extrabold text-blue-800 dark:text-blue-300 flex items-center gap-1">
                   <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
                   <span>${tfEscapeHtml(stats.yearLabel)}</span>
                 </span>
-                <span class="text-[10px] font-bold text-indigo-600 group-hover:underline flex items-center gap-0.5">Inspect <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
+                <span class="text-xs font-bold text-blue-600 group-hover:underline flex items-center gap-0.5">Inspect <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
               </div>
               <span id="hub-stat-fy-rev" class="font-mono-num font-black text-2xl text-slate-900 dark:text-white block tracking-tight my-1">
                 ${tfEscapeHtml(this.formatCurrency(stats.yearRevenue))}
@@ -11134,19 +11134,19 @@ class TradeFlowApp {
                   ${tfEscapeHtml(stats.yearProfit >= 0 ? '+' : '')}${tfEscapeHtml(this.formatCurrency(stats.yearProfit))} profit
                 </span>
               </div>
-              <p id="hub-stat-fy-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 pt-1.5 border-t border-indigo-200/50 dark:border-indigo-900/50">
+              <p id="hub-stat-fy-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-1 pt-1.5 border-t border-blue-200/50 dark:border-blue-900/50">
                 FY turnover · ${tfEscapeHtml(stats.yearTaxable > 0 ? ((stats.yearProfit / stats.yearTaxable) * 100).toFixed(1) : '0.0')}% profit margin
               </p>
             </div>
 
             <!-- Card 4: Lifetime Turnover -->
-            <div onclick="app.openStudioMetricsDrilldownModal('receivables')" class="p-4 rounded-xl bg-gradient-to-br from-teal-50/70 to-slate-50 dark:from-teal-950/30 dark:to-slate-900 border border-teal-500/40 hover:border-teal-500 shadow-2xs hover:shadow-md transition-all cursor-pointer group">
+            <div onclick="app.openStudioMetricsDrilldownModal('receivables')" class="p-4 rounded-xl bg-gradient-to-br from-emerald-50/70 to-slate-50 dark:from-emerald-950/30 dark:to-slate-900 border border-emerald-500/40 hover:border-emerald-500 shadow-2xs hover:shadow-md transition-all cursor-pointer group">
               <div class="flex items-center justify-between mb-1.5">
-                <span class="text-xs font-extrabold text-teal-800 dark:text-teal-300 flex items-center gap-1">
+                <span class="text-xs font-extrabold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
                   <i data-lucide="award" class="w-3.5 h-3.5"></i>
                   <span>LIFETIME TURNOVER</span>
                 </span>
-                <span class="text-[10px] font-bold text-teal-600 group-hover:underline flex items-center gap-0.5">Inspect <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
+                <span class="text-xs font-bold text-emerald-600 group-hover:underline flex items-center gap-0.5">Inspect <i data-lucide="chevron-right" class="w-3 h-3"></i></span>
               </div>
               <span id="hub-stat-lifetime-rev" class="font-mono-num font-black text-2xl text-slate-900 dark:text-white block tracking-tight my-1">
                 ${tfEscapeHtml(this.formatCurrency(stats.lifetimeRevenue))}
@@ -11154,7 +11154,7 @@ class TradeFlowApp {
               <div class="flex items-center justify-between text-xs mt-1">
                 <span id="hub-stat-lifetime-count" class="font-bold text-slate-700 dark:text-slate-300">${tfEscapeHtml(stats.lifetimeOrdersCount)} orders</span>
               </div>
-              <p id="hub-stat-lifetime-sub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 pt-1.5 border-t border-teal-200/50 dark:border-teal-900/50">
+              <p id="hub-stat-lifetime-sub" class="text-xs text-slate-500 dark:text-slate-400 mt-1 pt-1.5 border-t border-emerald-200/50 dark:border-emerald-900/50">
                 Collected ${tfEscapeHtml(this.formatCurrency(stats.totalCollected))} · Due ${tfEscapeHtml(this.formatCurrency(stats.totalBalanceDue))}
               </p>
             </div>
@@ -11168,33 +11168,33 @@ class TradeFlowApp {
               <span class="w-6 h-6 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-xs">5</span>
               <span>Commercial Governance Directives &amp; Statutory Trade Terms</span>
             </h3>
-            <span class="text-[11px] font-bold text-slate-400">Applied automatically across invoices &amp; challans</span>
+            <span class="text-xs font-bold text-slate-400">Applied automatically across invoices &amp; challans</span>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
             <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
-              <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-1">Standard Payment Terms</span>
+              <span class="text-xs font-black uppercase tracking-wider text-slate-500 block mb-1">Standard Payment Terms</span>
               <p id="hub-terms-text" class="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
                 Payment within 15 days of invoice date via RTGS/NEFT/UPI. Interest @ 18% p.a. chargeable on delayed settlements.
               </p>
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
-              <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-1">Legal Jurisdiction</span>
+              <span class="text-xs font-black uppercase tracking-wider text-slate-500 block mb-1">Legal Jurisdiction</span>
               <p id="hub-jurisdiction-text" class="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
                 ${tfEscapeHtml(this.jurisdictionLine() || 'Jurisdiction city not set (Settings > Business Profile > Business Defaults).')}
               </p>
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
-              <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-1">Quality Mandate</span>
+              <span class="text-xs font-black uppercase tracking-wider text-slate-500 block mb-1">Quality Mandate</span>
               <p class="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
                 ${tfEscapeHtml(this.data.businessProfile?.qualityStatement || 'Not set')}
               </p>
             </div>
 
             <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
-              <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-1">Registered Trademarks</span>
+              <span class="text-xs font-black uppercase tracking-wider text-slate-500 block mb-1">Registered Trademarks</span>
               <p class="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
                 ${tfEscapeHtml(this.data.businessProfile?.trademarks || 'Not set')}
               </p>
@@ -11221,82 +11221,82 @@ class TradeFlowApp {
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Legal Company Name *</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Legal Company Name *</label>
             <input id="hub-input-legalName" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-900 dark:text-white font-bold outline-none focus:border-emerald-500">
           </div>
 
           <div>
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Trade Brand Name *</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Trade Brand Name *</label>
             <input id="hub-input-brandName" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-900 dark:text-white font-bold outline-none focus:border-emerald-500">
           </div>
 
           <div>
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">GSTIN Number *</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">GSTIN Number *</label>
             <input id="hub-input-gstin" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500">
           </div>
 
           <div>
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Income Tax PAN</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Income Tax PAN</label>
             <input id="hub-input-pan" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500">
           </div>
 
           <div>
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">FSSAI License #</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">FSSAI License #</label>
             <input id="hub-input-fssai" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500">
           </div>
 
           <div>
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">State Code</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">State Code</label>
             <input id="hub-input-stateCode" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500">
           </div>
 
           <div class="lg:col-span-2">
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Head Office Address</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Head Office Address</label>
             <input id="hub-input-address" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500">
           </div>
 
           <div>
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">City</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">City</label>
             <input id="hub-input-city" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500">
           </div>
 
           <div>
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">State</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">State</label>
             <input id="hub-input-state" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500">
           </div>
 
           <div>
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Pincode</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Pincode</label>
             <input id="hub-input-pincode" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-emerald-500">
           </div>
 
           <div>
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Commercial Billing Email</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Commercial Billing Email</label>
             <input id="hub-input-email" type="email" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500">
           </div>
 
           <div>
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Executive Phone</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Executive Phone</label>
             <input id="hub-input-phone" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs font-mono text-slate-900 dark:text-white outline-none focus:border-emerald-500">
           </div>
 
           <div>
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Primary Bank Name</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Primary Bank Name</label>
             <input id="hub-input-bankName" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-900 dark:text-white font-bold outline-none focus:border-emerald-500">
           </div>
 
           <div>
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Account Number</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Account Number</label>
             <input id="hub-input-accountNumber" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500">
           </div>
 
           <div>
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">IFSC Code</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">IFSC Code</label>
             <input id="hub-input-ifsc" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500">
           </div>
 
           <div>
-            <label class="block text-[11px] font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Official UPI ID</label>
+            <label class="block text-xs font-extrabold uppercase text-slate-700 dark:text-slate-300 mb-1">Official UPI ID</label>
             <input id="hub-input-upiId" type="text" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-500">
           </div>
         </div>
@@ -11412,7 +11412,7 @@ class TradeFlowApp {
       if (toggleBtnText) toggleBtnText.textContent = 'Exit Edit Mode';
       if (modeBadge) {
         modeBadge.textContent = 'Edit Mode Active';
-        modeBadge.className = 'text-[10px] font-bold text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30';
+        modeBadge.className = 'text-xs font-bold text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30';
       }
     } else {
       if (viewContainer) viewContainer.classList.remove('hidden');
@@ -11420,7 +11420,7 @@ class TradeFlowApp {
       if (toggleBtnText) toggleBtnText.textContent = 'Live Edit Details';
       if (modeBadge) {
         modeBadge.textContent = 'View Mode';
-        modeBadge.className = 'text-[10px] font-bold text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-750';
+        modeBadge.className = 'text-xs font-bold text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-750';
       }
     }
 
@@ -11438,7 +11438,7 @@ class TradeFlowApp {
     const gstin = getVal('hub-input-gstin');
 
     if (!legalName || !brandName || !gstin) {
-      this.showToast('⚠️ Please enter Legal Name, Brand Name, and GSTIN.');
+      this.showToast('Please enter Legal Name, Brand Name, and GSTIN.');
       return;
     }
 
@@ -11470,7 +11470,7 @@ class TradeFlowApp {
     this.saveData();
     this.renderCompanyExecutiveHubProfile();
     this.toggleCompanyProfileEditMode(false);
-    this.showToast(`✨ ${this.config().brand} company profile saved.`);
+    this.showToast(`${this.config().brand} company profile saved.`);
   }
 
   renderExecutiveHubFinancials(providedStats) {
@@ -11486,7 +11486,7 @@ class TradeFlowApp {
     if (elCurProfit) {
       const sign = stats.monthProfit >= 0 ? '+' : '';
       elCurProfit.textContent = `${sign}${this.formatCurrency(stats.monthProfit)} net`;
-      elCurProfit.className = stats.monthProfit >= 0 ? 'text-xs font-bold text-teal-600 dark:text-teal-400' : 'text-xs font-bold text-rose-600 dark:text-rose-400';
+      elCurProfit.className = stats.monthProfit >= 0 ? 'text-xs font-bold text-emerald-600 dark:text-emerald-400' : 'text-xs font-bold text-rose-600 dark:text-rose-400';
     }
     if (elCurSub) {
       const margin = stats.monthTaxable > 0 ? ((stats.monthProfit / stats.monthTaxable) * 100).toFixed(1) : '0.0';
@@ -11538,7 +11538,7 @@ class TradeFlowApp {
   copyCompanyHubProfileSummary() {
     const p = this.data.businessProfile || {};
     const text = `====================================================
-🌿 ${p.brandName || this.config().brand} Executive Company Summary
+${p.brandName || this.config().brand} Executive Company Summary
 ====================================================
 • Legal Entity: ${p.legalName || ''}
 • Brand Trade Name: ${p.brandName || this.config().brand}
@@ -11592,7 +11592,7 @@ BANKING & PAYMENT COORDINATES:
   }
 
   async triggerSheetsHubSync() {
-    this.showToast('🔄 Syncing TradeFlow database with live Excel workbook...');
+    this.showToast('Syncing TradeFlow database with live Excel workbook...');
     try {
       const resp = await fetch('/api/sync/to-excel', { method: 'POST' });
       const res = await resp.json();
@@ -11602,17 +11602,17 @@ BANKING & PAYMENT COORDINATES:
           const now = new Date();
           timeEl.textContent = `Last synced: ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
         }
-        this.showToast('✅ Live Excel workbook & Google Sheet synced successfully!');
+        this.showToast('Live Excel workbook & Google Sheet synced successfully!');
       } else {
-        this.showToast(`⚠️ Sync notice: ${res.error || 'Check workbook availability'}`);
+        this.showToast(`Sync notice: ${res.error || 'Check workbook availability'}`);
       }
     } catch (e) {
-      this.showToast('✅ In-memory database & local tables synchronized.');
+      this.showToast('In-memory database & local tables synchronized.');
     }
   }
 
   async revealActiveExcelFile() {
-    this.showToast('📂 Opening original Excel database in Windows Explorer...');
+    this.showToast('Opening original Excel database in Windows Explorer...');
     try {
       const resp = await fetch('/api/vault/open-folder', {
         method: 'POST',
@@ -11621,7 +11621,7 @@ BANKING & PAYMENT COORDINATES:
       });
       const res = await resp.json();
       if (res && res.success) {
-        this.showToast('📂 Revealed TradeFlow_Master_Database.xlsx in Windows Explorer');
+        this.showToast('Revealed TradeFlow_Master_Database.xlsx in Windows Explorer');
       } else {
         this.downloadActiveExcelFile();
       }
@@ -11631,7 +11631,7 @@ BANKING & PAYMENT COORDINATES:
   }
 
   downloadActiveExcelFile() {
-    this.showToast('⬇️ Downloading TradeFlow_Master_Database.xlsx snapshot...');
+    this.showToast('Downloading TradeFlow_Master_Database.xlsx snapshot...');
     const a = document.createElement('a');
     a.href = tfSafeUrl('/api/export/excel');
     a.download = 'TradeFlow_Master_Database.xlsx';
@@ -11645,7 +11645,7 @@ BANKING & PAYMENT COORDINATES:
     const newUrl = window.prompt('Enter Google Sheet Spreadsheet URL or Sheet ID to connect:', currentUrl);
     if (newUrl && newUrl.trim()) {
       localStorage.setItem('TF_GOOGLE_SHEET_URL', newUrl.trim());
-      this.showToast('🔗 New Google Sheet linked & verified for live sync!');
+      this.showToast('New Google Sheet linked & verified for live sync!');
     }
   }
 
@@ -11663,7 +11663,7 @@ BANKING & PAYMENT COORDINATES:
         if (file) {
           const fileNameEl = document.getElementById('hub-sync-file-name');
           if (fileNameEl) fileNameEl.textContent = file.name;
-          this.showToast(`📁 Connected local workbook: ${file.name}`);
+          this.showToast(`Connected local workbook: ${file.name}`);
         }
       });
     }
@@ -11722,10 +11722,10 @@ BANKING & PAYMENT COORDINATES:
             <td class="px-3 py-2.5 text-xs text-slate-400 font-mono-num">${tfEscapeHtml(this.formatDate(o.date))}</td>
             <td class="px-3 py-2.5 text-xs font-bold text-white font-mono-num">${tfEscapeHtml(this.formatCurrency(rev))}</td>
             <td class="px-3 py-2.5 text-xs font-bold ${tfEscapeHtml(profit >= 0 ? 'text-emerald-400' : 'text-rose-400')} font-mono-num">
-              +${tfEscapeHtml(this.formatCurrency(profit))} <span class="text-[10px] text-slate-400 font-normal">(${tfEscapeHtml(marginPct)}%)</span>
+              +${tfEscapeHtml(this.formatCurrency(profit))} <span class="text-xs text-slate-400 font-normal">(${tfEscapeHtml(marginPct)}%)</span>
             </td>
             <td class="px-3 py-2.5 text-xs">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${tfEscapeHtml(o.status === 'settled' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30')}">
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold ${tfEscapeHtml(o.status === 'settled' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30')}">
                 ${tfEscapeHtml((o.status || 'draft').replace('_', ' '))}
               </span>
             </td>
@@ -11753,13 +11753,13 @@ BANKING & PAYMENT COORDINATES:
             </div>
             <div class="text-right">
               <span class="text-xs text-slate-400 block font-medium">Total Realized Profit</span>
-              <span class="text-lg font-black font-mono-num text-teal-400">+${tfEscapeHtml(this.formatCurrency(stats.lifetimeProfit))}</span>
+              <span class="text-lg font-black font-mono-num text-emerald-400">+${tfEscapeHtml(this.formatCurrency(stats.lifetimeProfit))}</span>
             </div>
           </div>
 
           <div class="rounded-xl border border-slate-800 overflow-hidden bg-slate-950/40">
             <table class="w-full text-left text-xs">
-              <thead class="bg-slate-900 border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+              <thead class="bg-slate-900 border-b border-slate-800 text-xs uppercase font-bold text-slate-400 tracking-wider">
                 <tr>
                   <th class="px-3 py-2">Document #</th>
                   <th class="px-3 py-2">Buyer / Retailer</th>
@@ -11790,7 +11790,7 @@ BANKING & PAYMENT COORDINATES:
             <td class="px-4 py-3 font-bold text-xs text-white">${tfEscapeHtml(name)}</td>
             <td class="px-4 py-3 text-xs font-mono-num text-slate-300 font-bold">${tfEscapeHtml(this.formatCurrency(g.revenue))}</td>
             <td class="px-4 py-3 text-xs font-mono-num text-slate-400">${tfEscapeHtml(this.formatCurrency(g.revenue - g.profit))}</td>
-            <td class="px-4 py-3 text-xs font-mono-num font-bold text-teal-400">+${tfEscapeHtml(this.formatCurrency(g.profit))}</td>
+            <td class="px-4 py-3 text-xs font-mono-num font-bold text-emerald-400">+${tfEscapeHtml(this.formatCurrency(g.profit))}</td>
             <td class="px-4 py-3 text-xs font-mono-num text-emerald-400 font-bold">${tfEscapeHtml(marginPct)}%</td>
             <td class="px-4 py-3 text-right text-xs text-slate-300 font-mono-num">${tfEscapeHtml(g.count)} orders</td>
           </tr>
@@ -11801,7 +11801,7 @@ BANKING & PAYMENT COORDINATES:
         <div class="space-y-3">
           <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <i data-lucide="calendar" class="w-4 h-4 text-teal-400"></i>
+              <i data-lucide="calendar" class="w-4 h-4 text-emerald-400"></i>
               <span class="text-xs font-bold text-slate-200">Month-by-Month Commercial Trajectory</span>
             </div>
             <span class="text-xs text-slate-400">${tfEscapeHtml(monthKeys.length)} Billing Periods Active</span>
@@ -11809,7 +11809,7 @@ BANKING & PAYMENT COORDINATES:
 
           <div class="rounded-xl border border-slate-800 overflow-hidden bg-slate-950/40">
             <table class="w-full text-left text-xs">
-              <thead class="bg-slate-900 border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+              <thead class="bg-slate-900 border-b border-slate-800 text-xs uppercase font-bold text-slate-400 tracking-wider">
                 <tr>
                   <th class="px-4 py-2">Billing Month</th>
                   <th class="px-4 py-2">Invoiced Volume</th>
@@ -11832,19 +11832,19 @@ BANKING & PAYMENT COORDINATES:
         <div class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800">
-              <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider block">${tfEscapeHtml(stats.yearLabel)} Annual Turnover</span>
+              <span class="text-xs font-bold text-blue-400 uppercase tracking-wider block">${tfEscapeHtml(stats.yearLabel)} Annual Turnover</span>
               <span class="text-xl font-black font-mono-num text-white mt-1 block">${tfEscapeHtml(this.formatCurrency(stats.yearRevenue))}</span>
-              <span class="text-[10px] text-slate-400 mt-0.5 block">Total invoiced supply across all channels</span>
+              <span class="text-xs text-slate-400 mt-0.5 block">Total invoiced supply across all channels</span>
             </div>
             <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800">
-              <span class="text-xs font-bold text-teal-400 uppercase tracking-wider block">Cumulative Realized Profit</span>
-              <span class="text-xl font-black font-mono-num text-teal-300 mt-1 block">+${tfEscapeHtml(this.formatCurrency(stats.yearProfit))}</span>
-              <span class="text-[10px] text-teal-400 font-bold mt-0.5 block">${tfEscapeHtml(marginPct)}% Net Profit Margin</span>
+              <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider block">Cumulative Realized Profit</span>
+              <span class="text-xl font-black font-mono-num text-emerald-300 mt-1 block">+${tfEscapeHtml(this.formatCurrency(stats.yearProfit))}</span>
+              <span class="text-xs text-emerald-400 font-bold mt-0.5 block">${tfEscapeHtml(marginPct)}% Net Profit Margin</span>
             </div>
             <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800">
               <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider block">Cash In Flow Protection</span>
               <span class="text-xl font-black font-mono-num text-emerald-300 mt-1 block">${tfEscapeHtml(this.formatCurrency(stats.totalCollected))}</span>
-              <span class="text-[10px] text-slate-400 mt-0.5 block">Advances &amp; Settlements In Hand</span>
+              <span class="text-xs text-slate-400 mt-0.5 block">Advances &amp; Settlements In Hand</span>
             </div>
           </div>
 
@@ -11900,7 +11900,7 @@ BANKING & PAYMENT COORDINATES:
 
           <div class="rounded-xl border border-slate-800 overflow-hidden bg-slate-950/40">
             <table class="w-full text-left text-xs">
-              <thead class="bg-slate-900 border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+              <thead class="bg-slate-900 border-b border-slate-800 text-xs uppercase font-bold text-slate-400 tracking-wider">
                 <tr>
                   <th class="px-3 py-2">Document #</th>
                   <th class="px-3 py-2">Buyer / Retailer</th>
@@ -11926,7 +11926,7 @@ BANKING & PAYMENT COORDINATES:
   loadOrderIntoStudioFromDrilldown(orderId) {
     this.closeStudioMetricsDrilldown();
     this.openInvoiceStudioModal(orderId);
-    this.showToast(`⚡ Loaded order ${orderId} into Invoice Studio!`);
+    this.showToast(`Loaded order ${orderId} into Invoice Studio!`);
   }
 
   copyStudioCommercialSummary() {
@@ -11946,7 +11946,7 @@ BANKING & PAYMENT COORDINATES:
     if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(summary).catch(() => {});
     }
-    this.showToast('📋 Commercial executive summary copied to clipboard!');
+    this.showToast('Commercial executive summary copied to clipboard!');
   }
 
   /* ---------- WHATSAPP QUICK MESSENGER & LIVE CONTACT DIRECTORY ENGINE ---------- */
@@ -12051,7 +12051,7 @@ BANKING & PAYMENT COORDINATES:
 
     const elStatus = document.getElementById('messenger-lookup-status');
     if (elStatus) {
-      elStatus.innerText = matchedContact ? '✓ Matched in Database' : '✓ Active Order Counterparty';
+      elStatus.innerText = matchedContact ? 'Matched in Database' : 'Active Order Counterparty';
     }
 
     // Clear Search Input & Render Directory
@@ -12091,14 +12091,14 @@ BANKING & PAYMENT COORDINATES:
           <button 
             type="button" 
             onclick="app.selectMessengerContact('${tfEscapeHtml(tfEscapeJs(c.id))}')"
-            class="px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer whitespace-nowrap ${
+            class="px-2 py-0.5 rounded-full text-xs font-bold border transition-all cursor-pointer whitespace-nowrap ${
               tfEscapeHtml(isSelected 
                 ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' 
                 : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700')
             }"
             title="${tfEscapeHtml(c.name)} (${tfEscapeHtml(c.phone || '')})"
           >
-            ⚡ ${tfEscapeHtml(shortName)}
+            ${tfEscapeHtml(shortName)}
           </button>
         `;
       }).join('');
@@ -12128,7 +12128,7 @@ BANKING & PAYMENT COORDINATES:
         <div class="py-6 px-3 text-center text-slate-400 space-y-1">
           <i data-lucide="search-x" class="w-5 h-5 mx-auto opacity-50"></i>
           <p class="text-xs font-semibold">No contacts match "${tfEscapeHtml(filterQuery)}"</p>
-          <p class="text-[10px]">Type any mobile number directly into the recipient box above.</p>
+          <p class="text-xs">Type any mobile number directly into the recipient box above.</p>
         </div>
       `;
       if (window.lucide) window.lucide.createIcons();
@@ -12139,7 +12139,7 @@ BANKING & PAYMENT COORDINATES:
       retailer: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
       manufacturer: 'bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/30',
       marketeer: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30',
-      transporter: 'bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/30',
+      transporter: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30',
       packaging: 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30'
     };
 
@@ -12165,14 +12165,14 @@ BANKING & PAYMENT COORDINATES:
           }"
         >
           <div class="flex items-center gap-2.5 min-w-0">
-            <div class="w-8 h-8 rounded-lg flex items-center justify-center font-black text-[11px] shrink-0 ${tfEscapeHtml(roleBadge)}">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${tfEscapeHtml(roleBadge)}">
               ${tfEscapeHtml(initials)}
             </div>
             <div class="min-w-0">
               <div class="text-xs font-bold text-slate-900 dark:text-slate-100 truncate flex items-center gap-1.5">
                 <span>${tfEscapeHtml(c.name)}</span>
               </div>
-              <div class="text-[10.5px] text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
+              <div class="text-xs text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
                 ${c.contactPerson && c.contactPerson !== c.name ? `<span>${tfEscapeHtml(c.contactPerson)} · </span>` : ''}
                 <span class="font-mono text-emerald-600 dark:text-emerald-400 font-medium">${tfEscapeHtml(c.phone || 'No phone')}</span>
               </div>
@@ -12180,7 +12180,7 @@ BANKING & PAYMENT COORDINATES:
           </div>
 
           <div class="shrink-0 flex items-center gap-1">
-            <span class="text-[9.5px] font-black uppercase px-2 py-0.5 rounded-full border ${tfEscapeHtml(roleBadge)}">
+            <span class="text-xs font-black uppercase px-2 py-0.5 rounded-full border ${tfEscapeHtml(roleBadge)}">
               ${tfEscapeHtml(c.role || 'Partner')}
             </span>
             ${isSelected ? '<i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 ml-1"></i>' : ''}
@@ -12224,14 +12224,14 @@ BANKING & PAYMENT COORDINATES:
     const elStatus = document.getElementById('messenger-lookup-status');
     if (elStatus) {
       elStatus.innerText = contact.contactPerson && contact.contactPerson !== contact.name 
-        ? `✓ Matched: ${contact.contactPerson}` 
-        : '✓ Matched in Database';
+        ? `Matched: ${contact.contactPerson}` 
+        : 'Matched in Database';
     }
 
     this.setStudioMessageTemplate(this.activeStudioMessageTemplate || 'invoice_dispatch');
     const searchVal = document.getElementById('messenger-contact-search')?.value || '';
     this.renderMessengerDirectory(searchVal);
-    this.showToast(`👤 Recipient set to ${contact.name}`);
+    this.showToast(`Recipient set to ${contact.name}`);
   }
 
   /* Real-Time Phone Input Auto-Lookup & Dynamic Greeting */
@@ -12259,8 +12259,8 @@ BANKING & PAYMENT COORDINATES:
         const elStatus = document.getElementById('messenger-lookup-status');
         if (elStatus) {
           elStatus.innerText = matched.contactPerson && matched.contactPerson !== matched.name 
-            ? `✓ Matched: ${matched.contactPerson}` 
-            : '✓ Matched in Database';
+            ? `Matched: ${matched.contactPerson}` 
+            : 'Matched in Database';
         }
 
         this.setStudioMessageTemplate(this.activeStudioMessageTemplate || 'invoice_dispatch');
@@ -12333,11 +12333,11 @@ BANKING & PAYMENT COORDINATES:
     if (elBadge) elBadge.innerText = (this.activeMessengerContact.role || 'Partner').toUpperCase();
 
     const elStatus = document.getElementById('messenger-lookup-status');
-    if (elStatus) elStatus.innerText = matchedContact ? '✓ Matched in Database' : '✓ Active Order Counterparty';
+    if (elStatus) elStatus.innerText = matchedContact ? 'Matched in Database' : 'Active Order Counterparty';
 
     this.setStudioMessageTemplate(this.activeStudioMessageTemplate || 'invoice_dispatch');
     this.renderMessengerDirectory('');
-    this.showToast('✓ Reset to order default recipient');
+    this.showToast('Reset to order default recipient');
   }
 
   /* Copy 1-Column Reusable Detail Snippet */
@@ -12404,7 +12404,7 @@ BANKING & PAYMENT COORDINATES:
     if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).catch(() => {});
     }
-    this.showToast(`✨ Copied ${label} to clipboard!`);
+    this.showToast(`Copied ${label} to clipboard!`);
   }
 
   /* Smart Message Templates Switcher with Dynamic Recipient Greetings */
@@ -12417,8 +12417,8 @@ BANKING & PAYMENT COORDINATES:
       if (btn) {
         const isActive = t === templateId;
         btn.className = isActive 
-          ? 'px-2 py-1.5 text-[11px] font-black rounded-lg text-white bg-emerald-600 transition-all whitespace-nowrap cursor-pointer text-center truncate shadow-xs'
-          : 'px-2 py-1.5 text-[11px] font-extrabold rounded-lg text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 transition-all whitespace-nowrap cursor-pointer text-center truncate';
+          ? 'px-2 py-1.5 text-xs font-black rounded-lg text-white bg-emerald-600 transition-all whitespace-nowrap cursor-pointer text-center truncate shadow-xs'
+          : 'px-2 py-1.5 text-xs font-extrabold rounded-lg text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 transition-all whitespace-nowrap cursor-pointer text-center truncate';
       }
     });
 
@@ -12536,7 +12536,7 @@ BANKING & PAYMENT COORDINATES:
     if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
 
     if (!cleanPhone || cleanPhone.length < 10) {
-      this.showToast('⚠️ Please enter a valid 10-digit mobile number.');
+      this.showToast('Please enter a valid 10-digit mobile number.');
       return;
     }
 
@@ -12563,7 +12563,7 @@ BANKING & PAYMENT COORDINATES:
     this.data.orders.unshift(newOrder);
     this.saveData();
 
-    this.showToast(`✨ Duplicated draft as brand-new order ${newOrder.invoiceNumber}!`);
+    this.showToast(`Duplicated draft as brand-new order ${newOrder.invoiceNumber}!`);
     this.closeStudioMagicDrawer();
     this.openInvoiceStudioModal(newOrder.id);
   }
@@ -12572,13 +12572,13 @@ BANKING & PAYMENT COORDINATES:
     const select = document.getElementById('studio-reuse-target-order');
     const targetId = select ? select.value : null;
     if (!targetId) {
-      this.showToast('⚠️ Please select a target order.');
+      this.showToast('Please select a target order.');
       return;
     }
 
     const targetOrder = this.data.orders.find(o => o.id === targetId);
     if (!targetOrder || !this.studioDraftData) {
-      this.showToast('⚠️ Order not found.');
+      this.showToast('Order not found.');
       return;
     }
 
@@ -12594,10 +12594,12 @@ BANKING & PAYMENT COORDINATES:
     targetOrder.driverPhone = this.studioDraftData.driverPhone;
 
     this.saveData();
-    this.showToast(`✨ Party & Logistics details applied to ${targetOrder.invoiceNumber || targetOrder.id}!`);
+    this.showToast(`Party & Logistics details applied to ${targetOrder.invoiceNumber || targetOrder.id}!`);
   }
 
   showToast(message) {
+    // Messages read as plain text: any leading emoji is dropped (icons come from the design system).
+    message = String(message ?? '').replace(/^[\p{Extended_Pictographic}\uFE0F\u200D\s]+/u, '');
     const container = document.getElementById('toast-container');
     if (!container) return;
     const toast = document.createElement('div');
@@ -12696,7 +12698,7 @@ BANKING & PAYMENT COORDINATES:
 
     this.saveData();
     this.render();
-    this.showToast('✓ Business Profile & Tax Settings updated successfully! All invoices will now reflect these details.');
+    this.showToast('Business Profile & Tax Settings updated successfully! All invoices will now reflect these details.');
   }
 
   // New Order Modal
@@ -12762,7 +12764,7 @@ BANKING & PAYMENT COORDINATES:
     if (quickSizes) {
       const sizes = [...new Map((this.data.products || []).filter(p => p.active !== false && (p.defaultPackSize || p.packSize))
         .map(p => [p.defaultPackSize || p.packSize, Number(p.casePack) || this.casePackConfig[p.defaultPackSize || p.packSize] || this.config().defaultCasePack])).entries()].slice(0, 4);
-      quickSizes.innerHTML = sizes.map(([size, perCase]) => `<button type="button" onclick="app.quickAddSkuRow('${tfEscapeHtml(tfEscapeJs(size))}')" class="btn-tactile px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600 rounded-lg">+ ${tfEscapeHtml(size)} Row (${tfEscapeHtml(perCase)}/cs)</button>`).join('');
+      quickSizes.innerHTML = sizes.map(([size, perCase]) => `<button type="button" onclick="app.quickAddSkuRow('${tfEscapeHtml(tfEscapeJs(size))}')" class="btn-tactile px-2.5 py-1 text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600 rounded-lg">+ ${tfEscapeHtml(size)} Row (${tfEscapeHtml(perCase)}/cs)</button>`).join('');
     }
   }
 
@@ -12777,7 +12779,7 @@ BANKING & PAYMENT COORDINATES:
     const draftBtn = document.getElementById('order-modal-submit-draft');
     if (draftBtn) draftBtn.innerText = 'Save Pipeline Draft';
     const mainLabel = document.getElementById('order-modal-submit-label');
-    if (mainLabel) mainLabel.innerText = 'Create Order & Open Factory PO 🚀';
+    if (mainLabel) mainLabel.innerText = 'Create Order & Open Factory PO';
 
     this.populateNewOrderSelects();
 
@@ -12818,13 +12820,13 @@ BANKING & PAYMENT COORDINATES:
     const draftBtn = document.getElementById('order-modal-submit-draft');
     if (draftBtn) draftBtn.innerText = 'Save Pipeline Draft';
     const mainLabel = document.getElementById('order-modal-submit-label');
-    if (mainLabel) mainLabel.innerText = 'Create Order & Open Factory PO 🚀';
+    if (mainLabel) mainLabel.innerText = 'Create Order & Open Factory PO';
   }
 
   openEditOrderModal(orderId) {
     const order = (this.data.orders || []).find(o => o.id === orderId);
     if (!order) {
-      this.showToast('⚠️ Order not found.');
+      this.showToast('Order not found.');
       return;
     }
 
@@ -12845,7 +12847,7 @@ BANKING & PAYMENT COORDINATES:
         id: tabId,
         type: 'order-edit',
         orderId: order.id,
-        title: `✏️ ${order.invoiceNumber}`,
+        title: `${order.invoiceNumber}`,
         icon: 'edit-3',
         closeable: true
       });
@@ -13012,7 +13014,7 @@ BANKING & PAYMENT COORDINATES:
         status.innerHTML = `
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
           <span class="font-bold text-emerald-600 dark:text-emerald-400">
-            ✅ Parsed ${tfEscapeHtml(parsedItems.length)} SKUs (${tfEscapeHtml(totalCases)} Cases, ${tfEscapeHtml(totalJars.toLocaleString('en-IN'))} Units).${unmatchedLines.length ? ` ⚠️ Not in catalogue: ${tfEscapeHtml(unmatchedLines.join(' · '))}` : ''}
+            Parsed ${tfEscapeHtml(parsedItems.length)} SKUs (${tfEscapeHtml(totalCases)} Cases, ${tfEscapeHtml(totalJars.toLocaleString('en-IN'))} Units).${unmatchedLines.length ? ` Not in catalogue: ${tfEscapeHtml(unmatchedLines.join(' · '))}` : ''}
           </span>
         `;
       }
@@ -13021,7 +13023,7 @@ BANKING & PAYMENT COORDINATES:
         status.innerHTML = `
           <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
           <span class="font-bold text-amber-600 dark:text-amber-400">
-            ⚠️ No variety lines detected with case counts. Check message formatting.
+            No variety lines detected with case counts. Check message formatting.
           </span>
         `;
       }
@@ -13181,7 +13183,7 @@ BANKING & PAYMENT COORDINATES:
                 onkeydown="if(event.key==='Enter') this.blur()"
                 class="w-7 text-center font-mono-num font-black text-amber-700 dark:text-amber-400 bg-transparent outline-none text-xs"
               >
-              <span class="text-[10px] text-slate-400 font-semibold">/cs</span>
+              <span class="text-xs text-slate-400 font-semibold">/cs</span>
             </div>
           </td>
           <td id="sku-row-qty-${tfEscapeHtml(idx)}" class="py-2.5 px-3 text-right font-mono-num font-black text-slate-900 dark:text-white">
@@ -13466,12 +13468,12 @@ BANKING & PAYMENT COORDINATES:
     const retailer = this.data.contacts.find(c => c.id === retailerId);
 
     if (!retailer) {
-      this.showToast('⚠️ Please select a Retailer / Buyer first.');
+      this.showToast('Please select a Retailer / Buyer first.');
       return;
     }
 
     if (!this.orderSkuItems || this.orderSkuItems.length === 0) {
-      this.showToast('⚠️ Please add at least one product line.');
+      this.showToast('Please add at least one product line.');
       return;
     }
 
@@ -13530,7 +13532,7 @@ BANKING & PAYMENT COORDINATES:
     const invoiceNum = numbers.invoiceNumber;
 
     const status = customerAdvance > 0 ? 'action_needed' : 'in_production';
-    const urgentAlert = customerAdvance > 0 ? `⚠️ Advance in Hand (${this.formatCurrency(customerAdvance)})! Place Manufacturer PO!` : null;
+    const urgentAlert = customerAdvance > 0 ? `Advance in Hand (${this.formatCurrency(customerAdvance)})! Place Manufacturer PO!` : null;
 
     const newOrder = {
       id: orderId,
@@ -13605,7 +13607,7 @@ BANKING & PAYMENT COORDINATES:
           validation,
           null
         );
-        this.showToast('🛑 Order cannot be saved: validation issues detected.');
+        this.showToast('Order cannot be saved: validation issues detected.');
         return;
       }
       if (validation.warnings.length > 0) {
@@ -13682,7 +13684,7 @@ BANKING & PAYMENT COORDINATES:
         this.unmountOrderEditCockpit();
         this.closeNewOrderModal(); // safe no-op if modal is already hidden
 
-        this.showToast(`✅ Order ${existingOrder.invoiceNumber || existingOrder.id} updated successfully!`);
+        this.showToast(`Order ${existingOrder.invoiceNumber || existingOrder.id} updated successfully!`);
 
         if (openFactoryPO) {
           this.openOrderDetailPage(existingOrder.id);
@@ -13726,10 +13728,10 @@ BANKING & PAYMENT COORDINATES:
     this.closeNewOrderModal();
     this.render();
 
-    this.showToast(`📦 Order ${invoiceNum} created (${orderItems.length} varieties, ${totalCases} cases)!`);
+    this.showToast(`Order ${invoiceNum} created (${orderItems.length} varieties, ${totalCases} cases)!`);
 
     // 10-Second Floating Undo Banner with Reopen
-    this.showUndoToast(`📦 Order created: ${newOrder.invoiceNumber || newOrder.id} · ${newOrder.retailerName}`, () => {
+    this.showUndoToast(`Order created: ${newOrder.invoiceNumber || newOrder.id} · ${newOrder.retailerName}`, () => {
       const idx = this.data.orders.findIndex(x => x.id === newOrder.id);
       if (idx !== -1) {
         this.data.orders.splice(idx, 1);
@@ -13738,7 +13740,7 @@ BANKING & PAYMENT COORDINATES:
         this.saveData();
         this.render();
         this.restoreNewOrderModalFromSnapshot(orderSnapshot);
-        this.showToast('↩️ Order creation undone! Reopened details in form so you can make changes.');
+        this.showToast('Order creation undone! Reopened details in form so you can make changes.');
       }
     });
 
@@ -13796,7 +13798,7 @@ BANKING & PAYMENT COORDINATES:
     }
 
     if (!order) {
-      this.showToast('⚠️ No order selected to generate factory PO.');
+      this.showToast('No order selected to generate factory PO.');
       return;
     }
 
@@ -13848,7 +13850,7 @@ BANKING & PAYMENT COORDINATES:
           <td class="py-2.5 px-3 text-center font-mono-num text-slate-500">${tfEscapeHtml(idx + 1)}</td>
           <td class="py-2.5 px-3">
             <span class="font-bold text-slate-900 block">${tfEscapeHtml(item.shortName || item.name)}</span>
-            <span class="text-[11px] text-slate-500">${tfEscapeHtml(item.name)}</span>
+            <span class="text-xs text-slate-500">${tfEscapeHtml(item.name)}</span>
           </td>
           <td class="py-2.5 px-3 font-semibold text-slate-700">${tfEscapeHtml(item.variant)}</td>
           <td class="py-2.5 px-3 text-right font-mono-num font-bold text-amber-700">${tfEscapeHtml(cases)} cs</td>
@@ -13866,7 +13868,7 @@ BANKING & PAYMENT COORDINATES:
         <!-- Header Banner -->
         <div class="flex items-start justify-between border-b-2 border-slate-900 pb-5 mb-5">
           <div>
-            <span class="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider bg-slate-900 text-amber-400 rounded">
+            <span class="px-2.5 py-1 text-xs font-black uppercase tracking-wider bg-slate-900 text-amber-400 rounded">
               Rule 55 CGST Rules • Job Work Production Order
             </span>
             <h1 class="text-2xl font-black tracking-tight text-slate-900 mt-2">${tfEscapeHtml(this.data.businessProfile.legalName)}</h1>
@@ -13875,7 +13877,7 @@ BANKING & PAYMENT COORDINATES:
           </div>
           <div class="text-right">
             <div class="px-3 py-1 bg-amber-100 border border-amber-300 rounded-lg inline-block text-right mb-2">
-              <span class="text-[10px] uppercase font-bold text-amber-800 block">Private Label Brand:</span>
+              <span class="text-xs uppercase font-bold text-amber-800 block">Private Label Brand:</span>
               <span class="text-base font-black text-amber-950 uppercase">${tfEscapeHtml(brandLabel)}</span>
             </div>
             <p class="text-xs font-bold text-slate-700">Job PO #: <span class="font-mono-num text-slate-950 font-black">${tfEscapeHtml(poNumber)}</span></p>
@@ -13887,14 +13889,14 @@ BANKING & PAYMENT COORDINATES:
         <!-- Stakeholders Grid -->
         <div class="grid grid-cols-2 gap-6 p-4 bg-slate-50 rounded-xl border border-slate-200 mb-6">
           <div>
-            <span class="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Manufacturing Unit (Processor):</span>
+            <span class="text-xs uppercase font-bold tracking-wider text-slate-500 block mb-1">Manufacturing Unit (Processor):</span>
             <h4 class="text-sm font-bold text-slate-900">${tfEscapeHtml(mfg.name)}</h4>
             <p class="text-xs text-slate-700 mt-0.5">Attn: <span class="font-bold">${tfEscapeHtml(mfg.contactPerson || '')}</span> (${tfEscapeHtml(mfg.phone)})</p>
             <p class="text-xs text-slate-600 mt-0.5">${tfEscapeHtml(mfg.billingAddress)}</p>
             <p class="text-xs font-mono-num text-slate-700 mt-0.5">GSTIN: <strong>${tfEscapeHtml(mfg.gstin)}</strong></p>
           </div>
           <div>
-            <span class="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Contract Principal & Dispatched To:</span>
+            <span class="text-xs uppercase font-bold tracking-wider text-slate-500 block mb-1">Contract Principal & Dispatched To:</span>
             <h4 class="text-sm font-bold text-slate-900">${tfEscapeHtml(retailer.name)}</h4>
             <p class="text-xs text-slate-700 mt-0.5">Brand Identity: <span class="font-bold text-amber-900">${tfEscapeHtml(brandLabel)}</span></p>
             <p class="text-xs text-slate-600 mt-0.5">${tfEscapeHtml(retailer.billingAddress || retailer.shippingAddress || 'Direct Factory Dispatch')}</p>
@@ -13906,7 +13908,7 @@ BANKING & PAYMENT COORDINATES:
         <div class="overflow-hidden border border-slate-300 rounded-xl mb-6">
           <table class="w-full text-left border-collapse text-xs">
             <thead>
-              <tr class="bg-slate-900 text-white font-bold uppercase tracking-wider text-[11px]">
+              <tr class="bg-slate-900 text-white font-bold uppercase tracking-wider text-xs">
                 <th class="py-2.5 px-3 text-center w-10">#</th>
                 <th class="py-2.5 px-3 min-w-[180px]">Product</th>
                 <th class="py-2.5 px-3 w-28">Pack Spec</th>
@@ -13940,7 +13942,7 @@ BANKING & PAYMENT COORDINATES:
               <i data-lucide="shield-alert" class="w-4 h-4 text-amber-700"></i>
               <span>Processing & Quality Directives:</span>
             </h5>
-            <ul class="list-disc list-inside space-y-1 text-slate-700 text-[11px] leading-relaxed">
+            <ul class="list-disc list-inside space-y-1 text-slate-700 text-xs leading-relaxed">
               <li><strong>Mustard Oil Compounding:</strong> 100% Pure Kachi Ghani Mustard Oil. Minimum 18% oil ratio in all jars.</li>
               <li><strong>Hermetic Sealing:</strong> Induction wad seal must be applied airtight on each PET and Glass jar prior to capping.</li>
               <li><strong>Batch Printing:</strong> Inkjet print Batch: <code class="font-mono font-bold">${tfEscapeHtml(batchCode)}</code>, Mfg Date: ${tfEscapeHtml(order.date)}, and Retail MRP on closure edge.</li>
@@ -13948,15 +13950,15 @@ BANKING & PAYMENT COORDINATES:
             </ul>
           </div>
 
-          <div class="p-4 bg-sky-50/60 rounded-xl border border-sky-200">
-            <h5 class="text-xs font-bold uppercase tracking-wider text-sky-900 mb-2 flex items-center gap-1.5">
-              <i data-lucide="package" class="w-4 h-4 text-sky-700"></i>
+          <div class="p-4 bg-blue-50/60 rounded-xl border border-blue-200">
+            <h5 class="text-xs font-bold uppercase tracking-wider text-blue-900 mb-2 flex items-center gap-1.5">
+              <i data-lucide="package" class="w-4 h-4 text-blue-700"></i>
               <span>Packaging Materials Dispatch:</span>
             </h5>
-            <p class="text-slate-700 text-[11px] leading-relaxed mb-2">
+            <p class="text-slate-700 text-xs leading-relaxed mb-2">
               Packaging supplier <strong>Apex Polymer & Flexo-Pack Ltd</strong> (Vapi/Daman) is dispatching the following materials directly to your Rajkot unit:
             </p>
-            <ul class="list-disc list-inside space-y-0.5 text-slate-700 text-[11px]">
+            <ul class="list-disc list-inside space-y-0.5 text-slate-700 text-xs">
               <li><strong>PET Jars (500g):</strong> ${tfEscapeHtml((order.items.filter(i => (i.packSize||'').includes('500g')).reduce((s,i)=>s+i.quantity,0)).toLocaleString('en-IN'))} units + gold caps & wads.</li>
               <li><strong>Glass Jars (1kg):</strong> ${tfEscapeHtml((order.items.filter(i => (i.packSize||'').includes('1kg')).reduce((s,i)=>s+i.quantity,0)).toLocaleString('en-IN'))} units + metal lug closures.</li>
               <li><strong>Printed Labels:</strong> '${tfEscapeHtml(brandLabel)}' brand front & back metallic stickers.</li>
@@ -13968,16 +13970,16 @@ BANKING & PAYMENT COORDINATES:
         <div class="pt-6 border-t-2 border-slate-200 flex justify-between items-end text-center">
           <div class="w-48">
             <div class="border-b border-slate-400 mb-1 pb-8"></div>
-            <p class="text-[11px] font-bold text-slate-800">Job Worker Acceptance</p>
-            <p class="text-[10px] text-slate-500">For ${tfEscapeHtml(mfg.name)}</p>
+            <p class="text-xs font-bold text-slate-800">Job Worker Acceptance</p>
+            <p class="text-xs text-slate-500">For ${tfEscapeHtml(mfg.name)}</p>
           </div>
-          <div class="text-[10px] text-slate-400 italic">
+          <div class="text-xs text-slate-400 italic">
             Computer generated Job Work Challan under Rule 55 • Goods in Job Work Transit
           </div>
           <div class="w-52">
             <div class="border-b border-slate-400 mb-1 pb-8"></div>
-            <p class="text-[11px] font-bold text-slate-800">Authorized Signatory</p>
-            <p class="text-[10px] text-slate-500">For ${tfEscapeHtml(this.data.businessProfile.legalName)}</p>
+            <p class="text-xs font-bold text-slate-800">Authorized Signatory</p>
+            <p class="text-xs text-slate-500">For ${tfEscapeHtml(this.data.businessProfile.legalName)}</p>
           </div>
         </div>
 
@@ -13990,7 +13992,7 @@ BANKING & PAYMENT COORDINATES:
   sendFactoryPOWhatsApp() {
     const order = this.currentFactoryPOOrder;
     if (!order) {
-      this.showToast('⚠️ Please select an order first.');
+      this.showToast('Please select an order first.');
       return;
     }
 
@@ -14247,14 +14249,14 @@ BANKING & PAYMENT COORDINATES:
             <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs">
               ${pdf.numPages > 1 ? `
                 <button id="pdf-prev" class="btn-tactile px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold" ${tfEscapeHtml(currentPage <= 1 ? 'disabled' : '')}>◀</button>
-                <span class="px-1 font-mono-num font-semibold text-[11px] text-slate-600 dark:text-slate-400">${tfEscapeHtml(currentPage)} / ${tfEscapeHtml(pdf.numPages)}</span>
+                <span class="px-1 font-mono-num font-semibold text-xs text-slate-600 dark:text-slate-400">${tfEscapeHtml(currentPage)} / ${tfEscapeHtml(pdf.numPages)}</span>
                 <button id="pdf-next" class="btn-tactile px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold" ${tfEscapeHtml(currentPage >= pdf.numPages ? 'disabled' : '')}>▶</button>
                 <span class="text-slate-300 dark:text-slate-600">|</span>
               ` : ''}
               <button id="pdf-zm-out" class="btn-tactile px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold" title="Zoom Out">−</button>
-              <span class="font-mono-num font-semibold text-[11px] min-w-[36px] text-center text-slate-700 dark:text-slate-300">${tfEscapeHtml(Math.round(currentScale * 100))}%</span>
+              <span class="font-mono-num font-semibold text-xs min-w-[36px] text-center text-slate-700 dark:text-slate-300">${tfEscapeHtml(Math.round(currentScale * 100))}%</span>
               <button id="pdf-zm-in" class="btn-tactile px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold" title="Zoom In">+</button>
-              <button id="pdf-zm-fit" class="btn-tactile px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-[11px]" title="Fit Width">Fit</button>
+              <button id="pdf-zm-fit" class="btn-tactile px-2 py-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs" title="Fit Width">Fit</button>
             </div>
           `;
           const pBtn = controlsEl.querySelector('#pdf-prev');
@@ -14281,11 +14283,11 @@ BANKING & PAYMENT COORDINATES:
       console.warn('Canvas render fallback:', err);
       containerEl.innerHTML = `
         <div class="flex flex-col items-center justify-center h-full p-6 text-center bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-          <div class="text-4xl mb-2">📄</div>
+          <div class="text-4xl mb-2"><i data-lucide="file-text" class="w-6 h-6 inline-block"></i></div>
           <div class="font-bold text-sm text-slate-900 dark:text-white mb-1">Document Saved on Disk</div>
           <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mb-4">The file is stored safely in your local documents directory. You can open it in Windows Explorer or download a copy.</p>
           <div class="flex items-center gap-2">
-            <button onclick="app.openActiveDocFolder()" class="btn-tactile px-3.5 py-2 text-xs font-bold text-slate-900 bg-amber-500 hover:bg-amber-600 rounded-lg flex items-center gap-1.5 shadow-sm">
+            <button onclick="app.openActiveDocFolder()" class="btn-tactile px-3.5 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg flex items-center gap-1.5 shadow-sm">
               <i data-lucide="folder" class="w-3.5 h-3.5"></i>
               <span>Open in File Explorer</span>
             </button>
@@ -14570,31 +14572,31 @@ BANKING & PAYMENT COORDINATES:
     if (kpiGrid) {
       kpiGrid.innerHTML = `
         <div class="bg-white dark:bg-[#11141d] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Total Received</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Total Received</span>
           <div class="text-xl font-black font-mono-num text-emerald-600 dark:text-emerald-400">${tfEscapeHtml(this.formatCurrency(totalReceived))}</div>
-          <span class="text-[10px] text-slate-400 font-medium">${tfEscapeHtml(payments.filter(p => p.direction === 'received').length)} receipts</span>
+          <span class="text-xs text-slate-400 font-medium">${tfEscapeHtml(payments.filter(p => p.direction === 'received').length)} receipts</span>
         </div>
         <div class="bg-white dark:bg-[#11141d] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Total Paid Out</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Total Paid Out</span>
           <div class="text-xl font-black font-mono-num text-rose-600 dark:text-rose-400">${tfEscapeHtml(this.formatCurrency(totalPaid))}</div>
-          <span class="text-[10px] text-slate-400 font-medium">${tfEscapeHtml(payments.filter(p => p.direction === 'paid').length)} dispatches</span>
+          <span class="text-xs text-slate-400 font-medium">${tfEscapeHtml(payments.filter(p => p.direction === 'paid').length)} dispatches</span>
         </div>
         <div class="bg-white dark:bg-[#11141d] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Net Balance</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Net Balance</span>
           <div class="text-xl font-black font-mono-num ${tfEscapeHtml(netBalance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400')}">
             ${tfEscapeHtml(this.formatCurrency(Math.abs(netBalance)))}
           </div>
-          <span class="text-[10px] text-slate-400 font-medium">${tfEscapeHtml(netBalance >= 0 ? 'Surplus Reserve' : 'Deficit Outstanding')}</span>
+          <span class="text-xs text-slate-400 font-medium">${tfEscapeHtml(netBalance >= 0 ? 'Surplus Reserve' : 'Deficit Outstanding')}</span>
         </div>
         <div class="bg-white dark:bg-[#11141d] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">This Month In</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">This Month In</span>
           <div class="text-xl font-black font-mono-num text-amber-600 dark:text-amber-400">${tfEscapeHtml(this.formatCurrency(thisMonthIn))}</div>
-          <span class="text-[10px] text-slate-400 font-medium">${tfEscapeHtml(this.formatMonthYear(new Date()))}</span>
+          <span class="text-xs text-slate-400 font-medium">${tfEscapeHtml(this.formatMonthYear(new Date()))}</span>
         </div>
         <div class="bg-white dark:bg-[#11141d] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Proofs Filed</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Proofs Filed</span>
           <div class="text-xl font-black font-mono-num text-blue-600 dark:text-blue-400">${tfEscapeHtml(proofsCount)}</div>
-          <span class="text-[10px] text-slate-400 font-medium">of ${tfEscapeHtml(payments.length)} entries</span>
+          <span class="text-xs text-slate-400 font-medium">of ${tfEscapeHtml(payments.length)} entries</span>
         </div>
       `;
     }
@@ -14706,8 +14708,8 @@ BANKING & PAYMENT COORDINATES:
             const monthTitle = this.formatMonthYear(monthKey);
             rowsHtml += `
               <tr class="bg-slate-100/70 dark:bg-slate-900/80">
-                <td colspan="11" class="px-4 py-1.5 font-bold text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  📅 ${tfEscapeHtml(monthTitle)}
+                <td colspan="11" class="px-4 py-1.5 font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  ${tfEscapeHtml(monthTitle)}
                 </td>
               </tr>
             `;
@@ -14720,7 +14722,7 @@ BANKING & PAYMENT COORDINATES:
 
           rowsHtml += `
             <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 cursor-pointer transition-colors" onclick="app.openOrderPaymentFullModal('${tfEscapeHtml(tfEscapeJs(p.id))}')">
-              <td class="px-4 py-3 text-center font-mono-num text-[11px] text-slate-400">${tfEscapeHtml(rowIdx)}</td>
+              <td class="px-4 py-3 text-center font-mono-num text-xs text-slate-400">${tfEscapeHtml(rowIdx)}</td>
               <td class="px-4 py-3 font-mono-num whitespace-nowrap text-slate-700 dark:text-slate-300">${tfEscapeHtml(this.formatDate(p.date))}</td>
               <td class="px-4 py-3">
                 ${p.orderRef ? `
@@ -14731,31 +14733,31 @@ BANKING & PAYMENT COORDINATES:
                 ` : '<span class="text-slate-400">—</span>'}
               </td>
               <td class="px-4 py-3">
-                <button type="button" class="font-bold text-slate-900 dark:text-white truncate max-w-[200px] text-left hover:text-amber-600 dark:hover:text-amber-400 hover:underline inline-flex items-center gap-1 group" onclick="event.stopPropagation(); app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(p.partyName || ''))}')" title="Click to view partner profile & coordinates">
+                <button type="button" class="font-bold text-slate-900 dark:text-white truncate max-w-[200px] text-left hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline inline-flex items-center gap-1 group" onclick="event.stopPropagation(); app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(p.partyName || ''))}')" title="Click to view partner profile & coordinates">
                   <span class="truncate">${tfEscapeHtml(p.partyName)}</span>
                   <i data-lucide="arrow-up-right" class="w-3 h-3 opacity-60 group-hover:opacity-100 text-amber-500 shrink-0"></i>
                 </button>
-                ${p.utr ? `<div class="text-[10px] font-mono text-slate-400">UTR: ${tfEscapeHtml(p.utr)}</div>` : ''}
+                ${p.utr ? `<div class="text-xs font-mono text-slate-400">UTR: ${tfEscapeHtml(p.utr)}</div>` : ''}
               </td>
               <td class="px-4 py-3">
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${tfEscapeHtml(categoryBadgeClasses[p.partyType] || categoryBadgeClasses.other)}">
+                <span class="px-2 py-0.5 rounded-full text-xs font-bold ${tfEscapeHtml(categoryBadgeClasses[p.partyType] || categoryBadgeClasses.other)}">
                   ${tfEscapeHtml(categoryLabels[p.partyType] || p.partyType)}
                 </span>
               </td>
               <td class="px-4 py-3">
-                <span class="font-mono text-[11px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-700 dark:text-slate-300">
+                <span class="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-700 dark:text-slate-300">
                   ${tfEscapeHtml(p.mode || 'NEFT')}
                 </span>
               </td>
               <td class="px-4 py-3 whitespace-nowrap">
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${tfEscapeHtml(isReceived ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800')}">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${tfEscapeHtml(isReceived ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800')}">
                   ${tfEscapeHtml(isReceived ? '↓ Received' : '↑ Paid Out')}
                 </span>
               </td>
               <td class="px-4 py-3 text-right font-mono-num font-bold text-xs whitespace-nowrap ${tfEscapeHtml(isReceived ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400')}">
                 ${tfEscapeHtml(isReceived ? '+' : '-')}${tfEscapeHtml(this.formatCurrency(p.amount))}
               </td>
-              <td class="px-4 py-3 text-right font-mono-num text-[11px] font-semibold whitespace-nowrap ${tfEscapeHtml(bal >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400')}">
+              <td class="px-4 py-3 text-right font-mono-num text-xs font-semibold whitespace-nowrap ${tfEscapeHtml(bal >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400')}">
                 ${tfEscapeHtml(this.formatCurrency(Math.abs(bal)))}
               </td>
               <td class="px-4 py-3 text-center" onclick="event.stopPropagation();">
@@ -14801,7 +14803,7 @@ BANKING & PAYMENT COORDINATES:
       }
 
       paginationEl.innerHTML = `
-        <div class="text-slate-500 text-[11px]">
+        <div class="text-slate-500 text-xs">
           Showing <strong>${tfEscapeHtml(totalEntries > 0 ? startIdx + 1 : 0)}–${tfEscapeHtml(endIdx)}</strong> of <strong>${tfEscapeHtml(totalEntries)}</strong> payments
         </div>
         <div class="flex items-center gap-1">
@@ -14934,7 +14936,7 @@ BANKING & PAYMENT COORDINATES:
     link.href = tfSafeUrl(URL.createObjectURL(blob));
     link.download = `TradeFlow_PaymentLedger_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
-    this.showToast('📊 Payment Ledger exported to CSV!');
+    this.showToast('Payment Ledger exported to CSV!');
   }
 
   /* ---------- PAYMENT MODAL COCKPIT ---------- */
@@ -15427,7 +15429,7 @@ BANKING & PAYMENT COORDINATES:
     }
 
     this.recalcPaymentLiveBalance();
-    this.showToast(`✨ Smart Auto-Fill: Cascaded ${autoFilledCount} fields from Order ${order.invoiceNumber || order.id}!`);
+    this.showToast(`Smart Auto-Fill: Cascaded ${autoFilledCount} fields from Order ${order.invoiceNumber || order.id}!`);
   }
 
   onPaymentPartyInput(partyName) {
@@ -15507,7 +15509,7 @@ BANKING & PAYMENT COORDINATES:
       }
 
       if (fieldsMatched > 1) {
-        this.showToast(`✨ Smart Auto-Fill: Matched ${fieldsMatched} fields for ${contact.name}!`);
+        this.showToast(`Smart Auto-Fill: Matched ${fieldsMatched} fields for ${contact.name}!`);
       }
     }
   }
@@ -15736,10 +15738,10 @@ BANKING & PAYMENT COORDINATES:
       const statusText = document.getElementById('payment-ai-status-text');
       const extractedCount = [analyzed.date, analyzed.amount, analyzed.party, analyzed.utr, analyzed.mode, analyzed.orderRef, analyzed.bank].filter(Boolean).length;
       if (banner && statusText) {
-        statusText.innerText = `✨ Auto-filled ${extractedCount} fields from ${fileName} (Direction: ${analyzed.direction === 'paid' ? 'Paid Out' : 'Received'}). Green fields were extracted; blank fields must be filled manually.`;
+        statusText.innerText = `Auto-filled ${extractedCount} fields from ${fileName} (Direction: ${analyzed.direction === 'paid' ? 'Paid Out' : 'Received'}). Green fields were extracted; blank fields must be filled manually.`;
       }
 
-      this.showToast(`✨ Document analyzed: ${extractedCount} fields auto-filled in green!`);
+      this.showToast(`Document analyzed: ${extractedCount} fields auto-filled in green!`);
       if (window.lucide) window.lucide.createIcons();
     };
 
@@ -15825,7 +15827,7 @@ BANKING & PAYMENT COORDINATES:
     const previewPane = document.getElementById('payment-preview-pane');
     document.querySelectorAll('.pay-split-btn').forEach(btn => {
       const match = btn.textContent.includes(ratio === '50-50' ? '50:50' : '40:60');
-      btn.className = `pay-split-btn px-2 py-0.5 text-[10px] font-bold rounded ${match ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'}`;
+      btn.className = `pay-split-btn px-2 py-0.5 text-xs font-bold rounded ${match ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'}`;
     });
 
     if (ratio === '40-60') {
@@ -15884,7 +15886,7 @@ BANKING & PAYMENT COORDINATES:
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    this.showToast(`📥 Downloaded ${fileName}`);
+    this.showToast(`Downloaded ${fileName}`);
   }
 
   renderPaymentPreview(fileName, fileData, fileType) {
@@ -16004,7 +16006,7 @@ BANKING & PAYMENT COORDINATES:
 
       if (data && data.isDuplicate) {
         this.lastDuplicateConflict = data;
-        if (title) title.textContent = `⚠️ Potential Duplicate Payment / File Detected (${data.matchedBy.toUpperCase()})!`;
+        if (title) title.textContent = `Potential Duplicate Payment / File Detected (${data.matchedBy.toUpperCase()})!`;
         if (desc) desc.textContent = `Already recorded in Order ${data.duplicate?.order_id || data.duplicate?.orderRef || 'Existing'} (${data.duplicate?.party_name || data.duplicate?.partyName || ''}, ₹${data.duplicate?.amount || ''}).`;
         if (banner) banner.classList.remove('hidden');
       } else {
@@ -16071,8 +16073,8 @@ BANKING & PAYMENT COORDINATES:
             <div id="dsc-left-zoom" class="w-full h-full flex flex-col origin-top transition-transform duration-150">
               <iframe src="${tfEscapeHtml(tfSafeUrl(prevUrl))}#toolbar=0&navpanes=0" class="w-full flex-1 rounded-t border border-slate-700 bg-white" style="min-height: 68vh;"></iframe>
               <div class="px-3 py-1.5 bg-slate-800 border-t border-slate-700 flex items-center justify-between text-xs text-slate-300">
-                <span class="truncate">📄 ${tfEscapeHtml(existing?.fileName || 'Registered Bank Slip (PDF)')}</span>
-                <a href="${tfEscapeHtml(tfSafeUrl(prevUrl))}" target="_blank" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold hover:bg-amber-500/30 flex items-center gap-1 shrink-0">
+                <span class="truncate">${tfEscapeHtml(existing?.fileName || 'Registered Bank Slip (PDF)')}</span>
+                <a href="${tfEscapeHtml(tfSafeUrl(prevUrl))}" target="_blank" class="px-2 py-0.5 rounded bg-emerald-700/20 text-amber-300 font-bold hover:bg-emerald-800/30 flex items-center gap-1 shrink-0">
                   <span>Open Full PDF ↗</span>
                 </a>
               </div>
@@ -16083,8 +16085,8 @@ BANKING & PAYMENT COORDINATES:
             <div id="dsc-left-zoom" class="w-full h-full flex flex-col items-center justify-center origin-top transition-transform duration-150">
               <img src="${tfEscapeHtml(tfSafeUrl(prevUrl))}" class="max-w-full max-h-[68vh] rounded shadow object-contain">
               <div class="w-full px-3 py-1.5 bg-slate-800 border-t border-slate-700 flex items-center justify-between text-xs text-slate-300 mt-2">
-                <span class="truncate">🖼️ ${tfEscapeHtml(existing?.fileName || 'Registered Bank Slip')}</span>
-                <a href="${tfEscapeHtml(tfSafeUrl(prevUrl))}" target="_blank" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold hover:bg-amber-500/30 flex items-center gap-1 shrink-0">
+                <span class="truncate">${tfEscapeHtml(existing?.fileName || 'Registered Bank Slip')}</span>
+                <a href="${tfEscapeHtml(tfSafeUrl(prevUrl))}" target="_blank" class="px-2 py-0.5 rounded bg-emerald-700/20 text-amber-300 font-bold hover:bg-emerald-800/30 flex items-center gap-1 shrink-0">
                   <span>Open Image ↗</span>
                 </a>
               </div>
@@ -16127,8 +16129,8 @@ BANKING & PAYMENT COORDINATES:
             <div id="dsc-right-zoom" class="w-full h-full flex flex-col origin-top transition-transform duration-150">
               <iframe src="${tfEscapeHtml(tfSafeUrl(inUrl))}#toolbar=0&navpanes=0" class="w-full flex-1 rounded-t border border-slate-700 bg-white" style="min-height: 68vh;"></iframe>
               <div class="px-3 py-1.5 bg-slate-800 border-t border-slate-700 flex items-center justify-between text-xs text-slate-300">
-                <span class="truncate">📄 ${tfEscapeHtml(incoming?.fileName || 'Incoming Bank Slip (PDF)')}</span>
-                <a href="${tfEscapeHtml(tfSafeUrl(inUrl))}" target="_blank" class="px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 font-bold hover:bg-violet-500/30 flex items-center gap-1 shrink-0">
+                <span class="truncate">${tfEscapeHtml(incoming?.fileName || 'Incoming Bank Slip (PDF)')}</span>
+                <a href="${tfEscapeHtml(tfSafeUrl(inUrl))}" target="_blank" class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold hover:bg-purple-500/30 flex items-center gap-1 shrink-0">
                   <span>Open Full PDF ↗</span>
                 </a>
               </div>
@@ -16139,8 +16141,8 @@ BANKING & PAYMENT COORDINATES:
             <div id="dsc-right-zoom" class="w-full h-full flex flex-col items-center justify-center origin-top transition-transform duration-150">
               <img src="${tfEscapeHtml(tfSafeUrl(inUrl))}" class="max-w-full max-h-[68vh] rounded shadow object-contain">
               <div class="w-full px-3 py-1.5 bg-slate-800 border-t border-slate-700 flex items-center justify-between text-xs text-slate-300 mt-2">
-                <span class="truncate">🖼️ ${tfEscapeHtml(incoming?.fileName || 'Incoming Scanned Slip')}</span>
-                <a href="${tfEscapeHtml(tfSafeUrl(inUrl))}" target="_blank" class="px-2 py-0.5 rounded bg-violet-500/20 text-violet-300 font-bold hover:bg-violet-500/30 flex items-center gap-1 shrink-0">
+                <span class="truncate">${tfEscapeHtml(incoming?.fileName || 'Incoming Scanned Slip')}</span>
+                <a href="${tfEscapeHtml(tfSafeUrl(inUrl))}" target="_blank" class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold hover:bg-purple-500/30 flex items-center gap-1 shrink-0">
                   <span>Open Image ↗</span>
                 </a>
               </div>
@@ -16150,11 +16152,11 @@ BANKING & PAYMENT COORDINATES:
       } else {
         rViewport.innerHTML = `
           <div class="p-6 text-center text-slate-300">
-            <i data-lucide="file-question" class="w-12 h-12 mx-auto mb-2 text-violet-400"></i>
+            <i data-lucide="file-question" class="w-12 h-12 mx-auto mb-2 text-purple-400"></i>
             <h4 class="font-bold text-sm text-white">Incoming Payment Draft</h4>
             <p class="text-xs text-slate-400 mt-1">Party: <b>${tfEscapeHtml(incoming?.partyName || '—')}</b></p>
             <p class="text-xs text-slate-400">Amount: <b>₹${tfEscapeHtml(Number(incoming?.amount || 0).toLocaleString('en-IN'))}</b></p>
-            <p class="text-xs text-slate-400">UTR: <b class="font-mono text-violet-300">${tfEscapeHtml(incoming?.utr || '—')}</b></p>
+            <p class="text-xs text-slate-400">UTR: <b class="font-mono text-purple-300">${tfEscapeHtml(incoming?.utr || '—')}</b></p>
           </div>
         `;
       }
@@ -16204,7 +16206,7 @@ BANKING & PAYMENT COORDINATES:
       if (titleEl) titleEl.textContent = `Order Dossier: ${order.invoiceNumber} (${order.id})`;
       if (badgeEl) {
         badgeEl.textContent = (order.status || 'Active').toUpperCase();
-        badgeEl.className = order.status === 'paid' ? 'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        badgeEl.className = order.status === 'paid' ? 'px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30';
       }
       if (subEl) subEl.textContent = `Buyer: ${order.retailerName} · Supplier: ${order.manufacturerName || 'Factory'}`;
 
@@ -16226,7 +16228,7 @@ BANKING & PAYMENT COORDINATES:
       body.innerHTML = `
         <!-- Top Conflict Warning Banner -->
         <div class="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-950 dark:text-rose-100 flex items-start gap-3">
-          <span class="p-1 rounded-lg bg-rose-500/20 text-rose-600 dark:text-rose-400 shrink-0">⚠️</span>
+          <span class="p-1 rounded-lg bg-rose-500/20 text-rose-600 dark:text-rose-400 shrink-0"><i data-lucide="triangle-alert" class="w-4 h-4 inline-block"></i></span>
           <div class="text-xs leading-relaxed">
             <strong class="font-black text-rose-800 dark:text-rose-300">Collision Detection Context:</strong>
             The incoming bank slip carries UTR <code class="font-mono bg-white dark:bg-rose-950/80 px-2 py-0.5 rounded border border-rose-300 dark:border-rose-700 text-rose-950 dark:text-rose-100 font-black shadow-2xs">${tfEscapeHtml(matchedUtr || '—')}</code> for ₹${tfEscapeHtml(Number(existing.amount || 0).toLocaleString('en-IN'))}.
@@ -16237,35 +16239,35 @@ BANKING & PAYMENT COORDINATES:
         <!-- 3-Column Financial & Stakeholder Metrics -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Buyer / Customer</span>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Buyer / Customer</span>
             <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-1">${tfEscapeHtml(order.retailerName)}</h4>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Contact: ${tfEscapeHtml(order.retailerId || '—')}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Contact: ${tfEscapeHtml(order.retailerId || '—')}</p>
           </div>
           <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Manufacturer / Supplier</span>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Manufacturer / Supplier</span>
             <h4 class="text-xs font-bold text-slate-900 dark:text-white mt-1">${tfEscapeHtml(order.manufacturerName || 'Manufacturer not set')}</h4>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Supplier: ${tfEscapeHtml(order.manufacturerId || '—')}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Supplier: ${tfEscapeHtml(order.manufacturerId || '—')}</p>
           </div>
           <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Order Value & Balances</span>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Order Value & Balances</span>
             <div class="flex items-baseline justify-between mt-1">
               <span class="text-xs font-bold text-slate-900 dark:text-white">Total: ₹${tfEscapeHtml(Number(order.totalInvoiceAmount || 0).toLocaleString('en-IN'))}</span>
-              <span class="text-[11px] font-bold ${tfEscapeHtml(order.customerBalanceDue > 0 ? 'text-amber-400' : 'text-emerald-400')}">Due: ₹${tfEscapeHtml(Number(order.customerBalanceDue || 0).toLocaleString('en-IN'))}</span>
+              <span class="text-xs font-bold ${tfEscapeHtml(order.customerBalanceDue > 0 ? 'text-amber-400' : 'text-emerald-400')}">Due: ₹${tfEscapeHtml(Number(order.customerBalanceDue || 0).toLocaleString('en-IN'))}</span>
             </div>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Terms: ${tfEscapeHtml(order.paymentTerms || 'Standard')}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Terms: ${tfEscapeHtml(order.paymentTerms || 'Standard')}</p>
           </div>
         </div>
 
         <!-- Order Items -->
         <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-2xs">
           <div class="px-3.5 py-2 bg-slate-100 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-800 dark:text-slate-200">📦 Order Batch Items</span>
-            <span class="text-[10px] text-slate-400 font-mono">${tfEscapeHtml((order.items || []).length)} Item(s)</span>
+            <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Order Batch Items</span>
+            <span class="text-xs text-slate-400 font-mono">${tfEscapeHtml((order.items || []).length)} Item(s)</span>
           </div>
           <div class="p-3">
             <table class="w-full text-left text-xs">
               <thead>
-                <tr class="text-[11px] text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-1">
+                <tr class="text-xs text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-1">
                   <th class="py-1">Product</th>
                   <th class="py-1">Pack Size</th>
                   <th class="py-1 text-center">Cases</th>
@@ -16292,13 +16294,13 @@ BANKING & PAYMENT COORDINATES:
         <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-2xs">
           <div class="px-3.5 py-2 bg-slate-100 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="text-xs font-bold text-slate-800 dark:text-slate-200">💳 Payments Registered on Order (${tfEscapeHtml(relatedPayments.length)})</span>
-              <span class="text-[10px] text-amber-500 font-bold">Inspect matching UTRs below</span>
+              <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Payments Registered on Order (${tfEscapeHtml(relatedPayments.length)})</span>
+              <span class="text-xs text-amber-500 font-bold">Inspect matching UTRs below</span>
             </div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 dark:bg-slate-950/40 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <thead class="bg-slate-50 dark:bg-slate-950/40 text-xs font-bold uppercase tracking-wider text-slate-400">
                 <tr>
                   <th class="p-2.5">Date</th>
                   <th class="p-2.5">Direction</th>
@@ -16322,28 +16324,28 @@ BANKING & PAYMENT COORDINATES:
                     <tr class="${tfEscapeHtml(isConflict ? 'bg-rose-500/10 dark:bg-rose-950/30 font-semibold' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/30')}">
                       <td class="p-2.5 whitespace-nowrap">${tfEscapeHtml(p.date || '—')}</td>
                       <td class="p-2.5 whitespace-nowrap">
-                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${tfEscapeHtml(isPaid ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300')}">
+                        <span class="px-1.5 py-0.5 rounded text-xs font-bold ${tfEscapeHtml(isPaid ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300')}">
                           ${tfEscapeHtml(isPaid ? 'Money Out (Paid)' : 'Money In (Recv)')}
                         </span>
                       </td>
                       <td class="p-2.5 font-medium text-slate-800 dark:text-slate-200">${tfEscapeHtml(p.partyName || '—')}</td>
                       <td class="p-2.5 font-mono font-bold text-slate-900 dark:text-white">₹${tfEscapeHtml(Number(p.amount || 0).toLocaleString('en-IN'))}</td>
-                      <td class="p-2.5 font-mono text-[11px] font-bold text-slate-700 dark:text-slate-300">${tfEscapeHtml(p.mode || 'NEFT')}</td>
+                      <td class="p-2.5 font-mono text-xs font-bold text-slate-700 dark:text-slate-300">${tfEscapeHtml(p.mode || 'NEFT')}</td>
                       <td class="p-2.5">
                         <div class="flex items-center gap-2">
                           <code class="font-mono text-xs font-black text-slate-950 dark:text-slate-50 bg-white/90 dark:bg-slate-900/90 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 select-all tracking-wide shadow-2xs">${tfEscapeHtml(p.utr || '—')}</code>
                           ${isConflict ? `
-                            <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-xs flex items-center gap-1 shrink-0 border border-rose-700">⚡ MATCHED</span>
+                            <span class="px-2 py-0.5 rounded text-xs font-black uppercase tracking-wider bg-rose-600 text-white shadow-xs flex items-center gap-1 shrink-0 border border-rose-700">MATCHED</span>
                           ` : ''}
                         </div>
                       </td>
                       <td class="p-2.5 text-right whitespace-nowrap">
                         ${proofUrl ? `
-                          <a href="${tfEscapeHtml(tfSafeUrl(proofUrl))}" target="_blank" class="btn-tactile px-2 py-1 text-[11px] rounded bg-slate-800 hover:bg-slate-700 text-slate-200 inline-flex items-center gap-1 border border-slate-700">
+                          <a href="${tfEscapeHtml(tfSafeUrl(proofUrl))}" target="_blank" class="btn-tactile px-2 py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 text-slate-200 inline-flex items-center gap-1 border border-slate-700">
                             <span>View Slip ↗</span>
                           </a>
                         ` : `
-                          <span class="text-slate-400 text-[11px]">No proof</span>
+                          <span class="text-slate-400 text-xs">No proof</span>
                         `}
                       </td>
                     </tr>
@@ -16357,8 +16359,8 @@ BANKING & PAYMENT COORDINATES:
         <!-- Attached Documents in Order Folder -->
         <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-2xs">
           <div class="px-3.5 py-2 bg-slate-100 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-800 dark:text-slate-200">📂 Document Vault Files (${tfEscapeHtml(orderDocs.length)})</span>
-            <span class="text-[10px] text-slate-400 font-mono">/data/orders/${tfEscapeHtml(order.id)}</span>
+            <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Document Vault Files (${tfEscapeHtml(orderDocs.length)})</span>
+            <span class="text-xs text-slate-400 font-mono">/data/orders/${tfEscapeHtml(order.id)}</span>
           </div>
           <div class="p-3">
             ${orderDocs.length === 0 ? `
@@ -16372,11 +16374,11 @@ BANKING & PAYMENT COORDINATES:
                   return `
                     <div class="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between gap-2">
                       <div class="min-w-0">
-                        <p class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate" title="${tfEscapeHtml(docName)}">📄 ${tfEscapeHtml(docName)}</p>
-                        <p class="text-[10px] text-slate-400 font-mono">${tfEscapeHtml(docSize)} • ${tfEscapeHtml(doc.category || 'Receipt')}</p>
+                        <p class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate" title="${tfEscapeHtml(docName)}">${tfEscapeHtml(docName)}</p>
+                        <p class="text-xs text-slate-400 font-mono">${tfEscapeHtml(docSize)} • ${tfEscapeHtml(doc.category || 'Receipt')}</p>
                       </div>
                       ${docUrl ? `
-                        <a href="${tfEscapeHtml(tfSafeUrl(docUrl))}" target="_blank" class="btn-tactile px-2 py-1 text-[11px] rounded bg-slate-800 hover:bg-slate-700 text-slate-200 shrink-0 border border-slate-700 inline-flex items-center gap-1">
+                        <a href="${tfEscapeHtml(tfSafeUrl(docUrl))}" target="_blank" class="btn-tactile px-2 py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 text-slate-200 shrink-0 border border-slate-700 inline-flex items-center gap-1">
                           <span>Preview ↗</span>
                         </a>
                       ` : ''}
@@ -16392,7 +16394,7 @@ BANKING & PAYMENT COORDINATES:
       if (titleEl) titleEl.textContent = `Order Record: ${orderRef || 'Registered Record'}`;
       if (badgeEl) {
         badgeEl.textContent = 'REGISTERED';
-        badgeEl.className = 'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        badgeEl.className = 'px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30';
       }
       if (subEl) subEl.textContent = `Counterparty: ${existing.party_name || existing.partyName || 'Party'}`;
       body.innerHTML = `
@@ -16423,7 +16425,7 @@ BANKING & PAYMENT COORDINATES:
     const partyName = existing?.party_name || existing?.partyName || incoming?.partyName || 'Counterparty';
     const utr = existing?.utr || incoming?.utr || '';
 
-    this.showToast('⏳ Attaching slip to order documents...');
+    this.showToast('Attaching slip to order documents...');
     try {
       const fileData = incoming?.dataUrl || incoming?.fileDataUrl || incoming?.fileUrl;
       if (fileData) {
@@ -16470,10 +16472,10 @@ BANKING & PAYMENT COORDINATES:
       this.renderOrders();
       this.renderPayments();
       this.updateUrgentCounter();
-      this.showToast(`🔗 Successfully merged! Slip attached to Order ${orderId} (${partyName}).`);
+      this.showToast(`Successfully merged! Slip attached to Order ${orderId} (${partyName}).`);
     } catch (e) {
       console.error('Failed to merge slip:', e);
-      this.showToast('❌ Failed to merge slip: ' + e.message, 'error');
+      this.showToast('Failed to merge slip: ' + e.message, 'error');
     }
   }
 
@@ -16498,7 +16500,7 @@ BANKING & PAYMENT COORDINATES:
       window.TradeFlowSmartFill.discardCurrentDraft?.();
     }
 
-    this.showToast('🛡️ Discarded duplicate payment slip. No duplicated entry was recorded.');
+    this.showToast('Discarded duplicate payment slip. No duplicated entry was recorded.');
   }
 
   linkToExistingPayment() {
@@ -16518,7 +16520,7 @@ BANKING & PAYMENT COORDINATES:
       window.TradeFlowSmartFill.hideDuplicateWarning();
     }
 
-    this.showToast('⚠️ Proceeding with separate transaction under manual override.');
+    this.showToast('Proceeding with separate transaction under manual override.');
   }
 
   async submitPaymentCockpit() {
@@ -16553,7 +16555,7 @@ BANKING & PAYMENT COORDINATES:
       this.setFieldHighlight('pay-select-order', null, false, true);
       if (orderErr) orderErr.classList.remove('hidden');
       if (orderSelect) orderSelect.focus();
-      this.showToast('⚠️ Every bill must be attached to an order. Please select an order.');
+      this.showToast('Every bill must be attached to an order. Please select an order.');
       return;
     } else {
       if (orderErr) orderErr.classList.add('hidden');
@@ -16563,7 +16565,7 @@ BANKING & PAYMENT COORDINATES:
     if (!date) {
       this.setFieldHighlight('pay-input-date', null, false, true);
       if (dateInput) dateInput.focus();
-      this.showToast('⚠️ Date is required.');
+      this.showToast('Date is required.');
       return;
     }
 
@@ -16571,7 +16573,7 @@ BANKING & PAYMENT COORDINATES:
     if (!amount || isNaN(amount) || amount <= 0) {
       this.setFieldHighlight('pay-input-amount', null, false, true);
       if (amountInput) amountInput.focus();
-      this.showToast('⚠️ Valid payment amount (> 0) is required.');
+      this.showToast('Valid payment amount (> 0) is required.');
       return;
     }
 
@@ -16579,7 +16581,7 @@ BANKING & PAYMENT COORDINATES:
     if (!partyName) {
       this.setFieldHighlight('pay-input-party', null, false, true);
       if (partyInput) partyInput.focus();
-      this.showToast('⚠️ Party / Company name is required.');
+      this.showToast('Party / Company name is required.');
       return;
     }
 
@@ -16718,7 +16720,7 @@ BANKING & PAYMENT COORDINATES:
           lastModifiedTimeLog: this.getLiveFormattedDateTime()
         };
       }
-      this.showToast(`✏️ Payment updated: ${this.formatCurrency(amount)} · ${partyName}`);
+      this.showToast(`Payment updated: ${this.formatCurrency(amount)} · ${partyName}`);
     } else {
       const newEntry = {
         id: 'PAY-' + Date.now(),
@@ -16748,7 +16750,7 @@ BANKING & PAYMENT COORDINATES:
         createdAt: new Date().toISOString()
       };
       this.data.payments.unshift(newEntry);
-      this.showToast(`💰 Payment logged: ${direction === 'received' ? '+' : '-'}${this.formatCurrency(amount)} · ${partyName}`);
+      this.showToast(`Payment logged: ${direction === 'received' ? '+' : '-'}${this.formatCurrency(amount)} · ${partyName}`);
 
       // 10-Second Floating Undo Banner with Form State Snapshot
       const paymentSnapshot = {
@@ -16772,7 +16774,7 @@ BANKING & PAYMENT COORDINATES:
         pendingMobileSnapId: this.currentPendingMobileSnapId || null
       };
 
-      this.showUndoToast(`💰 Payment logged: ${direction === 'received' ? '+' : '-'}${this.formatCurrency(amount)} · ${partyName}`, () => {
+      this.showUndoToast(`Payment logged: ${direction === 'received' ? '+' : '-'}${this.formatCurrency(amount)} · ${partyName}`, () => {
         const idx = this.data.payments.findIndex(x => x.id === newEntry.id);
         if (idx !== -1) {
           this.data.payments.splice(idx, 1);
@@ -16796,7 +16798,7 @@ BANKING & PAYMENT COORDINATES:
 
           // Re-open Payment Modal and restore all fields & attachments!
           this.restorePaymentModalFromSnapshot(paymentSnapshot);
-          this.showToast('↩️ Payment undone! Reopened details in form so you can make changes.');
+          this.showToast('Payment undone! Reopened details in form so you can make changes.');
         }
       });
     }
@@ -16974,7 +16976,7 @@ BANKING & PAYMENT COORDINATES:
               <td class="p-3 text-center font-mono-num text-slate-400 text-xs">${tfEscapeHtml(idx + 1)}</td>
               <td class="p-3">
                 <div class="font-bold text-slate-900 dark:text-white text-xs">${tfEscapeHtml(item.name || 'Product')}</div>
-                <div class="text-[10px] text-slate-400 font-mono">${tfEscapeHtml(item.sku || item.productId || 'SKU')} · ${tfEscapeHtml(item.variant || item.packSize || '')}</div>
+                <div class="text-xs text-slate-400 font-mono">${tfEscapeHtml(item.sku || item.productId || 'SKU')} · ${tfEscapeHtml(item.variant || item.packSize || '')}</div>
               </td>
               <td class="p-3 font-mono text-xs text-slate-600 dark:text-slate-300">${tfEscapeHtml(item.packSize || '—')}</td>
               <td class="p-3 text-center font-mono font-bold text-slate-700 dark:text-slate-200 text-xs">${tfEscapeHtml(cases)}</td>
@@ -17007,10 +17009,10 @@ BANKING & PAYMENT COORDINATES:
           <div class="p-5 rounded-xl border ${tfEscapeHtml(isReceived ? 'bg-emerald-500/5 dark:bg-emerald-950/30 border-emerald-500/30' : 'bg-rose-500/5 dark:bg-rose-950/30 border-rose-500/30')} shadow-xs flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between mb-2">
-                <span class="text-[10px] font-bold uppercase tracking-wider ${tfEscapeHtml(isReceived ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400')}">
+                <span class="text-xs font-bold uppercase tracking-wider ${tfEscapeHtml(isReceived ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400')}">
                   ${tfEscapeHtml(isReceived ? 'Payment Received (Credit)' : 'Payment Dispatched (Debit)')}
                 </span>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${tfEscapeHtml(isReceived ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white')}">
+                <span class="px-2 py-0.5 rounded-full text-xs font-bold ${tfEscapeHtml(isReceived ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white')}">
                   ${tfEscapeHtml(isReceived ? '↓ Money In' : '↑ Money Out')}
                 </span>
               </div>
@@ -17044,7 +17046,7 @@ BANKING & PAYMENT COORDINATES:
                 </div>
               ` : ''}
               <div class="mt-3 pt-2 border-t ${tfEscapeHtml(isReceived ? 'border-emerald-500/20' : 'border-rose-500/20')} flex justify-end">
-                <button onclick="app.editPayment('${tfEscapeHtml(tfEscapeJs(p.id))}')" class="btn-tactile px-2.5 py-1 text-[11px] font-bold rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1">
+                <button onclick="app.editPayment('${tfEscapeHtml(tfEscapeJs(p.id))}')" class="btn-tactile px-2.5 py-1 text-xs font-bold rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1">
                   <i data-lucide="wallet" class="w-3 h-3 text-amber-400"></i> Edit Payment
                 </button>
               </div>
@@ -17054,13 +17056,13 @@ BANKING & PAYMENT COORDINATES:
           <!-- Tile 2: Counterparty Information -->
           <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111622] shadow-xs flex flex-col justify-between">
             <div>
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Counterparty Dossier</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Counterparty Dossier</span>
               <h4 class="text-lg font-black text-slate-900 dark:text-white truncate" title="${tfEscapeHtml(p.partyName)}">${tfEscapeHtml(p.partyName)}</h4>
               <div class="flex items-center gap-1.5 mt-1">
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
                   ${tfEscapeHtml((p.partyType || 'Party').toUpperCase())}
                 </span>
-                ${contact?.gstin ? `<span class="text-[10px] font-mono text-slate-400">GST: ${tfEscapeHtml(contact.gstin)}</span>` : ''}
+                ${contact?.gstin ? `<span class="text-xs font-mono text-slate-400">GST: ${tfEscapeHtml(contact.gstin)}</span>` : ''}
               </div>
             </div>
             <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
@@ -17078,8 +17080,8 @@ BANKING & PAYMENT COORDINATES:
               </div>
               ${p.notes ? `
                 <div class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/60">
-                  <span class="text-[10px] text-slate-400 block font-semibold mb-0.5">Remarks:</span>
-                  <p class="text-[11px] text-slate-700 dark:text-slate-300 italic bg-slate-50 dark:bg-slate-900/60 p-2 rounded border border-slate-200 dark:border-slate-800">${tfEscapeHtml(p.notes)}</p>
+                  <span class="text-xs text-slate-400 block font-semibold mb-0.5">Remarks:</span>
+                  <p class="text-xs text-slate-700 dark:text-slate-300 italic bg-slate-50 dark:bg-slate-900/60 p-2 rounded border border-slate-200 dark:border-slate-800">${tfEscapeHtml(p.notes)}</p>
                 </div>
               ` : ''}
             </div>
@@ -17088,14 +17090,14 @@ BANKING & PAYMENT COORDINATES:
           <!-- Tile 3: Linked Order & Ledger Status -->
           <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111622] shadow-xs flex flex-col justify-between">
             <div>
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Attached Order &amp; Ledger</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Attached Order &amp; Ledger</span>
               <div class="flex items-center gap-2 flex-wrap">
                 <h4 class="text-xl font-black font-mono-num text-amber-600 dark:text-amber-400">${tfEscapeHtml(orderTitle)}</h4>
                 ${order ? `
-                  <button onclick="app.openEditOrderModal('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-200 flex items-center gap-1" title="Edit Order Details">
+                  <button onclick="app.openEditOrderModal('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-200 flex items-center gap-1" title="Edit Order Details">
                     <i data-lucide="edit-3" class="w-3 h-3"></i> Edit Order
                   </button>
-                  <button onclick="app.openInvoiceModal('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 hover:bg-amber-200 flex items-center gap-1">
+                  <button onclick="app.openInvoiceModal('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-2 py-0.5 rounded text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 hover:bg-amber-200 flex items-center gap-1">
                     <i data-lucide="file-text" class="w-3 h-3"></i> Invoice
                   </button>
                 ` : ''}
@@ -17146,76 +17148,76 @@ BANKING & PAYMENT COORDINATES:
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order ? order.retailerId : (contact ? contact.id : '')))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-amber-500 dark:border-slate-800/80 dark:hover:border-amber-500/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Buyer account & order history">
+            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order ? order.retailerId : (contact ? contact.id : '')))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-emerald-600 dark:border-slate-800/80 dark:hover:border-emerald-600/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Buyer account & order history">
               <div>
                 <div class="flex items-center justify-between text-slate-400 mb-1">
-                  <span class="text-[10px] uppercase font-bold">Buyer / Retailer</span>
+                  <span class="text-xs uppercase font-bold">Buyer / Retailer</span>
                   <i data-lucide="building-2" class="w-3.5 h-3.5 text-emerald-500"></i>
                 </div>
-                <div class="font-extrabold text-slate-900 dark:text-white text-sm truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order?.retailerName || p.partyName)}</div>
-                <div class="text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 text-[11px]">
+                <div class="font-extrabold text-slate-900 dark:text-white text-sm truncate group-hover:text-emerald-700 transition-colors">${tfEscapeHtml(order?.retailerName || p.partyName)}</div>
+                <div class="text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 text-xs">
                   <div>Contact: ${tfEscapeHtml(order?.retailerContact || contact?.contactPerson || '')}</div>
                   <div>Phone: ${tfEscapeHtml(order?.retailerPhone || contact?.phone || '')}</div>
                   <div class="truncate">Address: ${tfEscapeHtml(order?.deliveryAddress || order?.shippingAddress || 'Not set')}</div>
                 </div>
               </div>
-              <div class="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[11px] text-amber-600 dark:text-amber-400 font-bold group-hover:underline">
+              <div class="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-bold group-hover:underline">
                 <span>View Buyer Account</span>
                 <span>→</span>
               </div>
             </div>
 
-            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order ? order.manufacturerId : ''))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-amber-500 dark:border-slate-800/80 dark:hover:border-amber-500/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Factory profile & active batches">
+            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order ? order.manufacturerId : ''))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-emerald-600 dark:border-slate-800/80 dark:hover:border-emerald-600/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Factory profile & active batches">
               <div>
                 <div class="flex items-center justify-between text-slate-400 mb-1">
-                  <span class="text-[10px] uppercase font-bold">Manufacturer</span>
+                  <span class="text-xs uppercase font-bold">Manufacturer</span>
                   <i data-lucide="factory" class="w-3.5 h-3.5 text-blue-500"></i>
                 </div>
-                <div class="font-extrabold text-slate-900 dark:text-white text-sm truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order?.manufacturerName || 'Manufacturer not set')}</div>
-                <div class="text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 text-[11px]">
+                <div class="font-extrabold text-slate-900 dark:text-white text-sm truncate group-hover:text-emerald-700 transition-colors">${tfEscapeHtml(order?.manufacturerName || 'Manufacturer not set')}</div>
+                <div class="text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 text-xs">
                   <div>Advance Paid: <strong class="text-emerald-600 dark:text-emerald-400">${tfEscapeHtml(this.formatCurrency(order?.manufacturerAdvancePaid || 0))}</strong></div>
                   <div>Production: ${tfEscapeHtml((order?.manufacturerStatus || 'In Production').toUpperCase())}</div>
                 </div>
               </div>
-              <div class="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[11px] text-amber-600 dark:text-amber-400 font-bold group-hover:underline">
+              <div class="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-bold group-hover:underline">
                 <span>View Factory Batches</span>
                 <span>→</span>
               </div>
             </div>
 
-            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order ? order.packagingVendorId : ''))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-amber-500 dark:border-slate-800/80 dark:hover:border-amber-500/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Packaging Vendor & supply balance">
+            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order ? order.packagingVendorId : ''))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-emerald-600 dark:border-slate-800/80 dark:hover:border-emerald-600/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Packaging Vendor & supply balance">
               <div>
                 <div class="flex items-center justify-between text-slate-400 mb-1">
-                  <span class="text-[10px] uppercase font-bold">Packaging Supplier</span>
-                  <i data-lucide="package" class="w-3.5 h-3.5 text-sky-500"></i>
+                  <span class="text-xs uppercase font-bold">Packaging Supplier</span>
+                  <i data-lucide="package" class="w-3.5 h-3.5 text-blue-500"></i>
                 </div>
-                <div class="font-extrabold text-slate-900 dark:text-white text-sm truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order?.packagingVendorName || '')}</div>
-                <div class="text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 text-[11px]">
+                <div class="font-extrabold text-slate-900 dark:text-white text-sm truncate group-hover:text-emerald-700 transition-colors">${tfEscapeHtml(order?.packagingVendorName || '')}</div>
+                <div class="text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 text-xs">
                   <div>Total Cost: ${tfEscapeHtml(this.formatCurrency(order?.packagingCost || 28560))}</div>
                   <div>Advance Paid: ${tfEscapeHtml(this.formatCurrency(order?.packagingAdvancePaid || 15000))}</div>
                   <div>Status: ${tfEscapeHtml((order?.packagingStatus || 'Delivered to Mfg').toUpperCase())}</div>
                 </div>
               </div>
-              <div class="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[11px] text-amber-600 dark:text-amber-400 font-bold group-hover:underline">
+              <div class="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-bold group-hover:underline">
                 <span>View Packaging Hub</span>
                 <span>→</span>
               </div>
             </div>
 
-            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order?.marketeerId || order?.transporterId || ''))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-amber-500 dark:border-slate-800/80 dark:hover:border-amber-500/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Marketeer or Transporter profile">
+            <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order?.marketeerId || order?.transporterId || ''))}', 'order-payment-full-modal', '${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-3.5 rounded-xl bg-slate-50 hover:bg-amber-500/5 dark:bg-slate-900/60 dark:hover:bg-amber-500/10 border border-slate-200/80 hover:border-emerald-600 dark:border-slate-800/80 dark:hover:border-emerald-600/70 transition-all cursor-pointer group shadow-2xs flex flex-col justify-between" title="Click to view Marketeer or Transporter profile">
               <div>
                 <div class="flex items-center justify-between text-slate-400 mb-1">
-                  <span class="text-[10px] uppercase font-bold">Marketeer &amp; Logistics</span>
+                  <span class="text-xs uppercase font-bold">Marketeer &amp; Logistics</span>
                   <i data-lucide="truck" class="w-3.5 h-3.5 text-purple-500"></i>
                 </div>
-                <div class="font-extrabold text-slate-900 dark:text-white text-sm truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order?.marketeerName || 'Direct (no marketeer)')}</div>
-                <div class="text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 text-[11px]">
+                <div class="font-extrabold text-slate-900 dark:text-white text-sm truncate group-hover:text-emerald-700 transition-colors">${tfEscapeHtml(order?.marketeerName || 'Direct (no marketeer)')}</div>
+                <div class="text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 text-xs">
                   <div>Transporter: ${tfEscapeHtml(order?.transporterName || 'Not assigned')}</div>
                   <div>Freight Cost: ${tfEscapeHtml(this.formatCurrency(order?.totalTransportCost || 0))}</div>
                   <div>Vehicle: ${tfEscapeHtml(order?.vehicleNumber || 'Not entered')}</div>
                 </div>
               </div>
-              <div class="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[11px] text-amber-600 dark:text-amber-400 font-bold group-hover:underline">
+              <div class="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400 font-bold group-hover:underline">
                 <span>View Partner Dossier</span>
                 <span>→</span>
               </div>
@@ -17234,7 +17236,7 @@ BANKING & PAYMENT COORDINATES:
             </div>
             <div class="flex items-center gap-2">
               ${order ? `
-                <button onclick="app.openEditOrderModal('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-2.5 py-1 rounded text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 flex items-center gap-1 shadow-2xs">
+                <button onclick="app.openEditOrderModal('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-2.5 py-1 rounded text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white flex items-center gap-1 shadow-2xs">
                   <i data-lucide="edit-3" class="w-3 h-3"></i> Edit Items &amp; Rates
                 </button>
               ` : ''}
@@ -17245,7 +17247,7 @@ BANKING & PAYMENT COORDINATES:
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
-                <tr class="bg-slate-50 dark:bg-slate-900/80 text-[10px] uppercase font-bold text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                <tr class="bg-slate-50 dark:bg-slate-900/80 text-xs uppercase font-bold text-slate-400 border-b border-slate-200 dark:border-slate-800">
                   <th class="p-3 text-center w-10">#</th>
                   <th class="p-3">Product Description &amp; SKU</th>
                   <th class="p-3">Pack Size</th>
@@ -17260,7 +17262,7 @@ BANKING & PAYMENT COORDINATES:
               </tbody>
               <tfoot>
                 <tr class="bg-slate-50/80 dark:bg-slate-900/90 font-bold text-xs border-t border-slate-200 dark:border-slate-800">
-                  <td colspan="3" class="p-3 text-right uppercase text-[10px] text-slate-400">Total Volumes &amp; Subtotal:</td>
+                  <td colspan="3" class="p-3 text-right uppercase text-xs text-slate-400">Total Volumes &amp; Subtotal:</td>
                   <td class="p-3 text-center font-mono text-amber-600 dark:text-amber-400">${tfEscapeHtml(totalCases || 100)} Cases</td>
                   <td class="p-3 text-center font-mono text-amber-600 dark:text-amber-400">${tfEscapeHtml((totalUnits || 2240).toLocaleString('en-IN'))} Jars</td>
                   <td class="p-3 text-right font-mono text-slate-400">—</td>
@@ -17288,7 +17290,7 @@ BANKING & PAYMENT COORDINATES:
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs">
             <!-- Left Column: Direct Manufacturing & Packaging Costs -->
             <div class="space-y-3">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Direct Cost of Goods Sold (COGS)</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Direct Cost of Goods Sold (COGS)</span>
               <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 divide-y divide-slate-200/60 dark:divide-slate-800 space-y-2">
                 <div class="flex justify-between items-center py-1">
                   <span class="text-slate-600 dark:text-slate-300 font-medium">1. Factory Base Mfg &amp; Job-Work</span>
@@ -17311,7 +17313,7 @@ BANKING & PAYMENT COORDINATES:
 
             <!-- Right Column: Revenue, Taxes & Profit Realization -->
             <div class="space-y-3">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Billing &amp; Profit Scenario</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Billing &amp; Profit Scenario</span>
               <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 divide-y divide-slate-200/60 dark:divide-slate-800 space-y-2">
                 <div class="flex justify-between items-center py-1">
                   <span class="text-slate-600 dark:text-slate-300 font-medium">Taxable Selling Subtotal</span>
@@ -17343,7 +17345,7 @@ BANKING & PAYMENT COORDINATES:
               </span>
               <div>
                 <h4 class="font-bold text-slate-900 dark:text-white text-sm">Attached Document Proof &amp; In-Window Verification</h4>
-                <p class="text-[11px] text-slate-400 font-mono">${tfEscapeHtml(p.pn || 'Payment_Proof.pdf')} • Folder: storage/documents/orders/${tfEscapeHtml(p.orderFolder || p.orderRef || 'general')}/</p>
+                <p class="text-xs text-slate-400 font-mono">${tfEscapeHtml(p.pn || 'Payment_Proof.pdf')} • Folder: storage/documents/orders/${tfEscapeHtml(p.orderFolder || p.orderRef || 'general')}/</p>
               </div>
             </div>
 
@@ -17354,7 +17356,7 @@ BANKING & PAYMENT COORDINATES:
                   <i data-lucide="columns" class="w-3.5 h-3.5 text-blue-400"></i>
                   <span>Match Side-by-Side</span>
                 </button>
-                <button onclick="app.openOrderPaymentBillView('full')" class="btn-tactile px-3 py-1.5 text-xs font-bold text-slate-900 bg-amber-400 hover:bg-amber-300 rounded-lg flex items-center gap-1.5 shadow-2xs" title="View full bill in this window">
+                <button onclick="app.openOrderPaymentBillView('full')" class="btn-tactile px-3 py-1.5 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg flex items-center gap-1.5 shadow-2xs" title="View full bill in this window">
                   <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
                   <span>View Bill Here</span>
                 </button>
@@ -17385,9 +17387,9 @@ BANKING & PAYMENT COORDINATES:
                     <i data-lucide="file-text" class="w-8 h-8 text-amber-500 shrink-0"></i>
                     <div class="min-w-0 flex-1">
                       <div class="font-bold text-slate-900 dark:text-white truncate">${tfEscapeHtml(p.pn || 'Payment_Proof.pdf')}</div>
-                      <div class="text-[10px] text-slate-400">PDF Document Proof Attached</div>
+                      <div class="text-xs text-slate-400">PDF Document Proof Attached</div>
                     </div>
-                    <button onclick="app.openOrderPaymentBillView('split')" class="btn-tactile px-3 py-1.5 text-xs font-bold text-slate-900 bg-amber-500 hover:bg-amber-400 rounded-lg flex items-center gap-1 shrink-0">
+                    <button onclick="app.openOrderPaymentBillView('split')" class="btn-tactile px-3 py-1.5 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg flex items-center gap-1 shrink-0">
                       <i data-lucide="columns" class="w-3.5 h-3.5"></i>
                       <span>Match Details</span>
                     </button>
@@ -17400,7 +17402,7 @@ BANKING & PAYMENT COORDINATES:
               <i data-lucide="file-plus" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
               <div class="font-bold text-slate-700 dark:text-slate-300 text-sm">No document proof attached yet</div>
               <p class="text-xs text-slate-500 mt-0.5 mb-3">You can attach a scanned bank advice or voucher anytime.</p>
-              <button onclick="app.closeOrderPaymentFullModal(); app.editPayment('${tfEscapeHtml(tfEscapeJs(p.id))}');" class="btn-tactile px-4 py-2 text-xs font-bold text-slate-900 bg-amber-500 hover:bg-amber-400 rounded-lg inline-flex items-center gap-1.5">
+              <button onclick="app.closeOrderPaymentFullModal(); app.editPayment('${tfEscapeHtml(tfEscapeJs(p.id))}');" class="btn-tactile px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg inline-flex items-center gap-1.5">
                 <i data-lucide="upload" class="w-3.5 h-3.5"></i>
                 <span>Attach Proof Now</span>
               </button>
@@ -17417,10 +17419,10 @@ BANKING & PAYMENT COORDINATES:
               </span>
               <div>
                 <h4 class="font-bold text-slate-900 dark:text-white text-sm">System Audit Trail &amp; Precision Timestamp Logs</h4>
-                <p class="text-[11px] text-slate-400">Verifiable chronological audit records of order placement, payment logging, and modifications</p>
+                <p class="text-xs text-slate-400">Verifiable chronological audit records of order placement, payment logging, and modifications</p>
               </div>
             </div>
-            <span class="px-2.5 py-1 rounded-md text-[11px] font-mono-num font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+            <span class="px-2.5 py-1 rounded-md text-xs font-mono-num font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>Live Audit Verification Active</span>
             </span>
@@ -17430,13 +17432,13 @@ BANKING & PAYMENT COORDINATES:
             <!-- Order Timeline Card -->
             <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2.5">
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                   <i data-lucide="package" class="w-3.5 h-3.5"></i>
                   <span>Order Audit Log</span>
                 </span>
-                <span class="text-[10px] font-mono-num text-slate-400 font-bold">${tfEscapeHtml(order?.invoiceNumber || order?.id || 'N/A')}</span>
+                <span class="text-xs font-mono-num text-slate-400 font-bold">${tfEscapeHtml(order?.invoiceNumber || order?.id || 'N/A')}</span>
               </div>
-              <div class="space-y-2 divide-y divide-slate-200/60 dark:divide-slate-800 text-[11px]">
+              <div class="space-y-2 divide-y divide-slate-200/60 dark:divide-slate-800 text-xs">
                 <div class="pt-1 flex items-start justify-between gap-2">
                   <span class="text-slate-500 dark:text-slate-400 shrink-0">Order Placed:</span>
                   <span class="font-mono-num font-bold text-slate-800 dark:text-slate-200 text-right">
@@ -17459,13 +17461,13 @@ BANKING & PAYMENT COORDINATES:
             <!-- Payment Timeline Card -->
             <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2.5">
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
                   <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
                   <span>Payment Voucher Audit Log</span>
                 </span>
-                <span class="text-[10px] font-mono-num text-slate-400 font-bold">${tfEscapeHtml(p.id)}</span>
+                <span class="text-xs font-mono-num text-slate-400 font-bold">${tfEscapeHtml(p.id)}</span>
               </div>
-              <div class="space-y-2 divide-y divide-slate-200/60 dark:divide-slate-800 text-[11px]">
+              <div class="space-y-2 divide-y divide-slate-200/60 dark:divide-slate-800 text-xs">
                 <div class="pt-1 flex items-start justify-between gap-2">
                   <span class="text-slate-500 dark:text-slate-400 shrink-0">Voucher Logged:</span>
                   <span class="font-mono-num font-bold text-slate-800 dark:text-slate-200 text-right">
@@ -17504,7 +17506,7 @@ BANKING & PAYMENT COORDINATES:
 
     const docSource = p.dataUrl || p.pd;
     if (!docSource) {
-      this.showToast('⚠️ No document attached to this payment.');
+      this.showToast('No document attached to this payment.');
       return;
     }
 
@@ -17620,7 +17622,7 @@ BANKING & PAYMENT COORDINATES:
       bodyEl.innerHTML = `
         <div class="p-4 rounded-xl flex items-center justify-between ${tfEscapeHtml(isReceived ? 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60' : 'bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60')}">
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider ${tfEscapeHtml(isReceived ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300')}">
+            <span class="text-xs font-bold uppercase tracking-wider ${tfEscapeHtml(isReceived ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300')}">
               ${tfEscapeHtml(isReceived ? 'Money Received (Credit)' : 'Money Paid Out (Debit)')}
             </span>
             <div class="text-2xl font-black font-mono-num ${tfEscapeHtml(isReceived ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400')}">
@@ -17653,7 +17655,7 @@ BANKING & PAYMENT COORDINATES:
           </div>
           <div class="flex justify-between py-1.5">
             <span class="text-slate-400 font-semibold">Party Category</span>
-            <span class="font-semibold text-slate-700 dark:text-slate-300 uppercase text-[10px]">${tfEscapeHtml(p.partyType)}</span>
+            <span class="font-semibold text-slate-700 dark:text-slate-300 uppercase text-xs">${tfEscapeHtml(p.partyType)}</span>
           </div>
           <div class="flex justify-between py-1.5">
             <span class="text-slate-400 font-semibold">Order Reference</span>
@@ -17689,14 +17691,14 @@ BANKING & PAYMENT COORDINATES:
 
         ${p.pd ? `
           <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Attached Document Proof</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-2">Attached Document Proof</span>
             <div class="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
               <div class="min-w-0">
                 <div class="font-bold text-slate-900 dark:text-white truncate max-w-[180px]">${tfEscapeHtml(p.pn || 'Payment_Proof.pdf')}</div>
-                <span class="text-[10px] text-slate-400">Folder: storage/documents/orders/${tfEscapeHtml(p.orderFolder || p.orderRef || 'general')}/</span>
+                <span class="text-xs text-slate-400">Folder: storage/documents/orders/${tfEscapeHtml(p.orderFolder || p.orderRef || 'general')}/</span>
               </div>
               <div class="flex items-center gap-1.5 shrink-0">
-                <button onclick="app.openDocPreviewModal('${tfEscapeHtml(tfEscapeJs(p.id))}')" class="btn-tactile px-2.5 py-1.5 text-xs font-bold text-slate-900 bg-amber-500 hover:bg-amber-600 rounded-lg flex items-center gap-1 shadow-2xs">
+                <button onclick="app.openDocPreviewModal('${tfEscapeHtml(tfEscapeJs(p.id))}')" class="btn-tactile px-2.5 py-1.5 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg flex items-center gap-1 shadow-2xs">
                   <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                   <span>View</span>
                 </button>
@@ -17824,7 +17826,7 @@ BANKING & PAYMENT COORDINATES:
     this.updateRecycleBinBadge();
 
     // Trigger 10-Second Undo Toast
-    this.showUndoToast(`🗑️ Payment of ${this.formatCurrency(p.amount)} moved to Recycle Bin.`, () => {
+    this.showUndoToast(`Payment of ${this.formatCurrency(p.amount)} moved to Recycle Bin.`, () => {
       if (!p.isDeleted) return;
       p.isDeleted = false;
       delete p.deletedAt;
@@ -17841,7 +17843,7 @@ BANKING & PAYMENT COORDINATES:
   openDocPreviewModal(paymentId) {
     const p = (this.data.payments || []).find(x => x.id === paymentId);
     if (!p) {
-      this.showToast('⚠️ Payment entry not found.');
+      this.showToast('Payment entry not found.');
       return;
     }
 
@@ -17887,7 +17889,7 @@ BANKING & PAYMENT COORDINATES:
               <i data-lucide="receipt" class="w-6 h-6"></i>
             </div>
             <div>
-              <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Electronic Payment Advice</span>
+              <span class="text-xs font-black uppercase tracking-wider text-slate-400">Electronic Payment Advice</span>
               <h4 class="text-xl font-black font-mono-num text-slate-900 dark:text-white mt-1">${tfEscapeHtml(this.formatCurrency(p.amount))}</h4>
               <p class="text-xs font-semibold ${tfEscapeHtml(p.direction === 'paid' ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400')} mt-0.5">
                 ${tfEscapeHtml(p.direction === 'paid' ? 'Disbursed to ' + (p.partyName || 'Vendor') : 'Received from ' + (p.partyName || 'Customer'))}
@@ -17911,7 +17913,7 @@ BANKING & PAYMENT COORDINATES:
                 <strong class="text-slate-800 dark:text-slate-200">${tfEscapeHtml(p.mode || 'NEFT')}</strong>
               </div>
               ${p.notes ? `
-                <div class="pt-1.5 border-t border-slate-200 dark:border-slate-700 text-[11px] text-slate-500">
+                <div class="pt-1.5 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500">
                   Remarks: ${tfEscapeHtml(p.notes)}
                 </div>
               ` : ''}
@@ -17944,11 +17946,11 @@ BANKING & PAYMENT COORDINATES:
 
   async openFileInExplorer(filePath) {
     if (!filePath) {
-      this.showToast('⚠️ No document path provided');
+      this.showToast('No document path provided');
       return;
     }
     try {
-      this.showToast('📂 Opening file in Windows Explorer...');
+      this.showToast('Opening file in Windows Explorer...');
       const resp = await fetch('/api/open-folder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -17956,23 +17958,23 @@ BANKING & PAYMENT COORDINATES:
       });
       const data = await resp.json().catch(() => ({}));
       if (resp.ok && data.success) {
-        this.showToast('✅ Revealed in Windows Explorer!');
+        this.showToast('Revealed in Windows Explorer!');
       } else {
-        this.showToast('⚠️ Could not open in Windows Explorer: ' + (data.error || 'Unknown error'));
+        this.showToast('Could not open in Windows Explorer: ' + (data.error || 'Unknown error'));
       }
     } catch (e) {
       console.warn('openFileInExplorer error:', e);
-      this.showToast('⚠️ Failed to communicate with local server');
+      this.showToast('Failed to communicate with local server');
     }
   }
 
   async openOrderFolder(orderId) {
     if (!orderId) {
-      this.showToast('⚠️ No Order ID provided');
+      this.showToast('No Order ID provided');
       return;
     }
     try {
-      this.showToast(`📂 Opening order folder (${orderId}) in Windows Explorer...`);
+      this.showToast(`Opening order folder (${orderId}) in Windows Explorer...`);
       const resp = await fetch('/api/open-folder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -17980,13 +17982,13 @@ BANKING & PAYMENT COORDINATES:
       });
       const data = await resp.json().catch(() => ({}));
       if (resp.ok && data.success) {
-        this.showToast(`✅ Opened order folder (${orderId}) in Windows Explorer!`);
+        this.showToast(`Opened order folder (${orderId}) in Windows Explorer!`);
       } else {
-        this.showToast('⚠️ Could not open folder: ' + (data.error || 'Unknown error'));
+        this.showToast('Could not open folder: ' + (data.error || 'Unknown error'));
       }
     } catch (e) {
       console.warn('openOrderFolder error:', e);
-      this.showToast('⚠️ Failed to open folder');
+      this.showToast('Failed to open folder');
     }
   }
 
@@ -18015,7 +18017,7 @@ BANKING & PAYMENT COORDINATES:
 
   async openDocFolder(folder = 'general') {
     try {
-      this.showToast(`📂 Opening folder (${folder}) in Windows Explorer...`);
+      this.showToast(`Opening folder (${folder}) in Windows Explorer...`);
       const resp = await fetch('/api/open-folder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -18027,9 +18029,9 @@ BANKING & PAYMENT COORDINATES:
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(fullPath).catch(() => {});
         }
-        this.showToast(`✅ Opened in File Explorer: ${folder}`);
+        this.showToast(`Opened in File Explorer: ${folder}`);
       } else {
-        this.showToast(`⚠️ Could not open folder: ${data.error || 'Unknown error'}`);
+        this.showToast(`Could not open folder: ${data.error || 'Unknown error'}`);
       }
     } catch (e) {
       this.showToast(`Storage directory: data/orders/${folder}/`);
@@ -18038,7 +18040,7 @@ BANKING & PAYMENT COORDINATES:
 
   async openDataFolder() {
     try {
-      this.showToast('📂 Opening master data directory in Windows Explorer...');
+      this.showToast('Opening master data directory in Windows Explorer...');
       const resp = await fetch('/api/open-folder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -18046,9 +18048,9 @@ BANKING & PAYMENT COORDINATES:
       });
       const data = await resp.json().catch(() => ({}));
       if (resp.ok && data.success) {
-        this.showToast('✅ Opened master data & documents folder (data/) in File Explorer');
+        this.showToast('Opened master data & documents folder (data/) in File Explorer');
       } else {
-        this.showToast('⚠️ Could not open data folder: ' + (data.error || ''));
+        this.showToast('Could not open data folder: ' + (data.error || ''));
       }
     } catch (e) {
       this.showToast('Data folder: data/');
@@ -18057,7 +18059,7 @@ BANKING & PAYMENT COORDINATES:
 
   openExcelFile() {
     window.open('/api/export/excel', '_blank');
-    this.showToast('📊 Exporting / Opening TradeFlow_Master_Database.xlsx...');
+    this.showToast('Exporting / Opening TradeFlow_Master_Database.xlsx...');
   }
 
   revealExcelFile() {
@@ -18075,7 +18077,7 @@ BANKING & PAYMENT COORDINATES:
             if (ev.type === 'mobile_snap_received') {
               this.onMobileSnapReceived(ev);
             } else if (ev.source === 'excel_changes_available') {
-              this.showToast('📋 External Excel edit detected! Click "Excel Synced" to preview changes.');
+              this.showToast('External Excel edit detected! Click "Excel Synced" to preview changes.');
               this.updateExcelSyncPill('pending');
             } else if (ev.source === 'data_saved') {
               if (ev.details?.originTabId === this.tabId) return;
@@ -18084,7 +18086,7 @@ BANKING & PAYMENT COORDINATES:
               await this.syncAuthoritativeDataFromServer();
               this.render();
             } else if (ev.source === 'excel_import' || ev.source === 'backup_restored' || ev.source === 'record_rollback' || ev.source === 'order_saved') {
-              this.showToast('🟢 Data update received. Refreshing live view...');
+              this.showToast('Data update received. Refreshing live view...');
               await this.syncAuthoritativeDataFromServer();
               this.render();
             } else if (ev.source === 'sync_status') {
@@ -18157,7 +18159,7 @@ BANKING & PAYMENT COORDINATES:
           document.querySelectorAll('.audit-filter-btn').forEach(b => {
             b.className = 'audit-filter-btn px-2.5 py-1 rounded-md text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors';
           });
-          btn.className = 'audit-filter-btn px-2.5 py-1 rounded-md bg-amber-500 text-slate-950 shadow-2xs transition-colors';
+          btn.className = 'audit-filter-btn px-2.5 py-1 rounded-md bg-emerald-700 text-white shadow-2xs transition-colors';
           this.auditFilter = btn.getAttribute('data-audit-filter') || 'all';
           this.renderAuditNotices();
         });
@@ -18206,7 +18208,7 @@ BANKING & PAYMENT COORDINATES:
     const input = document.getElementById('order-doc-upload-input');
     if (input) {
       input.click();
-      this.showToast(`📁 Select document for ${orderId} (will be saved in data/orders/)`);
+      this.showToast(`Select document for ${orderId} (will be saved in data/orders/)`);
     } else {
       this.openDocumentReviewModalForOrder(orderId, defaultCategory);
     }
@@ -18256,7 +18258,7 @@ BANKING & PAYMENT COORDINATES:
     }
 
     // 3. Fallback to orders view
-    this.showToast('📋 Opening Orders Pipeline');
+    this.showToast('Opening Orders Pipeline');
   }
 
   renderAuditNotices() {
@@ -18304,7 +18306,7 @@ BANKING & PAYMENT COORDINATES:
             </svg>
           </div>
           <p class="text-xs font-bold text-slate-800 dark:text-slate-200">No missing items in this view!</p>
-          <p class="text-[10px] text-slate-400 mt-0.5">All bills and records are filed in data/orders/</p>
+          <p class="text-xs text-slate-400 mt-0.5">All bills and records are filed in data/orders/</p>
         </div>
       `;
       if (window.lucide) window.lucide.createIcons();
@@ -18331,14 +18333,14 @@ BANKING & PAYMENT COORDINATES:
         <div class="pt-2 pb-2 first:pt-0">
           <div 
             onclick="app.handleAuditNoticeClick('${tfEscapeHtml(tfEscapeJs(item.orderId || 'general'))}', '${tfEscapeHtml(tfEscapeJs(item.paymentId || ''))}')"
-            class="p-2.5 rounded-xl border ${tfEscapeHtml(badgeBg)} ${tfEscapeHtml(severityBorder)} shadow-2xs space-y-2 hover:border-amber-500/60 hover:shadow-md hover:bg-amber-500/5 transition-all cursor-pointer group"
+            class="p-2.5 rounded-xl border ${tfEscapeHtml(badgeBg)} ${tfEscapeHtml(severityBorder)} shadow-2xs space-y-2 hover:border-emerald-600/60 hover:shadow-md hover:bg-amber-500/5 transition-all cursor-pointer group"
             title="Click to inspect order ${tfEscapeHtml(item.orderRef || item.orderId)}"
           >
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center gap-1.5 min-w-0">
                 <span class="w-2 h-2 rounded-full ${tfEscapeHtml(isHigh ? 'bg-rose-500 shrink-0 animate-pulse' : (isMed ? 'bg-amber-500 shrink-0' : 'bg-blue-500 shrink-0'))}"></span>
-                <span class="text-xs font-bold font-mono-num text-slate-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">${tfEscapeHtml(item.orderRef || item.orderId)}</span>
-                <span class="text-[10px] px-1.5 py-0.5 rounded font-medium bg-white/80 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800">${tfEscapeHtml(catBadge)}</span>
+                <span class="text-xs font-bold font-mono-num text-slate-900 dark:text-white truncate group-hover:text-emerald-700 dark:group-hover:text-emerald-700 transition-colors">${tfEscapeHtml(item.orderRef || item.orderId)}</span>
+                <span class="text-xs px-1.5 py-0.5 rounded font-medium bg-white/80 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800">${tfEscapeHtml(catBadge)}</span>
               </div>
               ${item.amount ? `<span class="text-xs font-bold font-mono-num text-slate-900 dark:text-slate-100 shrink-0">${tfEscapeHtml(this.formatCurrency(item.amount))}</span>` : ''}
             </div>
@@ -18346,11 +18348,11 @@ BANKING & PAYMENT COORDINATES:
             <div class="flex items-center justify-between gap-2 pt-0.5">
               <div class="min-w-0 flex items-center gap-1">
                 <span class="text-xs font-medium text-slate-600 dark:text-slate-300 truncate" title="${tfEscapeHtml(item.entityName)}">${tfEscapeHtml(item.entityName)}</span>
-                <span class="text-[10px] text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap font-bold">Inspect ➔</span>
+                <span class="text-xs text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap font-bold">Inspect →</span>
               </div>
               <button 
                 onclick="event.stopPropagation(); app.triggerUploadForOrder('${tfEscapeHtml(tfEscapeJs(item.orderId || 'general'))}', '${tfEscapeHtml(tfEscapeJs(item.type === 'missing_invoice' ? 'retailer_invoice' : (item.type === 'missing_lr' ? 'transport_bilty' : (item.type === 'missing_mfg_bill' ? 'mfg_invoice' : 'bank_receipt'))))}')" 
-                class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center gap-1 shadow-2xs hover:shadow-sm transition-all shrink-0 active:scale-95"
+                class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white flex items-center gap-1 shadow-2xs hover:shadow-sm transition-all shrink-0 active:scale-95"
                 title="Direct 1-click document upload"
               >
                 <i data-lucide="upload" class="w-3 h-3"></i>
@@ -18374,7 +18376,7 @@ BANKING & PAYMENT COORDINATES:
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    this.showToast(`📥 Downloading ${entry.pn || 'payment_proof.pdf'}...`);
+    this.showToast(`Downloading ${entry.pn || 'payment_proof.pdf'}...`);
   }
 
   shareActiveDocWhatsApp() {
@@ -18423,7 +18425,7 @@ BANKING & PAYMENT COORDINATES:
       const fullPath = data.path || `storage/documents/orders/${folder}/`;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(fullPath);
-        this.showToast('📋 Full folder path copied: ' + fullPath);
+        this.showToast('Full folder path copied: ' + fullPath);
       } else {
         await this.showModalPrompt({
           title: 'Order Folder Path',
@@ -18667,7 +18669,7 @@ BANKING & PAYMENT COORDINATES:
     const defaultCat = document.getElementById('review-category')?.value || 'mfg_invoice';
     const analyzed = this.analyzeDocument(fileName, orderId, defaultCat);
     this.openDocumentReviewModal({ orderId, fileName, fileData, fileType, analyzed });
-    this.showToast('✨ Re-analysis complete — fields updated from filename!');
+    this.showToast('Re-analysis complete — fields updated from filename!');
   }
 
   zoomDocPreview(delta) {
@@ -18741,7 +18743,7 @@ BANKING & PAYMENT COORDINATES:
       this.closeDocumentReviewModal();
       this.renderActiveView();
       if (window.lucide) window.lucide.createIcons();
-      this.showToast(`✅ Document "${fileName}" saved & filed to ${orderId} vault!`);
+      this.showToast(`Document "${fileName}" saved & filed to ${orderId} vault!`);
     };
 
     if (typeof fetch !== 'undefined') {
@@ -18754,7 +18756,7 @@ BANKING & PAYMENT COORDINATES:
             this.closeDocumentReviewModal();
             this.renderActiveView();
             if (window.lucide) window.lucide.createIcons();
-            this.showToast(`✅ Invoice "${fileName}" analyzed, saved & filed to disk at storage/documents/orders/${orderId}/`);
+            this.showToast(`Invoice "${fileName}" analyzed, saved & filed to disk at storage/documents/orders/${orderId}/`);
           } else { saveLocally(); }
         }).catch(() => saveLocally());
     } else { saveLocally(); }
@@ -18763,7 +18765,7 @@ BANKING & PAYMENT COORDINATES:
   previewDocument(docId) {
     const doc = (this.data.documents || []).find(d => d.id === docId);
     if (!doc) {
-      this.showToast('⚠️ Document not found.');
+      this.showToast('Document not found.');
       return;
     }
 
@@ -18856,7 +18858,7 @@ BANKING & PAYMENT COORDINATES:
 
     const catLabel = { mfg_invoice: 'Factory Invoice', pkg_invoice: 'Packaging Bill', transport_bilty: 'LR / Bilty', retailer_invoice: 'Buyer Invoice', bank_receipt: 'Bank Proof', other: 'Other' };
     const catIcon = { mfg_invoice: 'factory', pkg_invoice: 'package', transport_bilty: 'truck', retailer_invoice: 'building-2', bank_receipt: 'landmark', other: 'file-text' };
-    const catColor = { mfg_invoice: 'text-blue-500', pkg_invoice: 'text-sky-500', transport_bilty: 'text-purple-500', retailer_invoice: 'text-emerald-500', bank_receipt: 'text-amber-500', other: 'text-slate-400' };
+    const catColor = { mfg_invoice: 'text-blue-500', pkg_invoice: 'text-blue-500', transport_bilty: 'text-purple-500', retailer_invoice: 'text-emerald-500', bank_receipt: 'text-amber-500', other: 'text-slate-400' };
 
     const docCards = docs.map(doc => {
       const meta = doc.metadata || {};
@@ -18870,8 +18872,8 @@ BANKING & PAYMENT COORDINATES:
           <div class="flex items-center gap-2 min-w-0">
             <span class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 ${tfEscapeHtml(color)} shrink-0"><i data-lucide="${tfEscapeHtml(icon)}" class="w-3.5 h-3.5"></i></span>
             <div class="min-w-0">
-              <p class="font-bold text-[11px] text-slate-900 dark:text-white truncate">${tfEscapeHtml(meta.invoiceNumber || doc.fileName)}</p>
-              <p class="text-[10px] text-slate-400 truncate">${tfEscapeHtml(label)}${tfEscapeHtml(dateStr ? ' • ' + dateStr : '')}</p>
+              <p class="font-bold text-xs text-slate-900 dark:text-white truncate">${tfEscapeHtml(meta.invoiceNumber || doc.fileName)}</p>
+              <p class="text-xs text-slate-400 truncate">${tfEscapeHtml(label)}${tfEscapeHtml(dateStr ? ' • ' + dateStr : '')}</p>
             </div>
           </div>
           <div class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -18879,10 +18881,10 @@ BANKING & PAYMENT COORDINATES:
             <button onclick="event.stopPropagation(); app.deleteDocument('${tfEscapeHtml(tfEscapeJs(doc.id))}', '${tfEscapeHtml(tfEscapeJs(orderId))}')" class="p-1 rounded hover:bg-rose-100 dark:hover:bg-rose-900/30 text-slate-400 hover:text-rose-500" title="Remove"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
           </div>
         </div>
-        ${meta.counterpartyName ? `<p class="text-[10px] text-slate-500 mt-1 truncate">${tfEscapeHtml(meta.counterpartyName)}${tfEscapeHtml(meta.gstin ? ' • ' + meta.gstin : '')}</p>` : ''}
-        ${amtStr ? `<p class="text-[11px] font-black font-mono-num text-slate-900 dark:text-white mt-1">${tfEscapeHtml(amtStr)}</p>` : ''}
-        ${meta.utrNumber ? `<p class="text-[10px] font-mono-num text-amber-600 dark:text-amber-400 mt-0.5">UTR: ${tfEscapeHtml(meta.utrNumber)}</p>` : ''}
-        <button onclick="app.previewDocument('${tfEscapeHtml(tfEscapeJs(doc.id))}')" class="mt-2 w-full text-[10px] font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center justify-center gap-1 py-1 rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+        ${meta.counterpartyName ? `<p class="text-xs text-slate-500 mt-1 truncate">${tfEscapeHtml(meta.counterpartyName)}${tfEscapeHtml(meta.gstin ? ' • ' + meta.gstin : '')}</p>` : ''}
+        ${amtStr ? `<p class="text-xs font-black font-mono-num text-slate-900 dark:text-white mt-1">${tfEscapeHtml(amtStr)}</p>` : ''}
+        ${meta.utrNumber ? `<p class="text-xs font-mono-num text-amber-600 dark:text-amber-400 mt-0.5">UTR: ${tfEscapeHtml(meta.utrNumber)}</p>` : ''}
+        <button onclick="app.previewDocument('${tfEscapeHtml(tfEscapeJs(doc.id))}')" class="mt-2 w-full text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center justify-center gap-1 py-1 rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
           <i data-lucide="eye" class="w-3 h-3"></i> View Bill Copy
         </button>
       </div>`;
@@ -18890,14 +18892,14 @@ BANKING & PAYMENT COORDINATES:
 
     const uploadBtns = [
       { cat: 'mfg_invoice', label: 'Factory Invoice', icon: 'factory', color: 'text-blue-500' },
-      { cat: 'pkg_invoice', label: 'Packaging Bill', icon: 'package', color: 'text-sky-500' },
+      { cat: 'pkg_invoice', label: 'Packaging Bill', icon: 'package', color: 'text-blue-500' },
       { cat: 'transport_bilty', label: 'LR / Bilty', icon: 'truck', color: 'text-purple-500' },
       { cat: 'bank_receipt', label: 'Bank Receipt', icon: 'landmark', color: 'text-amber-500' },
       { cat: 'retailer_invoice', label: 'Buyer Invoice', icon: 'building-2', color: 'text-emerald-500' },
-    ].map(b => `<button onclick="app.triggerOrderDocUpload('${tfEscapeHtml(tfEscapeJs(orderId))}', '${tfEscapeHtml(tfEscapeJs(b.cat))}')" class="btn-tactile flex flex-col items-center gap-1 p-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20 text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-all text-center min-w-[90px]">
+    ].map(b => `<button onclick="app.triggerOrderDocUpload('${tfEscapeHtml(tfEscapeJs(orderId))}', '${tfEscapeHtml(tfEscapeJs(b.cat))}')" class="btn-tactile flex flex-col items-center gap-1 p-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-600 hover:bg-amber-50 dark:hover:bg-amber-950/20 text-slate-500 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 transition-all text-center min-w-[90px]">
       <i data-lucide="${tfEscapeHtml(b.icon)}" class="w-4 h-4 ${tfEscapeHtml(b.color)}"></i>
-      <span class="text-[10px] font-bold leading-tight">${tfEscapeHtml(b.label)}</span>
-      <span class="text-[9px] opacity-60">Upload</span>
+      <span class="text-xs font-bold leading-tight">${tfEscapeHtml(b.label)}</span>
+      <span class="text-xs opacity-60">Upload</span>
     </button>`).join('');
 
     return `<div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
@@ -18905,16 +18907,16 @@ BANKING & PAYMENT COORDINATES:
         <div class="flex items-center gap-2">
           <i data-lucide="archive" class="w-4 h-4 text-amber-500"></i>
           <h3 class="text-sm font-bold text-slate-900 dark:text-white">Attached Invoices &amp; Bank Proofs Vault</h3>
-          <span class="px-2 py-0.5 text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded font-mono-num">${tfEscapeHtml(docs.length)} Filed</span>
+          <span class="px-2 py-0.5 text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded font-mono-num">${tfEscapeHtml(docs.length)} Filed</span>
         </div>
         <span class="text-xs text-slate-400">storage/documents/orders/${tfEscapeHtml(orderId)}/</span>
       </div>
       ${docs.length > 0 ? `<div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">${docCards}</div>
-      <div class="px-4 pb-4"><p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Upload More Bills</p><div class="flex items-center gap-2 flex-wrap">${uploadBtns}</div></div>`
+      <div class="px-4 pb-4"><p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Upload More Bills</p><div class="flex items-center gap-2 flex-wrap">${uploadBtns}</div></div>`
       : `<div class="p-6">
           <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5"><i data-lucide="upload-cloud" class="w-4 h-4 text-amber-500"></i> Upload Bills, Receipts &amp; Bank Proofs for this Order</p>
           <div class="flex items-center gap-2 flex-wrap">${uploadBtns}</div>
-          <p class="text-[10px] text-slate-400 mt-3">AI will auto-analyze &amp; extract all fields. You can verify and correct before saving.</p>
+          <p class="text-xs text-slate-400 mt-3">AI will auto-analyze &amp; extract all fields. You can verify and correct before saving.</p>
         </div>`}
     </div>`;
   }
@@ -19067,7 +19069,7 @@ BANKING & PAYMENT COORDINATES:
         <div class="p-4 text-center text-slate-400 text-xs">
           <i data-lucide="search-x" class="w-6 h-6 mx-auto mb-1.5 opacity-50 text-slate-400"></i>
           <p class="font-medium text-slate-300">No matches found for "<span class="text-amber-500 font-bold">${tfEscapeHtml(query)}</span>"</p>
-          <p class="text-[11px] text-slate-500 mt-0.5">Try searching by flavour (e.g. Mango, Mix, Della), buyer, invoice, or phone.</p>
+          <p class="text-xs text-slate-500 mt-0.5">Try searching by flavour (e.g. Mango, Mix, Della), buyer, invoice, or phone.</p>
         </div>
       `;
       resultsContainer.classList.remove('hidden');
@@ -19081,12 +19083,12 @@ BANKING & PAYMENT COORDINATES:
     if (matchingOrders.length > 0) {
       html += `
         <div>
-          <div class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+          <div class="px-2 py-1 text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
             <span class="flex items-center gap-1.5">
               <i data-lucide="boxes" class="w-3 h-3 text-amber-500"></i>
               <span>Matching Orders (${tfEscapeHtml(matchingOrders.length)})</span>
             </span>
-            <span class="text-[9px] text-slate-500">Click to Open Order Tab</span>
+            <span class="text-xs text-slate-500">Click to Open Order Tab</span>
           </div>
           <div class="space-y-1 mt-1">
             ${matchingOrders.map(order => {
@@ -19119,14 +19121,14 @@ BANKING & PAYMENT COORDINATES:
                         <span class="font-mono-num font-bold text-xs text-slate-900 dark:text-white">${tfEscapeHtml(this.highlightMatch(order.invoiceNumber, query))}</span>
                         <span class="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">${tfEscapeHtml(this.highlightMatch(order.retailerName, query))}</span>
                       </div>
-                      <div class="text-[11px] text-slate-400 truncate mt-0.5">
+                      <div class="text-xs text-slate-400 truncate mt-0.5">
                         ${tfEscapeHtml(this.highlightMatch(skuSnippet, query))} • <span class="font-mono-num text-amber-500 font-bold">${tfEscapeHtml(totalCases)} ${tfEscapeHtml(totalCases === 1 ? 'Case' : 'Cases')}</span> (${tfEscapeHtml(totalJars)} jars)
                       </div>
                     </div>
                   </div>
                   <div class="text-right shrink-0">
                     <div class="font-mono-num font-bold text-xs text-slate-900 dark:text-white">${tfEscapeHtml(this.formatCurrency(order.totalInvoiceAmount))}</div>
-                    <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${tfEscapeHtml(statusClass)} inline-block mt-0.5">${tfEscapeHtml(statusLabel)}</span>
+                    <span class="text-xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${tfEscapeHtml(statusClass)} inline-block mt-0.5">${tfEscapeHtml(statusLabel)}</span>
                   </div>
                 </div>
               `;
@@ -19140,12 +19142,12 @@ BANKING & PAYMENT COORDINATES:
     if (matchingContacts.length > 0) {
       html += `
         <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800/80">
-          <div class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+          <div class="px-2 py-1 text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
             <span class="flex items-center gap-1.5">
               <i data-lucide="users" class="w-3 h-3 text-emerald-500"></i>
               <span>Matching Supply Chain Partners (${tfEscapeHtml(matchingContacts.length)})</span>
             </span>
-            <span class="text-[9px] text-slate-500">Click to Open Partner Hub</span>
+            <span class="text-xs text-slate-500">Click to Open Partner Hub</span>
           </div>
           <div class="space-y-1 mt-1">
             ${matchingContacts.map(c => {
@@ -19171,15 +19173,15 @@ BANKING & PAYMENT COORDINATES:
                     <div class="min-w-0">
                       <div class="flex items-center gap-2">
                         <span class="font-bold text-xs text-slate-900 dark:text-white truncate">${tfEscapeHtml(this.highlightMatch(c.name, query))}</span>
-                        <span class="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">${tfEscapeHtml(roleLabels[c.role] || c.role)}</span>
+                        <span class="text-xs font-semibold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">${tfEscapeHtml(roleLabels[c.role] || c.role)}</span>
                       </div>
-                      <div class="text-[11px] text-slate-400 truncate mt-0.5">
+                      <div class="text-xs text-slate-400 truncate mt-0.5">
                         ${tfEscapeHtml(c.contactPerson ? `Contact: ${this.highlightMatch(c.contactPerson, query)} • ` : '')}Phone: <span class="font-mono-num">${tfEscapeHtml(this.highlightMatch(c.phone, query))}</span>
                       </div>
                     </div>
                   </div>
                   <div class="text-right shrink-0">
-                    <span class="text-[11px] text-slate-400 block">${tfEscapeHtml(c.role === 'retailer' ? 'Receivable' : 'Payable')}</span>
+                    <span class="text-xs text-slate-400 block">${tfEscapeHtml(c.role === 'retailer' ? 'Receivable' : 'Payable')}</span>
                     <span class="font-mono-num font-bold text-xs ${tfEscapeHtml(c.currentBalanceDue > 0 ? 'text-amber-500' : 'text-emerald-500')}">
                       ${tfEscapeHtml(this.formatCurrency(c.currentBalanceDue || 0))}
                     </span>
@@ -19196,8 +19198,8 @@ BANKING & PAYMENT COORDINATES:
     if (matchingProducts.length > 0) {
       html += `
         <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800/80">
-          <div class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <i data-lucide="tag" class="w-3 h-3 text-sky-500"></i>
+          <div class="px-2 py-1 text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="tag" class="w-3 h-3 text-blue-500"></i>
             <span>Product Catalog SKUs (${tfEscapeHtml(matchingProducts.length)})</span>
           </div>
           <div class="space-y-1 mt-1">
@@ -19208,16 +19210,16 @@ BANKING & PAYMENT COORDINATES:
                 title="View product in catalog"
               >
                 <div class="flex items-center gap-2.5 min-w-0">
-                  <span class="p-1.5 rounded-lg bg-sky-500/10 text-sky-500 shrink-0">
+                  <span class="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 shrink-0">
                     <i data-lucide="tag" class="w-3.5 h-3.5"></i>
                   </span>
                   <div class="min-w-0">
                     <span class="font-bold text-xs text-slate-900 dark:text-white block truncate">${tfEscapeHtml(this.highlightMatch(p.name, query))}</span>
-                    <span class="text-[11px] text-slate-400">Available Packs: ${tfEscapeHtml((p.variants || []).join(', '))}</span>
+                    <span class="text-xs text-slate-400">Available Packs: ${tfEscapeHtml((p.variants || []).join(', '))}</span>
                   </div>
                 </div>
                 <div class="text-right shrink-0">
-                  <span class="text-[10px] text-slate-400 block">Base Rate</span>
+                  <span class="text-xs text-slate-400 block">Base Rate</span>
                   <span class="font-mono-num font-bold text-xs text-amber-500">₹${tfEscapeHtml(p.basePrice || 85)}/jar</span>
                 </div>
               </div>
@@ -19229,9 +19231,9 @@ BANKING & PAYMENT COORDINATES:
 
     // Keyboard hints footer
     html += `
-      <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 px-2 py-1 flex items-center justify-between text-[10px] text-slate-400">
-        <span>Press <kbd class="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[9px]">↑</kbd> <kbd class="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[9px]">↓</kbd> to navigate</span>
-        <span><kbd class="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[9px]">Enter</kbd> to select • <kbd class="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-[9px]">Esc</kbd> to close</span>
+      <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 px-2 py-1 flex items-center justify-between text-xs text-slate-400">
+        <span>Press <kbd class="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-xs">↑</kbd> <kbd class="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-xs">↓</kbd> to navigate</span>
+        <span><kbd class="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-xs">Enter</kbd> to select • <kbd class="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-xs">Esc</kbd> to close</span>
       </div>
     `;
 
@@ -19257,7 +19259,7 @@ BANKING & PAYMENT COORDINATES:
       return `
         <div class="flex items-center gap-1.5 flex-wrap">
           ${items.map(i => `
-            <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-700 dark:text-slate-300 font-medium border border-slate-200/60 dark:border-slate-700/60">
+            <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-xs text-slate-700 dark:text-slate-300 font-medium border border-slate-200/60 dark:border-slate-700/60">
               ${tfEscapeHtml(cleanName(i))} <strong class="font-mono-num text-amber-600 dark:text-amber-400 font-bold">${tfEscapeHtml(i.cases || 0)} ${tfEscapeHtml((i.cases || 0) === 1 ? 'Case' : 'Cases')}</strong> (${tfEscapeHtml(i.packSize || '500g')})
             </span>
           `).join('')}
@@ -19273,26 +19275,26 @@ BANKING & PAYMENT COORDINATES:
       <div class="space-y-1.5 w-full">
         <div class="flex items-center gap-1.5 flex-wrap">
           ${previewItems.map(i => `
-            <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-700 dark:text-slate-300 font-medium border border-slate-200/60 dark:border-slate-700/60">
+            <span class="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-xs text-slate-700 dark:text-slate-300 font-medium border border-slate-200/60 dark:border-slate-700/60">
               ${tfEscapeHtml(cleanName(i))} <strong class="font-mono-num text-amber-600 dark:text-amber-400 font-bold">${tfEscapeHtml(i.cases || 0)} ${tfEscapeHtml((i.cases || 0) === 1 ? 'Case' : 'Cases')}</strong> (${tfEscapeHtml(i.packSize || '500g')})
             </span>
           `).join('')}
-          <button type="button" onclick="event.stopPropagation(); app.toggleOrderSkuDrawer('${tfEscapeHtml(tfEscapeJs(drawerId))}', this, ${tfEscapeHtml(hiddenCount)})" class="btn-tactile px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1 transition-colors">
+          <button type="button" onclick="event.stopPropagation(); app.toggleOrderSkuDrawer('${tfEscapeHtml(tfEscapeJs(drawerId))}', this, ${tfEscapeHtml(hiddenCount)})" class="btn-tactile px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-700/15 hover:bg-emerald-800/25 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1 transition-colors">
             <span>+${tfEscapeHtml(hiddenCount)} more varieties</span>
             <i data-lucide="chevron-down" class="w-3 h-3"></i>
           </button>
         </div>
 
         <div id="${tfEscapeHtml(drawerId)}" class="hidden p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 mt-2 transition-all">
-          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
+          <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
             <span>All ${tfEscapeHtml(items.length)} Varieties in Order</span>
             <span>Cases & Bottling Units</span>
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
             ${items.map((i, idx) => `
               <div class="flex items-center justify-between p-1.5 px-2 rounded bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-750">
                 <span class="font-medium text-slate-800 dark:text-slate-200 truncate pr-2" title="${tfEscapeHtml(i.name)}">
-                  <span class="text-slate-400 font-mono-num mr-1">${tfEscapeHtml(idx + 1)}.</span>${tfEscapeHtml(cleanName(i))} <span class="text-slate-400 text-[10px]">(${tfEscapeHtml(i.packSize || '500g')})</span>
+                  <span class="text-slate-400 font-mono-num mr-1">${tfEscapeHtml(idx + 1)}.</span>${tfEscapeHtml(cleanName(i))} <span class="text-slate-400 text-xs">(${tfEscapeHtml(i.packSize || '500g')})</span>
                 </span>
                 <span class="font-mono-num font-bold text-amber-600 dark:text-amber-400 shrink-0 whitespace-nowrap">${tfEscapeHtml(i.cases || 0)} ${tfEscapeHtml((i.cases || 0) === 1 ? 'Case' : 'Cases')} • ${tfEscapeHtml((i.quantity || 0).toLocaleString('en-IN'))} jars</span>
               </div>
@@ -19342,24 +19344,24 @@ BANKING & PAYMENT COORDINATES:
       bodyEl.innerHTML = `
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total In Flight</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Total In Flight</span>
             <span class="text-lg font-black font-mono-num text-slate-900 dark:text-white mt-0.5 block">${tfEscapeHtml(this.formatCurrency(totalVal))}</span>
-            <span class="text-[10px] text-slate-400">${tfEscapeHtml(activeOrders.length)} Batches</span>
+            <span class="text-xs text-slate-400">${tfEscapeHtml(activeOrders.length)} Batches</span>
           </div>
           <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Master Cases</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Master Cases</span>
             <span class="text-lg font-black font-mono-num text-amber-500 mt-0.5 block">${tfEscapeHtml(totalCases)} Cases</span>
-            <span class="text-[10px] text-slate-400">Shipper Cartons</span>
+            <span class="text-xs text-slate-400">Shipper Cartons</span>
           </div>
           <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Bottling Count</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Bottling Count</span>
             <span class="text-lg font-black font-mono-num text-slate-900 dark:text-white mt-0.5 block">${tfEscapeHtml(totalJars.toLocaleString('en-IN'))} Jars</span>
-            <span class="text-[10px] text-slate-400">Total Units</span>
+            <span class="text-xs text-slate-400">Total Units</span>
           </div>
           <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Advance In Hand</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Advance In Hand</span>
             <span class="text-lg font-black font-mono-num text-emerald-500 mt-0.5 block">${tfEscapeHtml(this.formatCurrency(activeOrders.reduce((s, o) => s + o.customerAdvanceReceived, 0)))}</span>
-            <span class="text-[10px] text-emerald-600 font-semibold">Credited to Bank</span>
+            <span class="text-xs text-emerald-600 font-semibold">Credited to Bank</span>
           </div>
         </div>
 
@@ -19375,43 +19377,43 @@ BANKING & PAYMENT COORDINATES:
             
             let statusBadge = '';
             if (order.status === 'action_needed') {
-              statusBadge = `<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/30">Action Needed (Advance Recv)</span>`;
+              statusBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/30">Action Needed (Advance Recv)</span>`;
             } else if (order.status === 'in_production') {
-              statusBadge = `<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-blue-500/10 text-blue-500 border border-blue-500/30">In Production (Factory)</span>`;
+              statusBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded-md bg-blue-500/10 text-blue-500 border border-blue-500/30">In Production (Factory)</span>`;
             } else if (order.status === 'in_transit') {
-              statusBadge = `<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-purple-500/10 text-purple-500 border border-purple-500/30">In Transit (Logistics)</span>`;
+              statusBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded-md bg-purple-500/10 text-purple-500 border border-purple-500/30">In Transit (Logistics)</span>`;
             } else {
-              statusBadge = `<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-rose-500/10 text-rose-500 border border-rose-500/30">Delivered • Overdue</span>`;
+              statusBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded-md bg-rose-500/10 text-rose-500 border border-rose-500/30">Delivered • Overdue</span>`;
             }
 
             return `
-              <div onclick="app.openInModalOrderDetail('${tfEscapeHtml(tfEscapeJs(order.id))}', 'orders_in_flight');" class="tf-card p-4 space-y-3 hover:border-amber-400 hover:shadow-md cursor-pointer transition-all group">
+              <div onclick="app.openInModalOrderDetail('${tfEscapeHtml(tfEscapeJs(order.id))}', 'orders_in_flight');" class="tf-card p-4 space-y-3 hover:border-emerald-600 hover:shadow-md cursor-pointer transition-all group">
                 <div class="flex items-start justify-between flex-wrap gap-2">
                   <div>
                     <div class="flex items-center gap-2">
-                      <span class="font-mono-num font-black text-sm text-slate-900 dark:text-white group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order.invoiceNumber)}</span>
+                      <span class="font-mono-num font-black text-sm text-slate-900 dark:text-white group-hover:text-emerald-700 transition-colors">${tfEscapeHtml(order.invoiceNumber)}</span>
                       ${statusBadge}
-                      <span class="text-[11px] text-slate-400">• Created ${tfEscapeHtml(this.formatDate(order.date))}</span>
+                      <span class="text-xs text-slate-400">• Created ${tfEscapeHtml(this.formatDate(order.date))}</span>
                     </div>
                     <div class="font-bold text-xs text-slate-800 dark:text-slate-200 mt-1">
-                      <span onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.retailerId))}'); app.closeKpiBreakdownModal();" class="hover:underline hover:text-amber-500 cursor-pointer" title="View Buyer Hub">${tfEscapeHtml(order.retailerName)}</span>
+                      <span onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.retailerId))}'); app.closeKpiBreakdownModal();" class="hover:underline hover:text-emerald-700 cursor-pointer" title="View Buyer Hub">${tfEscapeHtml(order.retailerName)}</span>
                       <span class="font-normal text-slate-400">• Factory: <span onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.manufacturerId))}'); app.closeKpiBreakdownModal();" class="hover:underline hover:text-blue-400 cursor-pointer" title="View Factory Hub">${tfEscapeHtml(mfg ? mfg.name : 'Manufacturer not set')}</span></span>
                     </div>
                   </div>
                   <div class="text-right">
                     <span class="font-mono-num font-black text-sm text-slate-900 dark:text-white block">${tfEscapeHtml(this.formatCurrency(order.totalInvoiceAmount))}</span>
-                    <span class="text-[11px] text-slate-400">Balance Due: <strong class="font-mono-num text-amber-500">${tfEscapeHtml(this.formatCurrency(order.customerBalanceDue))}</strong></span>
+                    <span class="text-xs text-slate-400">Balance Due: <strong class="font-mono-num text-amber-500">${tfEscapeHtml(this.formatCurrency(order.customerBalanceDue))}</strong></span>
                   </div>
                 </div>
 
                 <div class="flex items-start justify-between flex-wrap gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 text-xs">
                   <div class="flex-1 pr-2">
-                    <span class="text-[10px] font-bold uppercase text-slate-400 block mb-1">SKUs & Varieties:</span>
+                    <span class="text-xs font-bold uppercase text-slate-400 block mb-1">SKUs & Varieties:</span>
                     ${this.formatOrderSkuDisplay(order.items, order.id, 'flight')}
                   </div>
                   <div class="flex items-center gap-2 shrink-0 pt-1">
                     <span class="font-mono-num text-xs font-bold text-slate-400 mr-1">${tfEscapeHtml(oCases)} Cases • ${tfEscapeHtml(oJars.toLocaleString('en-IN'))} Jars</span>
-                    <button onclick="event.stopPropagation(); app.openInModalOrderDetail('${tfEscapeHtml(tfEscapeJs(order.id))}', 'orders_in_flight');" class="btn-tactile px-3 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-950 rounded-lg flex items-center gap-1 shadow-sm">
+                    <button onclick="event.stopPropagation(); app.openInModalOrderDetail('${tfEscapeHtml(tfEscapeJs(order.id))}', 'orders_in_flight');" class="btn-tactile px-3 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-800 dark:text-white rounded-lg flex items-center gap-1 shadow-sm">
                       <span>Inspect Order</span>
                       <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                     </button>
@@ -19426,7 +19428,7 @@ BANKING & PAYMENT COORDINATES:
       const unassigned = this.data.orders.filter(o => o.status === 'action_needed');
       const totalAdvance = unassigned.reduce((s, o) => s + o.customerAdvanceReceived, 0);
 
-      if (titleEl) titleEl.innerText = '⚠️ Idle Advance in Hand — Factory PO Action Required';
+      if (titleEl) titleEl.innerText = 'Idle Advance in Hand — Factory PO Action Required';
       if (subtitleEl) subtitleEl.innerText = `${this.formatCurrency(totalAdvance)} received in advance from buyers • ${unassigned.length} orders need factory dispatch`;
       if (iconContainer) iconContainer.className = 'p-2 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20';
       if (iconEl) iconEl.setAttribute('data-lucide', 'alert-triangle');
@@ -19449,23 +19451,23 @@ BANKING & PAYMENT COORDINATES:
             const totalJars = (order.items || []).reduce((s, i) => s + (i.quantity || 0), 0);
 
             return `
-              <div onclick="app.openInModalOrderDetail('${tfEscapeHtml(tfEscapeJs(order.id))}', 'advance_in_hand');" class="tf-card p-4 space-y-3 border-amber-300 dark:border-amber-700/60 hover:border-amber-400 hover:shadow-md cursor-pointer transition-all group">
+              <div onclick="app.openInModalOrderDetail('${tfEscapeHtml(tfEscapeJs(order.id))}', 'advance_in_hand');" class="tf-card p-4 space-y-3 border-amber-300 dark:border-amber-700/60 hover:border-emerald-600 hover:shadow-md cursor-pointer transition-all group">
                 <div class="flex items-start justify-between flex-wrap gap-2">
                   <div>
                     <div class="flex items-center gap-2">
-                      <span class="font-mono-num font-black text-sm text-slate-900 dark:text-white group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order.invoiceNumber)}</span>
-                      <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-500 text-slate-950">Action Needed</span>
+                      <span class="font-mono-num font-black text-sm text-slate-900 dark:text-white group-hover:text-emerald-700 transition-colors">${tfEscapeHtml(order.invoiceNumber)}</span>
+                      <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-amber-500 text-slate-950">Action Needed</span>
                       <span class="text-xs text-slate-400">• Booked on ${tfEscapeHtml(this.formatDate(order.date))}</span>
                     </div>
                     <h4 class="font-bold text-sm text-slate-900 dark:text-white mt-1">
-                      <span onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.retailerId))}'); app.closeKpiBreakdownModal();" class="hover:underline hover:text-amber-500 cursor-pointer">${tfEscapeHtml(order.retailerName)}</span>
+                      <span onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.retailerId))}'); app.closeKpiBreakdownModal();" class="hover:underline hover:text-emerald-700 cursor-pointer">${tfEscapeHtml(order.retailerName)}</span>
                     </h4>
                     <p class="text-xs text-slate-400 mt-0.5">Target Manufacturer: <strong>${tfEscapeHtml(mfg ? mfg.name : 'Manufacturer not set')}</strong></p>
                   </div>
                   <div class="text-right">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Advance In Hand</span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Advance In Hand</span>
                     <span class="text-xl font-black font-mono-num text-emerald-500">${tfEscapeHtml(this.formatCurrency(order.customerAdvanceReceived))}</span>
-                    <span class="text-[11px] text-slate-400 block">Total Order: ${tfEscapeHtml(this.formatCurrency(order.totalInvoiceAmount))}</span>
+                    <span class="text-xs text-slate-400 block">Total Order: ${tfEscapeHtml(this.formatCurrency(order.totalInvoiceAmount))}</span>
                   </div>
                 </div>
 
@@ -19483,9 +19485,9 @@ BANKING & PAYMENT COORDINATES:
                   <button onclick="event.stopPropagation(); app.openInModalOrderDetail('${tfEscapeHtml(tfEscapeJs(order.id))}', 'advance_in_hand');" class="btn-tactile px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg">
                     Inspect Order
                   </button>
-                  <button onclick="event.stopPropagation(); app.openFactoryPOModal('${tfEscapeHtml(tfEscapeJs(order.id))}'); app.closeKpiBreakdownModal();" class="btn-tactile px-4 py-1.5 text-xs font-black text-slate-950 bg-amber-400 hover:bg-amber-300 border-2 border-amber-300 rounded-lg shadow-sm flex items-center gap-1.5">
+                  <button onclick="event.stopPropagation(); app.openFactoryPOModal('${tfEscapeHtml(tfEscapeJs(order.id))}'); app.closeKpiBreakdownModal();" class="btn-tactile px-4 py-1.5 text-xs font-black text-white bg-emerald-700 hover:bg-emerald-800 border-2 border-emerald-700 rounded-lg shadow-sm flex items-center gap-1.5">
                     <i data-lucide="factory" class="w-4 h-4"></i>
-                    <span>Forward PO to Factory (Rule 55 Challan) ➔</span>
+                    <span>Forward PO to Factory (Rule 55 Challan) →</span>
                   </button>
                 </div>
               </div>
@@ -19507,19 +19509,19 @@ BANKING & PAYMENT COORDINATES:
       bodyEl.innerHTML = `
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Receivables</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Total Receivables</span>
             <span class="text-lg font-black font-mono-num text-slate-900 dark:text-white mt-0.5 block">${tfEscapeHtml(this.formatCurrency(totalReceivables))}</span>
-            <span class="text-[10px] text-slate-400">${tfEscapeHtml(unpaidOrders.length)} Invoices with balance</span>
+            <span class="text-xs text-slate-400">${tfEscapeHtml(unpaidOrders.length)} Invoices with balance</span>
           </div>
           <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-center">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 block">Overdue Balance</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 block">Overdue Balance</span>
             <span class="text-lg font-black font-mono-num text-rose-600 dark:text-rose-400 mt-0.5 block">${tfEscapeHtml(this.formatCurrency(totalOverdue))}</span>
-            <span class="text-[10px] text-rose-600 font-semibold">${tfEscapeHtml(overdueOrders.length)} Overdue Invoices</span>
+            <span class="text-xs text-rose-600 font-semibold">${tfEscapeHtml(overdueOrders.length)} Overdue Invoices</span>
           </div>
           <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Current / Upcoming</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Current / Upcoming</span>
             <span class="text-lg font-black font-mono-num text-amber-500 mt-0.5 block">${tfEscapeHtml(this.formatCurrency(Math.max(0, totalReceivables - totalOverdue)))}</span>
-            <span class="text-[10px] text-slate-400">Within payment terms</span>
+            <span class="text-xs text-slate-400">Within payment terms</span>
           </div>
         </div>
 
@@ -19530,26 +19532,26 @@ BANKING & PAYMENT COORDINATES:
             const daysOverdue = Math.max(1, Math.round((new Date() - new Date(order.dueDate)) / (1000 * 60 * 60 * 24)));
 
             return `
-              <div onclick="app.openInModalOrderDetail('${tfEscapeHtml(tfEscapeJs(order.id))}', 'receivables');" class="tf-card p-4 space-y-3 hover:border-amber-400 hover:shadow-md cursor-pointer transition-all group ${tfEscapeHtml(isOverdue ? 'border-rose-300 dark:border-rose-900/60' : '')}">
+              <div onclick="app.openInModalOrderDetail('${tfEscapeHtml(tfEscapeJs(order.id))}', 'receivables');" class="tf-card p-4 space-y-3 hover:border-emerald-600 hover:shadow-md cursor-pointer transition-all group ${tfEscapeHtml(isOverdue ? 'border-rose-300 dark:border-rose-900/60' : '')}">
                 <div class="flex items-start justify-between flex-wrap gap-2">
                   <div>
                     <div class="flex items-center gap-2">
-                      <span class="font-mono-num font-black text-sm text-slate-900 dark:text-white group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order.invoiceNumber)}</span>
+                      <span class="font-mono-num font-black text-sm text-slate-900 dark:text-white group-hover:text-emerald-700 transition-colors">${tfEscapeHtml(order.invoiceNumber)}</span>
                       ${isOverdue 
-                        ? `<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-rose-500/15 text-rose-500 border border-rose-500/30 font-mono-num">⚠️ ${tfEscapeHtml(daysOverdue)} Days Overdue</span>`
-                        : `<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/30">Due in ${tfEscapeHtml(order.paymentTerms || this.config().defaultPaymentTerms)}</span>`
+                        ? `<span class="px-2 py-0.5 text-xs font-bold rounded-md bg-rose-500/15 text-rose-500 border border-rose-500/30 font-mono-num">${tfEscapeHtml(daysOverdue)} Days Overdue</span>`
+                        : `<span class="px-2 py-0.5 text-xs font-bold rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/30">Due in ${tfEscapeHtml(order.paymentTerms || this.config().defaultPaymentTerms)}</span>`
                       }
                       <span class="text-xs text-slate-400">• Due Date: <strong>${tfEscapeHtml(this.formatDate(order.dueDate))}</strong></span>
                     </div>
                     <h4 class="font-bold text-sm text-slate-900 dark:text-white mt-1">
-                      <span onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.retailerId))}'); app.closeKpiBreakdownModal();" class="hover:underline hover:text-amber-500 cursor-pointer">${tfEscapeHtml(order.retailerName)}</span>
+                      <span onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(order.retailerId))}'); app.closeKpiBreakdownModal();" class="hover:underline hover:text-emerald-700 cursor-pointer">${tfEscapeHtml(order.retailerName)}</span>
                     </h4>
                     <p class="text-xs text-slate-400 mt-0.5">Contact: <strong>${tfEscapeHtml(retailer ? retailer.contactPerson : 'Buyer')}</strong> • Phone: <strong class="font-mono-num">${tfEscapeHtml(retailer ? retailer.phone : '—')}</strong></p>
                   </div>
                   <div class="text-right">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Balance Outstanding Due</span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Balance Outstanding Due</span>
                     <span class="text-xl font-black font-mono-num ${tfEscapeHtml(isOverdue ? 'text-rose-500' : 'text-amber-500')}">${tfEscapeHtml(this.formatCurrency(order.customerBalanceDue))}</span>
-                    <span class="text-[11px] text-slate-400 block">Total: ${tfEscapeHtml(this.formatCurrency(order.totalInvoiceAmount))} (Adv: ${tfEscapeHtml(this.formatCurrency(order.customerAdvanceReceived))})</span>
+                    <span class="text-xs text-slate-400 block">Total: ${tfEscapeHtml(this.formatCurrency(order.totalInvoiceAmount))} (Adv: ${tfEscapeHtml(this.formatCurrency(order.customerAdvanceReceived))})</span>
                   </div>
                 </div>
 
@@ -19559,9 +19561,9 @@ BANKING & PAYMENT COORDINATES:
                   </button>
                   <button onclick="event.stopPropagation(); app.sendPaymentReminderWhatsApp('${tfEscapeHtml(tfEscapeJs(order.id))}')" class="btn-tactile px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 border border-emerald-500 rounded-lg flex items-center gap-1.5 shadow-sm" title="Open pre-filled WhatsApp reminder">
                     <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
-                    <span>📲 WhatsApp Reminder</span>
+                    <span>WhatsApp Reminder</span>
                   </button>
-                  <button onclick="event.stopPropagation(); app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}'); app.closeKpiBreakdownModal();" class="btn-tactile px-3.5 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-950 rounded-lg flex items-center gap-1.5 shadow-sm">
+                  <button onclick="event.stopPropagation(); app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}'); app.closeKpiBreakdownModal();" class="btn-tactile px-3.5 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-800 dark:text-white rounded-lg flex items-center gap-1.5 shadow-sm">
                     <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
                     <span>Record Payment</span>
                   </button>
@@ -19594,19 +19596,19 @@ BANKING & PAYMENT COORDINATES:
       bodyEl.innerHTML = `
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Vendor Liabilities</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Total Vendor Liabilities</span>
             <span class="text-lg font-black font-mono-num text-slate-900 dark:text-white mt-0.5 block">${tfEscapeHtml(this.formatCurrency(totalVendorPayables))}</span>
-            <span class="text-[10px] text-slate-400">All External Suppliers</span>
+            <span class="text-xs text-slate-400">All External Suppliers</span>
           </div>
           <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-500 block">Manufacturer Dues</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-blue-500 block">Manufacturer Dues</span>
             <span class="text-lg font-black font-mono-num text-blue-500 mt-0.5 block">${tfEscapeHtml(this.formatCurrency(totalMfgDue))}</span>
-            <span class="text-[10px] text-slate-400">${tfEscapeHtml(mfgs.length)} Contract Manufacturers</span>
+            <span class="text-xs text-slate-400">${tfEscapeHtml(mfgs.length)} Contract Manufacturers</span>
           </div>
           <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-sky-500 block">Packaging Dues</span>
-            <span class="text-lg font-black font-mono-num text-sky-500 mt-0.5 block">${tfEscapeHtml(this.formatCurrency(totalPkgDue))}</span>
-            <span class="text-[10px] text-slate-400">Jars, Caps & Labels</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-blue-500 block">Packaging Dues</span>
+            <span class="text-lg font-black font-mono-num text-blue-500 mt-0.5 block">${tfEscapeHtml(this.formatCurrency(totalPkgDue))}</span>
+            <span class="text-xs text-slate-400">Jars, Caps & Labels</span>
           </div>
         </div>
 
@@ -19626,15 +19628,15 @@ BANKING & PAYMENT COORDINATES:
                 <div>
                   <div class="flex items-center gap-2">
                     <h5 class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-blue-500 transition-colors">${tfEscapeHtml(mfg.name)}</h5>
-                    <span class="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-500">Factory</span>
+                    <span class="text-xs font-semibold px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-500">Factory</span>
                   </div>
-                  <p class="text-[11px] text-slate-400 mt-0.5">${tfEscapeHtml(mfg.contactPerson)} • Phone: <span class="font-mono-num">${tfEscapeHtml(mfg.phone)}</span> • Location: ${tfEscapeHtml(mfg.city || '')}</p>
+                  <p class="text-xs text-slate-400 mt-0.5">${tfEscapeHtml(mfg.contactPerson)} • Phone: <span class="font-mono-num">${tfEscapeHtml(mfg.phone)}</span> • Location: ${tfEscapeHtml(mfg.city || '')}</p>
                 </div>
                 <div class="flex items-center gap-4">
                   <div class="text-right">
-                    <span class="text-[10px] text-slate-400 block">Pending Payable</span>
+                    <span class="text-xs text-slate-400 block">Pending Payable</span>
                     <span class="font-mono-num font-black text-sm ${tfEscapeHtml(balance > 0 ? 'text-rose-500' : 'text-emerald-500')}">${tfEscapeHtml(this.formatCurrency(balance))}</span>
-                    <span class="text-[10px] text-slate-500 block">Paid: ${tfEscapeHtml(this.formatCurrency(paid))}</span>
+                    <span class="text-xs text-slate-500 block">Paid: ${tfEscapeHtml(this.formatCurrency(paid))}</span>
                   </div>
                   <button onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(mfg.id))}'); app.closeKpiBreakdownModal();" class="btn-tactile px-3 py-1.5 text-xs font-bold text-blue-500 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg flex items-center gap-1">
                     <span>View Hub</span>
@@ -19648,7 +19650,7 @@ BANKING & PAYMENT COORDINATES:
 
         <div class="space-y-2 pt-3">
           <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 px-1">
-            <i data-lucide="package" class="w-3.5 h-3.5 text-sky-500"></i>
+            <i data-lucide="package" class="w-3.5 h-3.5 text-blue-500"></i>
             <span>Packaging & Bottles Suppliers</span>
           </h4>
           ${pkgs.map(pkg => {
@@ -19658,21 +19660,21 @@ BANKING & PAYMENT COORDINATES:
             const balance = Math.max(0, billed - paid);
 
             return `
-              <div onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(pkg.id))}'); app.closeKpiBreakdownModal();" class="tf-card p-3.5 flex items-center justify-between flex-wrap gap-3 hover:border-sky-400 hover:shadow-md cursor-pointer transition-all group">
+              <div onclick="app.navigateToContact('${tfEscapeHtml(tfEscapeJs(pkg.id))}'); app.closeKpiBreakdownModal();" class="tf-card p-3.5 flex items-center justify-between flex-wrap gap-3 hover:border-blue-400 hover:shadow-md cursor-pointer transition-all group">
                 <div>
                   <div class="flex items-center gap-2">
-                    <h5 class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-sky-500 transition-colors">${tfEscapeHtml(pkg.name)}</h5>
-                    <span class="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-sky-500/10 text-sky-500">Jars & Caps</span>
+                    <h5 class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-blue-500 transition-colors">${tfEscapeHtml(pkg.name)}</h5>
+                    <span class="text-xs font-semibold px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-500">Jars & Caps</span>
                   </div>
-                  <p class="text-[11px] text-slate-400 mt-0.5">${tfEscapeHtml(pkg.contactPerson)} • Phone: <span class="font-mono-num">${tfEscapeHtml(pkg.phone)}</span> • Materials Dispatched Direct to Factory</p>
+                  <p class="text-xs text-slate-400 mt-0.5">${tfEscapeHtml(pkg.contactPerson)} • Phone: <span class="font-mono-num">${tfEscapeHtml(pkg.phone)}</span> • Materials Dispatched Direct to Factory</p>
                 </div>
                 <div class="flex items-center gap-4">
                   <div class="text-right">
-                    <span class="text-[10px] text-slate-400 block">Pending Payable</span>
+                    <span class="text-xs text-slate-400 block">Pending Payable</span>
                     <span class="font-mono-num font-black text-sm ${tfEscapeHtml(balance > 0 ? 'text-amber-500' : 'text-emerald-500')}">${tfEscapeHtml(this.formatCurrency(balance))}</span>
-                    <span class="text-[10px] text-slate-500 block">Paid: ${tfEscapeHtml(this.formatCurrency(paid))}</span>
+                    <span class="text-xs text-slate-500 block">Paid: ${tfEscapeHtml(this.formatCurrency(paid))}</span>
                   </div>
-                  <button onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(pkg.id))}'); app.closeKpiBreakdownModal();" class="btn-tactile px-3 py-1.5 text-xs font-bold text-sky-500 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 rounded-lg flex items-center gap-1">
+                  <button onclick="event.stopPropagation(); app.navigateToContact('${tfEscapeHtml(tfEscapeJs(pkg.id))}'); app.closeKpiBreakdownModal();" class="btn-tactile px-3 py-1.5 text-xs font-bold text-blue-500 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg flex items-center gap-1">
                     <span>View Hub</span>
                     <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                   </button>
@@ -19763,7 +19765,7 @@ BANKING & PAYMENT COORDINATES:
 
           <div class="flex items-center gap-2">
             ${statusPill}
-            <button onclick="app.openOrderDetailPage('${tfEscapeHtml(tfEscapeJs(order.id))}'); app.closeKpiBreakdownModal();" class="btn-tactile px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 bg-slate-100 dark:bg-slate-800/80 rounded-lg flex items-center gap-1" title="Open as permanent workspace tab">
+            <button onclick="app.openOrderDetailPage('${tfEscapeHtml(tfEscapeJs(order.id))}'); app.closeKpiBreakdownModal();" class="btn-tactile px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 bg-slate-100 dark:bg-slate-800/80 rounded-lg flex items-center gap-1" title="Open as permanent workspace tab">
               <span>Full Tab</span>
               <i data-lucide="external-link" class="w-3 h-3"></i>
             </button>
@@ -19772,12 +19774,12 @@ BANKING & PAYMENT COORDINATES:
 
         <!-- Horizontal Instant Batch Switcher Strip (Zero reload / Zero lost state) -->
         <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800">
-          <div class="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">
             <span class="flex items-center gap-1.5">
               <i data-lucide="layers" class="w-3.5 h-3.5 text-amber-500"></i>
               <span>Instant Batch Switcher (${tfEscapeHtml(peerOrders.length)} In-Flight Orders)</span>
             </span>
-            <span class="text-[10px] text-slate-400 font-normal lowercase">Click any order chip to switch instantly:</span>
+            <span class="text-xs text-slate-400 font-normal lowercase">Click any order chip to switch instantly:</span>
           </div>
           <div class="flex items-center gap-2 overflow-x-auto pb-1.5 tf-scrollbar">
             ${peerOrders.map(po => {
@@ -19794,7 +19796,7 @@ BANKING & PAYMENT COORDINATES:
                   title="Switch to ${tfEscapeHtml(po.invoiceNumber)} (${tfEscapeHtml(po.retailerName)})"
                 >
                   <span class="font-mono-num">${tfEscapeHtml(po.invoiceNumber)}</span>
-                  <span class="text-[10px] font-normal ${tfEscapeHtml(isCurrent ? 'text-slate-900' : 'text-slate-400')}">• ${tfEscapeHtml((po.retailerName || '').split(' ')[0])} (${tfEscapeHtml(poCases)} cs)</span>
+                  <span class="text-xs font-normal ${tfEscapeHtml(isCurrent ? 'text-slate-900' : 'text-slate-400')}">• ${tfEscapeHtml((po.retailerName || '').split(' ')[0])} (${tfEscapeHtml(poCases)} cs)</span>
                   ${isCurrent ? '<i data-lucide="check" class="w-3 h-3"></i>' : ''}
                 </button>
               `;
@@ -19806,29 +19808,29 @@ BANKING & PAYMENT COORDINATES:
       <!-- Financial & Volume Metrics Strip -->
       <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
         <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Invoice</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Total Invoice</span>
           <span class="text-base font-black font-mono-num text-slate-900 dark:text-white mt-0.5 block">${tfEscapeHtml(this.formatCurrency(order.totalInvoiceAmount))}</span>
-          <span class="text-[10px] text-slate-400 font-mono-num">${tfEscapeHtml((order.gstType === 'intra' ? 'Intrastate (' : 'Interstate (') + this.gstLabels(order).combined + ')')}</span>
+          <span class="text-xs text-slate-400 font-mono-num">${tfEscapeHtml((order.gstType === 'intra' ? 'Intrastate (' : 'Interstate (') + this.gstLabels(order).combined + ')')}</span>
         </div>
         <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Advance In Hand</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Advance In Hand</span>
           <span class="text-base font-black font-mono-num text-emerald-500 mt-0.5 block">${tfEscapeHtml(this.formatCurrency(order.customerAdvanceReceived))}</span>
-          <span class="text-[10px] text-emerald-600 font-semibold">${tfEscapeHtml(advancePercent)}% of Total</span>
+          <span class="text-xs text-emerald-600 font-semibold">${tfEscapeHtml(advancePercent)}% of Total</span>
         </div>
         <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Balance Due</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Balance Due</span>
           <span class="text-base font-black font-mono-num ${tfEscapeHtml(order.customerBalanceDue > 0 ? 'text-amber-500' : 'text-emerald-500')} mt-0.5 block">${tfEscapeHtml(this.formatCurrency(order.customerBalanceDue))}</span>
-          <span class="text-[10px] text-slate-400">Due: ${tfEscapeHtml(this.formatDate(order.dueDate))}</span>
+          <span class="text-xs text-slate-400">Due: ${tfEscapeHtml(this.formatDate(order.dueDate))}</span>
         </div>
         <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Master Cases</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Master Cases</span>
           <span class="text-base font-black font-mono-num text-amber-500 mt-0.5 block">${tfEscapeHtml(totalCases)} Cases</span>
-          <span class="text-[10px] text-slate-400">Shipper Cartons</span>
+          <span class="text-xs text-slate-400">Shipper Cartons</span>
         </div>
         <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Bottling Units</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Bottling Units</span>
           <span class="text-base font-black font-mono-num text-slate-900 dark:text-white mt-0.5 block">${tfEscapeHtml(totalJars.toLocaleString('en-IN'))} Jars</span>
-          <span class="text-[10px] text-slate-400">${tfEscapeHtml((order.items || []).length)} Varieties</span>
+          <span class="text-xs text-slate-400">${tfEscapeHtml((order.items || []).length)} Varieties</span>
         </div>
       </div>
 
@@ -19836,28 +19838,28 @@ BANKING & PAYMENT COORDINATES:
       <div class="space-y-2">
         <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider px-1">
           <span>Connected Supply Chain Partners</span>
-          <span class="text-[10px] font-normal lowercase">Click hub link to view partner history</span>
+          <span class="text-xs font-normal lowercase">Click hub link to view partner history</span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <!-- Buyer -->
-          <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order.retailerId))}', 'kpi-breakdown-modal', '${tfEscapeHtml(tfEscapeJs(order.id))}')" class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-500/70 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between" title="Click to view Buyer account & history">
+          <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order.retailerId))}', 'kpi-breakdown-modal', '${tfEscapeHtml(tfEscapeJs(order.id))}')" class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-600/70 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between" title="Click to view Buyer account & history">
             <div class="space-y-2">
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Buyer / Retailer</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Buyer / Retailer</span>
                 <i data-lucide="building-2" class="w-3.5 h-3.5 text-emerald-500"></i>
               </div>
               <div>
-                <h5 class="font-bold text-xs text-slate-900 dark:text-white truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(order.retailerName)}</h5>
-                <p class="text-[11px] text-slate-400 mt-0.5">${tfEscapeHtml(retailer ? retailer.contactPerson : 'Buyer')}</p>
-                <div class="flex items-center justify-between text-[11px] font-mono-num font-bold text-slate-800 dark:text-slate-200 mt-1">
+                <h5 class="font-bold text-xs text-slate-900 dark:text-white truncate group-hover:text-emerald-700 transition-colors">${tfEscapeHtml(order.retailerName)}</h5>
+                <p class="text-xs text-slate-400 mt-0.5">${tfEscapeHtml(retailer ? retailer.contactPerson : 'Buyer')}</p>
+                <div class="flex items-center justify-between text-xs font-mono-num font-bold text-slate-800 dark:text-slate-200 mt-1">
                   <a href="tel:${tfEscapeHtml(retailer && retailer.phone ? retailer.phone.replace(/[^0-9+]/g, '') : '')}" onclick="event.stopPropagation();" class="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:underline" title="Call ${tfEscapeHtml(order.retailerName)}">
                     <i data-lucide="phone" class="w-3 h-3"></i> <span>${tfEscapeHtml(retailer ? retailer.phone : '—')}</span>
                   </a>
                 </div>
-                <p class="text-[10px] font-mono-num text-slate-500 mt-0.5">GST: ${tfEscapeHtml(retailer ? retailer.gstin : '—')}</p>
+                <p class="text-xs font-mono-num text-slate-500 mt-0.5">GST: ${tfEscapeHtml(retailer ? retailer.gstin : '—')}</p>
               </div>
             </div>
-            <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex justify-between items-center text-[11px] text-amber-600 dark:text-amber-400 font-bold group-hover:underline mt-2">
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex justify-between items-center text-xs text-emerald-700 dark:text-emerald-400 font-bold group-hover:underline mt-2">
               <span class="text-slate-400 font-normal">Terms: ${tfEscapeHtml(order.paymentTerms || 'Net 15')}</span>
               <span class="flex items-center gap-0.5">
                 <span>View Hub</span>
@@ -19867,24 +19869,24 @@ BANKING & PAYMENT COORDINATES:
           </div>
 
           <!-- Pickle Factory -->
-          <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order.manufacturerId))}', 'kpi-breakdown-modal', '${tfEscapeHtml(tfEscapeJs(order.id))}')" class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-500/70 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between" title="Click to view Factory profile & active batches">
+          <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order.manufacturerId))}', 'kpi-breakdown-modal', '${tfEscapeHtml(tfEscapeJs(order.id))}')" class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-600/70 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between" title="Click to view Factory profile & active batches">
             <div class="space-y-2">
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Manufacturer</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Manufacturer</span>
                 <i data-lucide="factory" class="w-3.5 h-3.5 text-blue-500"></i>
               </div>
               <div>
-                <h5 class="font-bold text-xs text-slate-900 dark:text-white truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(mfg ? mfg.name : 'Manufacturer')}</h5>
-                <p class="text-[11px] text-slate-400 mt-0.5">${tfEscapeHtml(mfg ? mfg.contactPerson : 'Factory Manager')} • ${tfEscapeHtml(mfg ? mfg.city || 'Gondal' : 'Gujarat')}</p>
-                <div class="flex items-center justify-between text-[11px] font-mono-num font-bold text-slate-800 dark:text-slate-200 mt-1">
+                <h5 class="font-bold text-xs text-slate-900 dark:text-white truncate group-hover:text-emerald-700 transition-colors">${tfEscapeHtml(mfg ? mfg.name : 'Manufacturer')}</h5>
+                <p class="text-xs text-slate-400 mt-0.5">${tfEscapeHtml(mfg ? mfg.contactPerson : 'Factory Manager')} • ${tfEscapeHtml(mfg ? mfg.city || 'Gondal' : 'Gujarat')}</p>
+                <div class="flex items-center justify-between text-xs font-mono-num font-bold text-slate-800 dark:text-slate-200 mt-1">
                   <a href="tel:${tfEscapeHtml(mfg && mfg.phone ? mfg.phone.replace(/[^0-9+]/g, '') : '')}" onclick="event.stopPropagation();" class="flex items-center gap-1 text-blue-500 dark:text-blue-400 hover:underline" title="Call Factory">
                     <i data-lucide="phone" class="w-3 h-3"></i> <span>${tfEscapeHtml(mfg ? mfg.phone : '—')}</span>
                   </a>
                 </div>
-                <p class="text-[10px] font-mono-num text-slate-500 mt-0.5">Job-Work: ${tfEscapeHtml(this.formatCurrency(order.manufacturerTotalCost))}</p>
+                <p class="text-xs font-mono-num text-slate-500 mt-0.5">Job-Work: ${tfEscapeHtml(this.formatCurrency(order.manufacturerTotalCost))}</p>
               </div>
             </div>
-            <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex justify-between items-center text-[11px] text-amber-600 dark:text-amber-400 font-bold group-hover:underline mt-2">
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex justify-between items-center text-xs text-emerald-700 dark:text-emerald-400 font-bold group-hover:underline mt-2">
               <span class="text-slate-400 font-mono-num font-normal">Adv: ${tfEscapeHtml(this.formatCurrency(order.manufacturerAdvancePaid))}</span>
               <span class="flex items-center gap-0.5">
                 <span>View Hub</span>
@@ -19894,24 +19896,24 @@ BANKING & PAYMENT COORDINATES:
           </div>
 
           <!-- Packaging Vendor -->
-          <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order.packagingVendorId))}', 'kpi-breakdown-modal', '${tfEscapeHtml(tfEscapeJs(order.id))}')" class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-500/70 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between" title="Click to view Packaging Vendor & balance">
+          <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order.packagingVendorId))}', 'kpi-breakdown-modal', '${tfEscapeHtml(tfEscapeJs(order.id))}')" class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-600/70 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between" title="Click to view Packaging Vendor & balance">
             <div class="space-y-2">
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Packaging Supplier</span>
-                <i data-lucide="package" class="w-3.5 h-3.5 text-sky-500"></i>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Packaging Supplier</span>
+                <i data-lucide="package" class="w-3.5 h-3.5 text-blue-500"></i>
               </div>
               <div>
-                <h5 class="font-bold text-xs text-slate-900 dark:text-white truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(pkg ? pkg.name : 'Packaging Vendor')}</h5>
-                <p class="text-[11px] text-slate-400 mt-0.5">${tfEscapeHtml(pkg ? pkg.contactPerson : 'Vendor')} • Jars & Labels</p>
-                <div class="flex items-center justify-between text-[11px] font-mono-num font-bold text-slate-800 dark:text-slate-200 mt-1">
-                  <a href="tel:${tfEscapeHtml(pkg && pkg.phone ? pkg.phone.replace(/[^0-9+]/g, '') : '')}" onclick="event.stopPropagation();" class="flex items-center gap-1 text-sky-500 dark:text-sky-400 hover:underline" title="Call Packaging Supplier">
+                <h5 class="font-bold text-xs text-slate-900 dark:text-white truncate group-hover:text-emerald-700 transition-colors">${tfEscapeHtml(pkg ? pkg.name : 'Packaging Vendor')}</h5>
+                <p class="text-xs text-slate-400 mt-0.5">${tfEscapeHtml(pkg ? pkg.contactPerson : 'Vendor')} • Jars & Labels</p>
+                <div class="flex items-center justify-between text-xs font-mono-num font-bold text-slate-800 dark:text-slate-200 mt-1">
+                  <a href="tel:${tfEscapeHtml(pkg && pkg.phone ? pkg.phone.replace(/[^0-9+]/g, '') : '')}" onclick="event.stopPropagation();" class="flex items-center gap-1 text-blue-500 dark:text-blue-400 hover:underline" title="Call Packaging Supplier">
                     <i data-lucide="phone" class="w-3 h-3"></i> <span>${tfEscapeHtml(pkg ? pkg.phone : '—')}</span>
                   </a>
                 </div>
-                <p class="text-[10px] font-mono-num text-slate-500 mt-0.5">Cost: ${tfEscapeHtml(this.formatCurrency(order.packagingCost))}</p>
+                <p class="text-xs font-mono-num text-slate-500 mt-0.5">Cost: ${tfEscapeHtml(this.formatCurrency(order.packagingCost))}</p>
               </div>
             </div>
-            <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex justify-between items-center text-[11px] text-amber-600 dark:text-amber-400 font-bold group-hover:underline mt-2">
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex justify-between items-center text-xs text-emerald-700 dark:text-emerald-400 font-bold group-hover:underline mt-2">
               <span class="text-slate-400 font-mono-num font-normal">Adv: ${tfEscapeHtml(this.formatCurrency(order.packagingAdvancePaid))}</span>
               <span class="flex items-center gap-0.5">
                 <span>View Hub</span>
@@ -19921,24 +19923,24 @@ BANKING & PAYMENT COORDINATES:
           </div>
 
           <!-- Logistics & Transporter -->
-          <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order.transporterId))}', 'kpi-breakdown-modal', '${tfEscapeHtml(tfEscapeJs(order.id))}')" class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-500/70 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between" title="Click to view Transporter & LR tracker">
+          <div onclick="app.navigateToContactFromModal('${tfEscapeHtml(tfEscapeJs(order.transporterId))}', 'kpi-breakdown-modal', '${tfEscapeHtml(tfEscapeJs(order.id))}')" class="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-600/70 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between" title="Click to view Transporter & LR tracker">
             <div class="space-y-2">
               <div class="flex items-center justify-between">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Logistics & Freight</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Logistics & Freight</span>
                 <i data-lucide="truck" class="w-3.5 h-3.5 text-purple-500"></i>
               </div>
               <div>
-                <h5 class="font-bold text-xs text-slate-900 dark:text-white truncate group-hover:text-amber-500 transition-colors">${tfEscapeHtml(transporter ? transporter.name : 'Transporter')}</h5>
-                <p class="text-[11px] text-slate-400 mt-0.5 font-mono-num">${tfEscapeHtml(order.lrNumber ? 'LR: ' + order.lrNumber : 'LR: Pending Loading')}</p>
-                <div class="flex items-center justify-between text-[11px] font-mono-num font-bold text-slate-800 dark:text-slate-200 mt-1">
+                <h5 class="font-bold text-xs text-slate-900 dark:text-white truncate group-hover:text-emerald-700 transition-colors">${tfEscapeHtml(transporter ? transporter.name : 'Transporter')}</h5>
+                <p class="text-xs text-slate-400 mt-0.5 font-mono-num">${tfEscapeHtml(order.lrNumber ? 'LR: ' + order.lrNumber : 'LR: Pending Loading')}</p>
+                <div class="flex items-center justify-between text-xs font-mono-num font-bold text-slate-800 dark:text-slate-200 mt-1">
                   <a href="tel:${tfEscapeHtml(transporter && transporter.phone ? transporter.phone.replace(/[^0-9+]/g, '') : '')}" onclick="event.stopPropagation();" class="flex items-center gap-1 text-purple-500 dark:text-purple-400 hover:underline" title="Call Transporter">
                     <i data-lucide="phone" class="w-3 h-3"></i> <span>${tfEscapeHtml(transporter ? transporter.phone : '—')}</span>
                   </a>
                 </div>
-                <p class="text-[10px] font-mono-num text-slate-500 mt-0.5">${tfEscapeHtml(order.vehicleNumber || 'Vehicle: Not Assigned')}</p>
+                <p class="text-xs font-mono-num text-slate-500 mt-0.5">${tfEscapeHtml(order.vehicleNumber || 'Vehicle: Not Assigned')}</p>
               </div>
             </div>
-            <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex justify-between items-center text-[11px] text-amber-600 dark:text-amber-400 font-bold group-hover:underline mt-2">
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex justify-between items-center text-xs text-emerald-700 dark:text-emerald-400 font-bold group-hover:underline mt-2">
               <span class="text-slate-400 font-normal">Freight: ${tfEscapeHtml(this.formatCurrency(order.freightAmount || 0))}</span>
               <span class="flex items-center gap-0.5">
                 <span>View Hub</span>
@@ -19954,15 +19956,15 @@ BANKING & PAYMENT COORDINATES:
         <div class="p-3 px-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <h4 class="text-xs font-bold text-slate-900 dark:text-white">SKU & Bottling Line Items</h4>
-            <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-500/10 text-amber-500 font-mono-num">${tfEscapeHtml((order.items || []).length)} SKUs</span>
+            <span class="px-2 py-0.5 text-xs font-bold rounded bg-amber-500/10 text-amber-500 font-mono-num">${tfEscapeHtml((order.items || []).length)} SKUs</span>
           </div>
-          <span class="text-[11px] text-slate-400">HSN: ${tfEscapeHtml([...new Set((order.items || []).map(i => this.itemHsn(i)))].join(', ') || '—')} • ${tfEscapeHtml(this.gstLabels(order).total)}</span>
+          <span class="text-xs text-slate-400">HSN: ${tfEscapeHtml([...new Set((order.items || []).map(i => this.itemHsn(i)))].join(', ') || '—')} • ${tfEscapeHtml(this.gstLabels(order).total)}</span>
         </div>
 
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs border-collapse">
             <thead>
-              <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-xs font-bold text-slate-400 uppercase tracking-wider">
                 <th class="py-2.5 px-3 w-8 text-center">#</th>
                 <th class="py-2.5 px-3 min-w-[160px]">Product</th>
                 <th class="py-2.5 px-3 w-20">Pack Size</th>
@@ -19979,11 +19981,11 @@ BANKING & PAYMENT COORDINATES:
                   <td class="py-2.5 px-3 text-center text-slate-400 font-mono-num">${tfEscapeHtml(idx + 1)}</td>
                   <td class="py-2.5 px-3">
                     <span class="font-bold text-slate-900 dark:text-white block">${tfEscapeHtml(item.name || item.shortName)}</span>
-                    <span class="text-[10px] text-slate-400">${tfEscapeHtml(item.variant || 'Standard')}</span>
+                    <span class="text-xs text-slate-400">${tfEscapeHtml(item.variant || 'Standard')}</span>
                   </td>
                   <td class="py-2.5 px-3 font-semibold text-slate-700 dark:text-slate-300">${tfEscapeHtml(item.packSize || '500g')}</td>
                   <td class="py-2.5 px-3 text-right font-mono-num font-bold text-amber-500">${tfEscapeHtml(item.cases || 0)}</td>
-                  <td class="py-2.5 px-3 text-center text-[10px] font-mono-num text-slate-400">${tfEscapeHtml(item.casePack || 24)} / cs</td>
+                  <td class="py-2.5 px-3 text-center text-xs font-mono-num text-slate-400">${tfEscapeHtml(item.casePack || 24)} / cs</td>
                   <td class="py-2.5 px-3 text-right font-mono-num font-bold text-slate-900 dark:text-white">${tfEscapeHtml((item.quantity || 0).toLocaleString('en-IN'))}</td>
                   <td class="py-2.5 px-3 text-right font-mono-num text-slate-600 dark:text-slate-400">${tfEscapeHtml(this.formatCurrency(item.unitRate))}</td>
                   <td class="py-2.5 px-3 text-right font-mono-num font-black text-slate-900 dark:text-white">${tfEscapeHtml(this.formatCurrency(item.totalAmount))}</td>
@@ -20009,14 +20011,14 @@ BANKING & PAYMENT COORDINATES:
         <div class="p-3 px-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <i data-lucide="archive" class="w-3.5 h-3.5 text-amber-500"></i>
-            <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Document Vault</span>
-            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono-num">${tfEscapeHtml((this.data.documents || []).filter(d => d.orderId === order.id).length)} filed</span>
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Document Vault</span>
+            <span class="text-xs font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono-num">${tfEscapeHtml((this.data.documents || []).filter(d => d.orderId === order.id).length)} filed</span>
           </div>
           <div class="flex items-center gap-1.5">
-            <button onclick="app.triggerOrderDocUpload('${tfEscapeHtml(tfEscapeJs(order.id))}', 'bank_receipt')" class="btn-tactile px-2.5 py-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700 rounded-lg flex items-center gap-1" title="Upload bank proof / receipt">
+            <button onclick="app.triggerOrderDocUpload('${tfEscapeHtml(tfEscapeJs(order.id))}', 'bank_receipt')" class="btn-tactile px-2.5 py-1 text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700 rounded-lg flex items-center gap-1" title="Upload bank proof / receipt">
               <i data-lucide="landmark" class="w-3 h-3"></i> Bank Proof
             </button>
-            <button onclick="app.triggerOrderDocUpload('${tfEscapeHtml(tfEscapeJs(order.id))}', 'mfg_invoice')" class="btn-tactile px-2.5 py-1 text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/30 border border-blue-300 dark:border-blue-700 rounded-lg flex items-center gap-1" title="Upload factory/vendor invoice">
+            <button onclick="app.triggerOrderDocUpload('${tfEscapeHtml(tfEscapeJs(order.id))}', 'mfg_invoice')" class="btn-tactile px-2.5 py-1 text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/30 border border-blue-300 dark:border-blue-700 rounded-lg flex items-center gap-1" title="Upload factory/vendor invoice">
               <i data-lucide="upload" class="w-3 h-3"></i> Upload Bill
             </button>
           </div>
@@ -20026,17 +20028,17 @@ BANKING & PAYMENT COORDINATES:
             ${(this.data.documents || []).filter(d => d.orderId === order.id).slice(0, 6).map(doc => {
               const meta = doc.metadata || {};
               const icons = { mfg_invoice: 'factory', pkg_invoice: 'package', transport_bilty: 'truck', retailer_invoice: 'building-2', bank_receipt: 'landmark', other: 'file-text' };
-              const colors = { mfg_invoice: 'text-blue-500', pkg_invoice: 'text-sky-500', transport_bilty: 'text-purple-500', retailer_invoice: 'text-emerald-500', bank_receipt: 'text-amber-500', other: 'text-slate-400' };
-              return `<button onclick="app.previewDocument('${tfEscapeHtml(tfEscapeJs(doc.id))}')" class="btn-tactile shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-all text-left min-w-[120px] max-w-[160px]" title="View: ${tfEscapeHtml(doc.fileName)}">
+              const colors = { mfg_invoice: 'text-blue-500', pkg_invoice: 'text-blue-500', transport_bilty: 'text-purple-500', retailer_invoice: 'text-emerald-500', bank_receipt: 'text-amber-500', other: 'text-slate-400' };
+              return `<button onclick="app.previewDocument('${tfEscapeHtml(tfEscapeJs(doc.id))}')" class="btn-tactile shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-emerald-600 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-all text-left min-w-[120px] max-w-[160px]" title="View: ${tfEscapeHtml(doc.fileName)}">
                 <i data-lucide="${tfEscapeHtml(icons[doc.category] || 'file-text')}" class="w-3 h-3 ${tfEscapeHtml(colors[doc.category] || 'text-slate-400')} shrink-0"></i>
                 <div class="min-w-0">
-                  <p class="text-[10px] font-bold text-slate-900 dark:text-white truncate">${tfEscapeHtml(meta.invoiceNumber || doc.fileName)}</p>
-                  <p class="text-[9px] text-slate-400 truncate">${tfEscapeHtml(meta.totalAmount ? '₹' + Number(meta.totalAmount).toLocaleString('en-IN') : doc.category)}</p>
+                  <p class="text-xs font-bold text-slate-900 dark:text-white truncate">${tfEscapeHtml(meta.invoiceNumber || doc.fileName)}</p>
+                  <p class="text-xs text-slate-400 truncate">${tfEscapeHtml(meta.totalAmount ? '₹' + Number(meta.totalAmount).toLocaleString('en-IN') : doc.category)}</p>
                 </div>
               </button>`;
             }).join('')}
           </div>
-        ` : `<p class="text-[10px] text-slate-400 text-center py-2">No bills filed yet — upload above ↑</p>`}
+        ` : `<p class="text-xs text-slate-400 text-center py-2">No bills filed yet — upload above ↑</p>`}
       </div>
 
       <!-- Action Buttons Footer inside body -->
@@ -20048,9 +20050,9 @@ BANKING & PAYMENT COORDINATES:
 
         <div class="flex items-center gap-2 flex-wrap">
           ${order.status === 'action_needed' ? `
-            <button onclick="app.openFactoryPOModal('${tfEscapeHtml(tfEscapeJs(order.id))}'); app.closeKpiBreakdownModal();" class="btn-tactile px-4 py-2 text-xs font-black text-slate-950 bg-amber-400 hover:bg-amber-300 border-2 border-amber-300 rounded-lg shadow-sm flex items-center gap-1.5">
+            <button onclick="app.openFactoryPOModal('${tfEscapeHtml(tfEscapeJs(order.id))}'); app.closeKpiBreakdownModal();" class="btn-tactile px-4 py-2 text-xs font-black text-white bg-emerald-700 hover:bg-emerald-800 border-2 border-emerald-700 rounded-lg shadow-sm flex items-center gap-1.5">
               <i data-lucide="factory" class="w-4 h-4"></i>
-              <span>Forward Factory PO (Rule 55 Challan) ➔</span>
+              <span>Forward Factory PO (Rule 55 Challan) →</span>
             </button>
           ` : ''}
 
@@ -20064,7 +20066,7 @@ BANKING & PAYMENT COORDINATES:
               <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
               <span>WhatsApp Reminder</span>
             </button>
-            <button onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}'); app.closeKpiBreakdownModal();" class="btn-tactile px-3.5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-950 rounded-lg flex items-center gap-1.5 shadow-sm">
+            <button onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(order.id))}'); app.closeKpiBreakdownModal();" class="btn-tactile px-3.5 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-800 dark:text-white rounded-lg flex items-center gap-1.5 shadow-sm">
               <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
               <span>Record Payment</span>
             </button>
@@ -20313,7 +20315,7 @@ BANKING & PAYMENT COORDINATES:
     const keyLabel = document.getElementById('smart-key-status-label');
     const keyInput = document.getElementById('smart-gemini-api-key');
     if (savedKey) {
-      if (keyLabel) keyLabel.innerText = '✓ AI Vision Key Active';
+      if (keyLabel) keyLabel.innerText = 'AI Vision Key Active';
       if (keyInput) keyInput.value = savedKey;
     } else {
       if (keyLabel) keyLabel.innerText = 'AI Vision Key (Optional)';
@@ -20340,7 +20342,7 @@ BANKING & PAYMENT COORDINATES:
       if (icon) icon.style.transform = 'rotate(180deg)';
     } else {
       container.classList.add('hidden');
-      if (label) label.innerText = '⚡ Open AI Smart Filler Studio';
+      if (label) label.innerText = 'Open AI Smart Filler Studio';
       if (icon) icon.style.transform = 'rotate(0deg)';
     }
     if (window.lucide) window.lucide.createIcons();
@@ -20376,7 +20378,7 @@ BANKING & PAYMENT COORDINATES:
       const base64Data = e.target.result;
       const compName = document.getElementById('edit-contact-name')?.value || 'Company';
       this.updateProfileLogoPreview(base64Data, compName);
-      this.showToast('✨ Company logo loaded! Click "Save Profile" to apply.');
+      this.showToast('Company logo loaded! Click "Save Profile" to apply.');
     };
     reader.readAsDataURL(file);
     event.target.value = '';
@@ -20421,7 +20423,7 @@ BANKING & PAYMENT COORDINATES:
     } else if (role === 'retailer') {
       roleBadge.className = 'px-2.5 py-0.5 text-xs font-bold rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800';
     } else if (role === 'packaging') {
-      roleBadge.className = 'px-2.5 py-0.5 text-xs font-bold rounded-md bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800';
+      roleBadge.className = 'px-2.5 py-0.5 text-xs font-bold rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800';
     } else if (role === 'marketeer') {
       roleBadge.className = 'px-2.5 py-0.5 text-xs font-bold rounded-md bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800';
     } else {
@@ -20512,8 +20514,8 @@ Payment Terms: Net 15 Days`;
     if (val) {
       localStorage.setItem('tradeflow_gemini_api_key', val);
       const keyLabel = document.getElementById('smart-key-status-label');
-      if (keyLabel) keyLabel.innerText = '✓ AI Vision Key Active';
-      this.showToast('✨ Gemini Vision API key saved successfully!');
+      if (keyLabel) keyLabel.innerText = 'AI Vision Key Active';
+      this.showToast('Gemini Vision API key saved successfully!');
       this.toggleSmartApiKeyInput();
     } else {
       localStorage.removeItem('tradeflow_gemini_api_key');
@@ -20586,7 +20588,7 @@ Payment Terms: Net 15 Days`;
           if (textInput) textInput.value = extractedText;
           const extracted = this.parseContactText(extractedText);
           this.applyExtractedContact(extracted);
-          this.showToast(`✨ Extracted text and populated profile from PDF: ${file.name}`);
+          this.showToast(`Extracted text and populated profile from PDF: ${file.name}`);
         } else {
           if (statusEl) statusEl.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> <span>PDF has no selectable text (scanned image). Use screenshot or paste text.</span>`;
         }
@@ -20634,7 +20636,7 @@ Payment Terms: Net 15 Days`;
             const resJson = await resp.json();
             if (resJson.data && Object.keys(resJson.data).length > 0) {
               this.applyExtractedContact(resJson.data);
-              this.showToast('✨ AI Vision extracted company details successfully!');
+              this.showToast('AI Vision extracted company details successfully!');
               return;
             }
           }
@@ -20696,7 +20698,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
               const cleanJsonStr = rawReply.replace(/```json/gi, '').replace(/```/g, '').trim();
               const parsedData = JSON.parse(cleanJsonStr);
               this.applyExtractedContact(parsedData);
-              this.showToast('✨ Gemini Vision extracted profile details successfully!');
+              this.showToast('Gemini Vision extracted profile details successfully!');
               return;
             }
           } catch (aiErr) {
@@ -21054,7 +21056,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
       if (autoFilledCount > 0) {
         statusEl.innerHTML = `
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span class="font-bold text-emerald-700 dark:text-emerald-300">✨ ${tfEscapeHtml(autoFilledCount)} profile fields automatically populated in light green!</span>
+          <span class="font-bold text-emerald-700 dark:text-emerald-300">${tfEscapeHtml(autoFilledCount)} profile fields automatically populated in light green!</span>
           <span class="text-slate-500 dark:text-slate-400">Review or adjust any field below.</span>
         `;
       } else {
@@ -21066,7 +21068,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     }
 
     if (autoFilledCount > 0) {
-      this.showToast(`✨ Smart Auto-Fill: Populated ${autoFilledCount} fields in light green!`);
+      this.showToast(`Smart Auto-Fill: Populated ${autoFilledCount} fields in light green!`);
     }
   }
 
@@ -21165,11 +21167,11 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     const newCapacity = (document.getElementById('edit-contact-capacity')?.value || '').trim();
 
     if (!newName) {
-      this.showToast('⚠️ Company / Trade Name is required.');
+      this.showToast('Company / Trade Name is required.');
       return;
     }
     if (!newPhone) {
-      this.showToast('⚠️ Phone Number is required.');
+      this.showToast('Phone Number is required.');
       return;
     }
 
@@ -21318,7 +21320,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     void window.TradeFlowSmartFill?.archivePendingPartnerDocument?.(contact);
     window.TradeFlowSmartFill?.markSaved?.();
     this.closeEditContactModal();
-    this.showToast(isNew ? `✨ Added new partner ${newName} successfully!` : `Updated profile for ${newName} successfully!`);
+    this.showToast(isNew ? `Added new partner ${newName} successfully!` : `Updated profile for ${newName} successfully!`);
 
     // Re-render active views
     this.renderActiveView();
@@ -21335,7 +21337,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
   openSkuEditModal(skuId) {
     const existing = skuId ? (this.data.products || []).find(p => p.id === skuId) : null;
     if (skuId && !existing) {
-      this.showToast('⚠️ SKU not found.');
+      this.showToast('SKU not found.');
       return;
     }
     const cfg = this.config();
@@ -21394,22 +21396,22 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
 
     previewEl.innerHTML = `
       <div>
-        <span class="text-[10px] font-bold uppercase tracking-wider block opacity-70">Live Unit Profit &amp; Margin</span>
+        <span class="text-xs font-bold uppercase tracking-wider block opacity-70">Live Unit Profit &amp; Margin</span>
         <div class="flex items-center gap-2 mt-0.5">
           <span class="text-base font-black font-mono-num">${tfEscapeHtml(profit >= 0 ? '+' : '')}${tfEscapeHtml(this.formatCurrency(profit))} / unit</span>
           <span class="px-2 py-0.5 rounded text-xs font-bold font-mono-num ${tfEscapeHtml(isHealthy ? 'bg-emerald-500 text-slate-950' : 'bg-amber-500 text-slate-950')}">
             ${tfEscapeHtml(marginPct)}% Margin
           </span>
         </div>
-        <p class="text-[11px] opacity-75 mt-0.5">
+        <p class="text-xs opacity-75 mt-0.5">
           Total Unit COGS: ${tfEscapeHtml(this.formatCurrency(unitCogs))} (Mfg ${tfEscapeHtml(this.formatCurrency(mfgCost))} + Pkg ${tfEscapeHtml(this.formatCurrency(pkgCost))})
         </p>
       </div>
 
       <div class="text-right">
-        <span class="text-[10px] font-bold uppercase tracking-wider block opacity-70">Per Case Economics (${tfEscapeHtml(casePack)} jars)</span>
+        <span class="text-xs font-bold uppercase tracking-wider block opacity-70">Per Case Economics (${tfEscapeHtml(casePack)} jars)</span>
         <span class="text-sm font-bold font-mono-num block mt-0.5">Case Profit: ${tfEscapeHtml(this.formatCurrency(caseProfit))}</span>
-        <span class="text-[11px] opacity-75">Retailer Margin: ${tfEscapeHtml(this.formatCurrency(Math.max(0, mrp - price)))} / unit</span>
+        <span class="text-xs opacity-75">Retailer Margin: ${tfEscapeHtml(this.formatCurrency(Math.max(0, mrp - price)))} / unit</span>
       </div>
     `;
   }
@@ -21419,7 +21421,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     const id = document.getElementById('sku-edit-id')?.value;
     let product = id ? (this.data.products || []).find(p => p.id === id) : null;
     if (id && !product) {
-      this.showToast('⚠️ SKU not found to update.');
+      this.showToast('SKU not found to update.');
       return;
     }
 
@@ -21435,14 +21437,14 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     const mrp = parseFloat(document.getElementById('sku-edit-mrp')?.value) || 0;
 
     if (!name) {
-      this.showToast('⚠️ Product name is required.');
+      this.showToast('Product name is required.');
       return;
     }
 
     const isNew = !product;
     const duplicate = (this.data.products || []).find(p => p !== product && String(p.name || '').trim().toLowerCase() === name.toLowerCase() && String(p.variant || '').trim().toLowerCase() === variant.toLowerCase());
     if (duplicate) {
-      this.showToast(`⚠️ "${name}${variant ? ' – ' + variant : ''}" already exists (${duplicate.id}). Edit that product instead.`);
+      this.showToast(`"${name}${variant ? ' – ' + variant : ''}" already exists (${duplicate.id}). Edit that product instead.`);
       return;
     }
     if (isNew) {
@@ -21467,7 +21469,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     this.saveData();
     this.closeSkuEditModal();
     this.renderProductsGrid();
-    this.showToast(isNew ? `✅ Product "${name}" added (${product.id}).` : `✅ SKU "${name}" updated successfully! Standard Selling Rate: ${this.formatCurrency(price)}.`);
+    this.showToast(isNew ? `Product "${name}" added (${product.id}).` : `SKU "${name}" updated successfully! Standard Selling Rate: ${this.formatCurrency(price)}.`);
   }
 
   /* ---------- TRADE MARGIN & ORDER PROFIT CALCULATOR ENGINE ---------- */
@@ -21609,10 +21611,10 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
   // Preset buttons and pack sizes come from the product catalogue.
   renderCalcPresetButtons() {
     const products = (this.data.products || []).filter(p => p.active !== false).slice(0, 8);
-    const button = (onclick, label, title) => `<button type="button" onclick="${tfEscapeHtml(onclick)}" title="${tfEscapeHtml(title)}" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">${tfEscapeHtml(label)}</button>`;
+    const button = (onclick, label, title) => `<button type="button" onclick="${tfEscapeHtml(onclick)}" title="${tfEscapeHtml(title)}" class="btn-tactile px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">${tfEscapeHtml(label)}</button>`;
     const label = p => `${p.shortName || p.name}${p.defaultPackSize || p.packSize ? ` (${p.defaultPackSize || p.packSize})` : ''}`;
     const simple = document.getElementById('calc-simple-presets');
-    if (simple) simple.innerHTML = products.map(p => button(`app.loadSimplePreset('${tfEscapeJs(p.id)}')`, label(p), `Load ${p.name}`)).join('') || '<span class="text-[11px] text-slate-400">Add products in the Products tab to get presets</span>';
+    if (simple) simple.innerHTML = products.map(p => button(`app.loadSimplePreset('${tfEscapeJs(p.id)}')`, label(p), `Load ${p.name}`)).join('') || '<span class="text-xs text-slate-400">Add products in the Products tab to get presets</span>';
     const advanced = document.getElementById('calc-adv-presets');
     if (advanced) advanced.innerHTML = products.map(p => button(`app.addAdvancedProduct('${tfEscapeJs(p.id)}')`, '+ ' + label(p), `Add ${p.name}`)).join('');
     const packSelect = document.getElementById('calc-simple-pack-size');
@@ -21635,7 +21637,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     this.renderCalcPresetButtons();
     this.syncSimpleInputs();
     this.updateProfitCalculator();
-    this.showToast(`✨ Loaded preset: ${this.simpleCalcData.name}`);
+    this.showToast(`Loaded preset: ${this.simpleCalcData.name}`);
   }
 
   handleSimplePackSizeChange(size) {
@@ -21746,7 +21748,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
             <input id="adv-input-trans-${tfEscapeHtml(idx)}" type="number" step="0.5" min="0" value="${tfEscapeHtml(p.transportPct !== undefined ? p.transportPct : trans)}" class="w-12 p-1.5 text-center font-bold text-slate-900 dark:text-white bg-transparent border border-slate-200 dark:border-slate-700 rounded text-xs" oninput="app.handleAdvancedRowInput(${tfEscapeHtml(idx)}, 'transportPct', this.value)">
           </td>
           <td class="py-2 px-2 text-center">
-            <input id="adv-input-label-${tfEscapeHtml(idx)}" type="number" step="0.05" min="0" value="${tfEscapeHtml(p.labelCost !== undefined ? p.labelCost : labelCost)}" class="w-12 p-1.5 text-center font-bold text-indigo-700 dark:text-indigo-300 bg-transparent border border-indigo-200 dark:border-indigo-800 rounded text-xs" placeholder="0.00" oninput="app.handleAdvancedRowInput(${tfEscapeHtml(idx)}, 'labelCost', this.value)">
+            <input id="adv-input-label-${tfEscapeHtml(idx)}" type="number" step="0.05" min="0" value="${tfEscapeHtml(p.labelCost !== undefined ? p.labelCost : labelCost)}" class="w-12 p-1.5 text-center font-bold text-blue-700 dark:text-blue-300 bg-transparent border border-blue-200 dark:border-blue-800 rounded text-xs" placeholder="0.00" oninput="app.handleAdvancedRowInput(${tfEscapeHtml(idx)}, 'labelCost', this.value)">
           </td>
           <td id="adv-row-landed-${tfEscapeHtml(idx)}" class="py-2 px-2 text-right font-bold text-rose-600 dark:text-rose-400">
             ₹${tfEscapeHtml(landed.toFixed(2))}
@@ -21757,7 +21759,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
           <td class="py-2 px-2 text-center">
             <input id="adv-input-mkt-${tfEscapeHtml(idx)}" type="number" step="0.5" min="0" value="${tfEscapeHtml(p.marketeerPct !== undefined ? p.marketeerPct : mkt)}" class="w-12 p-1.5 text-center font-bold text-amber-600 bg-transparent border border-amber-300 dark:border-amber-700 rounded text-xs" oninput="app.handleAdvancedRowInput(${tfEscapeHtml(idx)}, 'marketeerPct', this.value)">
           </td>
-          <td id="adv-row-ss-${tfEscapeHtml(idx)}" class="py-2 px-2 text-right font-bold text-teal-600 dark:text-teal-400">
+          <td id="adv-row-ss-${tfEscapeHtml(idx)}" class="py-2 px-2 text-right font-bold text-emerald-600 dark:text-emerald-400">
             ₹${tfEscapeHtml(ssPrice.toFixed(2))}
           </td>
           <td id="adv-row-outflow-${tfEscapeHtml(idx)}" class="py-2 px-2 text-right font-bold text-rose-600 dark:text-rose-400">
@@ -21817,12 +21819,12 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     this.advancedCalcProducts.push(newProd);
     this.renderAdvancedRows();
     this.updateProfitCalculator();
-    this.showToast(`✨ Added "${newProd.name}" to order calculation`);
+    this.showToast(`Added "${newProd.name}" to order calculation`);
   }
 
   removeAdvancedProduct(idx) {
     if (this.advancedCalcProducts.length <= 1) {
-      this.showToast('⚠️ Must keep at least one product in order.');
+      this.showToast('Must keep at least one product in order.');
       return;
     }
     this.advancedCalcProducts.splice(idx, 1);
@@ -21916,7 +21918,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
           
           <!-- 1. Mfg Base -->
           <div class="flex-1 min-w-[70px] sm:min-w-[80px] p-1.5 sm:p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs flex flex-col items-center justify-center text-center min-w-0 overflow-hidden">
-            <span class="text-[9.5px] sm:text-[10.5px] font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400 truncate">1. Mfg Base</span>
+            <span class="text-xs sm:text-xs font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400 truncate">1. Mfg Base</span>
             <span class="text-xs sm:text-sm lg:text-base font-black font-mono-num text-slate-900 dark:text-white mt-0.5 truncate">₹${tfEscapeHtml(mfg.toFixed(2))}</span>
           </div>
 
@@ -21925,8 +21927,8 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
           <!-- 2. GST -->
           <div class="flex-1 min-w-[70px] sm:min-w-[80px] p-1.5 sm:p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs flex flex-col items-center justify-center text-center min-w-0 overflow-hidden">
             <div class="flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5 w-full min-w-0">
-              <span class="text-[9.5px] sm:text-[10.5px] font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400 truncate">2. GST</span>
-              <span class="text-[8.5px] sm:text-[9.5px] font-bold font-mono-num text-slate-400 dark:text-slate-500 shrink-0">(${tfEscapeHtml(gst)}%)</span>
+              <span class="text-xs sm:text-xs font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400 truncate">2. GST</span>
+              <span class="text-xs sm:text-xs font-bold font-mono-num text-slate-400 dark:text-slate-500 shrink-0">(${tfEscapeHtml(gst)}%)</span>
             </div>
             <span class="text-xs sm:text-sm lg:text-base font-black font-mono-num text-slate-900 dark:text-white mt-0.5 truncate">+₹${tfEscapeHtml(gstAmt.toFixed(2))}</span>
           </div>
@@ -21936,8 +21938,8 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
           <!-- 3. Freight -->
           <div class="flex-1 min-w-[70px] sm:min-w-[80px] p-1.5 sm:p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs flex flex-col items-center justify-center text-center min-w-0 overflow-hidden">
             <div class="flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5 w-full min-w-0">
-              <span class="text-[9.5px] sm:text-[10.5px] font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400 truncate">3. Freight</span>
-              <span class="text-[8.5px] sm:text-[9.5px] font-bold font-mono-num text-slate-400 dark:text-slate-500 shrink-0">(${tfEscapeHtml(trans)}%)</span>
+              <span class="text-xs sm:text-xs font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400 truncate">3. Freight</span>
+              <span class="text-xs sm:text-xs font-bold font-mono-num text-slate-400 dark:text-slate-500 shrink-0">(${tfEscapeHtml(trans)}%)</span>
             </div>
             <span class="text-xs sm:text-sm lg:text-base font-black font-mono-num text-slate-900 dark:text-white mt-0.5 truncate">+₹${tfEscapeHtml(transAmt.toFixed(2))}</span>
           </div>
@@ -21945,9 +21947,9 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
           ${labelCost > 0 ? `
             <span class="text-slate-400 dark:text-slate-500 font-black text-xs shrink-0 px-0.5">+</span>
             <!-- 4. Label / Print -->
-            <div class="flex-1 min-w-[75px] sm:min-w-[85px] p-1.5 sm:p-2 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-indigo-900 dark:text-indigo-200 shadow-2xs flex flex-col items-center justify-center text-center min-w-0 overflow-hidden">
-              <span class="text-[9.5px] sm:text-[10.5px] font-bold uppercase tracking-tight text-indigo-600 dark:text-indigo-400 truncate">4. Print/Label</span>
-              <span class="text-xs sm:text-sm lg:text-base font-black font-mono-num text-indigo-700 dark:text-indigo-300 mt-0.5 truncate">+₹${tfEscapeHtml(labelCost.toFixed(2))}</span>
+            <div class="flex-1 min-w-[75px] sm:min-w-[85px] p-1.5 sm:p-2 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-200 shadow-2xs flex flex-col items-center justify-center text-center min-w-0 overflow-hidden">
+              <span class="text-xs sm:text-xs font-bold uppercase tracking-tight text-blue-600 dark:text-blue-400 truncate">4. Print/Label</span>
+              <span class="text-xs sm:text-sm lg:text-base font-black font-mono-num text-blue-700 dark:text-blue-300 mt-0.5 truncate">+₹${tfEscapeHtml(labelCost.toFixed(2))}</span>
             </div>
           ` : ''}
 
@@ -21956,53 +21958,53 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
           <!-- 5. Landed Cost -->
           <div class="flex-1 min-w-[95px] sm:min-w-[110px] p-1.5 sm:p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-300 dark:border-rose-700 text-rose-900 dark:text-rose-200 shadow-xs flex flex-col items-center justify-center text-center min-w-0 overflow-hidden">
             <div class="flex items-center justify-center gap-1 w-full min-w-0 px-0.5">
-              <span class="text-xs sm:text-sm shrink-0">💳</span>
-              <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-tight text-rose-700 dark:text-rose-300 truncate">Landed Cost</span>
+              <span class="text-xs sm:text-sm shrink-0"><i data-lucide="credit-card" class="w-4 h-4 inline-block"></i></span>
+              <span class="text-xs sm:text-xs font-black uppercase tracking-tight text-rose-700 dark:text-rose-300 truncate">Landed Cost</span>
             </div>
-            <span class="text-xs sm:text-sm lg:text-base font-black font-mono-num text-rose-800 dark:text-rose-200 mt-0.5 truncate">₹${tfEscapeHtml(landed.toFixed(2))} <span class="text-[9px] font-bold text-rose-600 dark:text-rose-400">/pc</span></span>
-            <span class="text-[8.5px] sm:text-[9px] font-semibold text-rose-600 dark:text-rose-400 opacity-90 truncate">Pay from Pocket</span>
+            <span class="text-xs sm:text-sm lg:text-base font-black font-mono-num text-rose-800 dark:text-rose-200 mt-0.5 truncate">₹${tfEscapeHtml(landed.toFixed(2))} <span class="text-xs font-bold text-rose-600 dark:text-rose-400">/pc</span></span>
+            <span class="text-xs sm:text-xs font-semibold text-rose-600 dark:text-rose-400 opacity-90 truncate">Pay from Pocket</span>
           </div>
 
-          <span class="text-slate-400 dark:text-slate-500 font-black text-xs shrink-0 px-0.5">➔</span>
+          <span class="text-slate-400 dark:text-slate-500 font-black text-xs shrink-0 px-0.5">→</span>
 
           <!-- 6. Magic Roots -->
           <div class="flex-1 min-w-[95px] sm:min-w-[110px] p-1.5 sm:p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-400 dark:border-emerald-600 text-emerald-900 dark:text-emerald-200 shadow-xs flex flex-col items-center justify-center text-center min-w-0 overflow-hidden">
             <div class="flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5 w-full min-w-0 px-0.5">
               <div class="flex items-center gap-0.5 shrink-0">
-                <span class="text-xs shrink-0">🌿</span>
-                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-tight text-emerald-700 dark:text-emerald-300 truncate" title="${tfEscapeHtml(this.config().brand)} (${tfEscapeHtml(profit)}%)">${tfEscapeHtml(this.config().brand)}</span>
+                <span class="text-xs shrink-0"><i data-lucide="leaf" class="w-4 h-4 inline-block"></i></span>
+                <span class="text-xs sm:text-xs font-black uppercase tracking-tight text-emerald-700 dark:text-emerald-300 truncate" title="${tfEscapeHtml(this.config().brand)} (${tfEscapeHtml(profit)}%)">${tfEscapeHtml(this.config().brand)}</span>
               </div>
-              <span class="text-[8.5px] sm:text-[9.5px] font-black font-mono-num px-1 py-0.2 rounded bg-emerald-200/60 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 shrink-0">(${tfEscapeHtml(profit)}%)</span>
+              <span class="text-xs sm:text-xs font-black font-mono-num px-1 py-0.2 rounded bg-emerald-200/60 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 shrink-0">(${tfEscapeHtml(profit)}%)</span>
             </div>
-            <span class="text-xs sm:text-sm lg:text-base font-black font-mono-num text-emerald-700 dark:text-emerald-300 mt-0.5 truncate">+₹${tfEscapeHtml(ourCut.toFixed(2))} <span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">/unit</span></span>
-            <span class="text-[8.5px] sm:text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 opacity-90 truncate">Into My Pocket</span>
+            <span class="text-xs sm:text-sm lg:text-base font-black font-mono-num text-emerald-700 dark:text-emerald-300 mt-0.5 truncate">+₹${tfEscapeHtml(ourCut.toFixed(2))} <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">/unit</span></span>
+            <span class="text-xs sm:text-xs font-semibold text-emerald-600 dark:text-emerald-400 opacity-90 truncate">Into My Pocket</span>
           </div>
 
-          <span class="text-slate-400 dark:text-slate-500 font-black text-xs shrink-0 px-0.5">➔</span>
+          <span class="text-slate-400 dark:text-slate-500 font-black text-xs shrink-0 px-0.5">→</span>
 
           <!-- 7. Marketeer -->
           <div class="flex-1 min-w-[95px] sm:min-w-[110px] p-1.5 sm:p-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-300 dark:border-amber-600 text-amber-900 dark:text-amber-200 shadow-xs flex flex-col items-center justify-center text-center min-w-0 overflow-hidden">
             <div class="flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5 w-full min-w-0 px-0.5">
               <div class="flex items-center gap-0.5 shrink-0">
-                <span class="text-xs shrink-0">🤝</span>
-                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-tight text-amber-700 dark:text-amber-300 truncate" title="Marketeer (${tfEscapeHtml(mkt)}%)">Marketeer</span>
+                <span class="text-xs shrink-0"><i data-lucide="handshake" class="w-4 h-4 inline-block"></i></span>
+                <span class="text-xs sm:text-xs font-black uppercase tracking-tight text-amber-700 dark:text-amber-300 truncate" title="Marketeer (${tfEscapeHtml(mkt)}%)">Marketeer</span>
               </div>
-              <span class="text-[8.5px] sm:text-[9.5px] font-black font-mono-num px-1 py-0.2 rounded bg-amber-200/60 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 shrink-0">(${tfEscapeHtml(mkt)}%)</span>
+              <span class="text-xs sm:text-xs font-black font-mono-num px-1 py-0.2 rounded bg-amber-200/60 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 shrink-0">(${tfEscapeHtml(mkt)}%)</span>
             </div>
-            <span class="text-xs sm:text-sm lg:text-base font-black font-mono-num text-amber-700 dark:text-amber-300 mt-0.5 truncate">+₹${tfEscapeHtml(mktCut.toFixed(2))} <span class="text-[9px] font-bold text-amber-600 dark:text-amber-400">/unit</span></span>
-            <span class="text-[8.5px] sm:text-[9px] font-semibold text-amber-600 dark:text-amber-400 opacity-90 truncate">Landed × ${tfEscapeHtml(mkt)}%</span>
+            <span class="text-xs sm:text-sm lg:text-base font-black font-mono-num text-amber-700 dark:text-amber-300 mt-0.5 truncate">+₹${tfEscapeHtml(mktCut.toFixed(2))} <span class="text-xs font-bold text-amber-600 dark:text-amber-400">/unit</span></span>
+            <span class="text-xs sm:text-xs font-semibold text-amber-600 dark:text-amber-400 opacity-90 truncate">Landed × ${tfEscapeHtml(mkt)}%</span>
           </div>
 
-          <span class="text-slate-400 dark:text-slate-500 font-black text-xs shrink-0 px-0.5">➔</span>
+          <span class="text-slate-400 dark:text-slate-500 font-black text-xs shrink-0 px-0.5">→</span>
 
           <!-- 8. Price to SS -->
-          <div class="flex-1 min-w-[95px] sm:min-w-[110px] p-1.5 sm:p-2 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-700 text-white shadow-sm border border-teal-500 flex flex-col items-center justify-center text-center min-w-0 overflow-hidden">
+          <div class="flex-1 min-w-[95px] sm:min-w-[110px] p-1.5 sm:p-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-sm border border-emerald-500 flex flex-col items-center justify-center text-center min-w-0 overflow-hidden">
             <div class="flex items-center justify-center gap-1 w-full min-w-0 px-0.5">
-              <span class="text-xs sm:text-sm shrink-0">🚚</span>
-              <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-tight text-teal-100 truncate">Price to SS</span>
+              <span class="text-xs sm:text-sm shrink-0"><i data-lucide="truck" class="w-4 h-4 inline-block"></i></span>
+              <span class="text-xs sm:text-xs font-black uppercase tracking-tight text-emerald-100 truncate">Price to SS</span>
             </div>
-            <span class="text-xs sm:text-sm lg:text-base font-black font-mono-num text-white mt-0.5 truncate">₹${tfEscapeHtml(ssPrice.toFixed(2))} <span class="text-[9px] font-bold text-teal-200">/ unit</span></span>
-            <span class="text-[8.5px] sm:text-[9px] font-semibold text-teal-100 opacity-90 truncate">Billing Rate</span>
+            <span class="text-xs sm:text-sm lg:text-base font-black font-mono-num text-white mt-0.5 truncate">₹${tfEscapeHtml(ssPrice.toFixed(2))} <span class="text-xs font-bold text-emerald-200">/ unit</span></span>
+            <span class="text-xs sm:text-xs font-semibold text-emerald-100 opacity-90 truncate">Billing Rate</span>
           </div>
 
         </div>
@@ -22207,12 +22209,12 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(quote).then(() => {
-        this.showToast('📋 Order quote breakdown copied to clipboard!');
+        this.showToast('Order quote breakdown copied to clipboard!');
       }).catch(() => {
-        this.showToast('✅ Order quote generated!');
+        this.showToast('Order quote generated!');
       });
     } else {
-      this.showToast('📋 Order quote ready!');
+      this.showToast('Order quote ready!');
     }
   }
 
@@ -22295,7 +22297,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
       }
       this.renderOrderSkuTable();
       this.recomputeOrderTotals();
-      this.showToast(`✅ New order populated with calculated products!`);
+      this.showToast(`New order populated with calculated products!`);
     }, 60);
   }
 
@@ -22305,14 +22307,14 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     this.quickFilterChip = null;
     const clearBtn = document.getElementById('chip-clear-filter');
     if (clearBtn) clearBtn.classList.add('hidden');
-    document.querySelectorAll('.tf-chip-filter').forEach(c => c.classList.remove('ring-2', 'ring-amber-500', 'shadow-xs'));
+    document.querySelectorAll('.tf-chip-filter').forEach(c => c.classList.remove('ring-2', 'ring-emerald-600', 'shadow-xs'));
 
     document.querySelectorAll('[data-filter-status]').forEach(b => {
       const match = b.getAttribute('data-filter-status') === filter;
-      b.classList.toggle('bg-amber-600', match);
+      b.classList.toggle('bg-emerald-700', match);
       b.classList.toggle('text-white', match);
-      b.classList.toggle('dark:bg-amber-500', match);
-      b.classList.toggle('dark:text-slate-900', match);
+      b.classList.toggle('dark:bg-emerald-700', match);
+      b.classList.toggle('dark:text-white', match);
       b.classList.toggle('shadow-xs', match);
     });
 
@@ -22339,9 +22341,9 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     document.querySelectorAll('.tf-chip-filter').forEach(btn => {
       const isCurrent = btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(chip);
       if (isCurrent) {
-        btn.classList.add('ring-2', 'ring-amber-500', 'shadow-xs');
+        btn.classList.add('ring-2', 'ring-emerald-600', 'shadow-xs');
       } else {
-        btn.classList.remove('ring-2', 'ring-amber-500', 'shadow-xs');
+        btn.classList.remove('ring-2', 'ring-emerald-600', 'shadow-xs');
       }
     });
 
@@ -22360,7 +22362,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     this.quickFilterChip = null;
     const clearBtn = document.getElementById('chip-clear-filter');
     if (clearBtn) clearBtn.classList.add('hidden');
-    document.querySelectorAll('.tf-chip-filter').forEach(c => c.classList.remove('ring-2', 'ring-amber-500', 'shadow-xs'));
+    document.querySelectorAll('.tf-chip-filter').forEach(c => c.classList.remove('ring-2', 'ring-emerald-600', 'shadow-xs'));
     this.renderOrdersTable();
   }
 
@@ -22521,21 +22523,21 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
           <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition-colors" onclick="app.navigateToOrderDetail('${tfEscapeHtml(tfEscapeJs(o.id))}')">
             <td class="py-3 px-4 font-mono-num font-bold text-slate-900 dark:text-white">
               ${tfEscapeHtml(o.invoiceNumber)}
-              <div class="text-[10px] text-slate-400 font-normal">${tfEscapeHtml(this.formatDate(o.date))}</div>
+              <div class="text-xs text-slate-400 font-normal">${tfEscapeHtml(this.formatDate(o.date))}</div>
             </td>
             <td class="py-3 px-3">
-              <button type="button" onclick="event.stopPropagation(); app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(o.retailerName || ''))}')" class="font-semibold text-slate-800 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400 hover:underline inline-flex items-center gap-1 group text-left" title="Click to view Buyer details">
+              <button type="button" onclick="event.stopPropagation(); app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(o.retailerName || ''))}')" class="font-semibold text-slate-800 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline inline-flex items-center gap-1 group text-left" title="Click to view Buyer details">
                 <span>${tfEscapeHtml(o.retailerName)}</span>
                 <i data-lucide="arrow-up-right" class="w-3 h-3 opacity-0 group-hover:opacity-100 text-amber-500 shrink-0"></i>
               </button>
-              <div class="text-[10px] text-slate-400 font-normal">${tfEscapeHtml(o.paymentTerms || 'Net 15')}</div>
+              <div class="text-xs text-slate-400 font-normal">${tfEscapeHtml(o.paymentTerms || 'Net 15')}</div>
             </td>
             <td class="py-3 px-3 font-mono-num text-slate-700 dark:text-slate-300 font-bold">${tfEscapeHtml(this.formatCurrency(o.totalInvoiceAmount))}</td>
             <td class="py-3 px-3 font-mono-num text-emerald-600 dark:text-emerald-400 font-bold">${tfEscapeHtml(this.formatCurrency(o.customerAdvanceReceived || 0))}</td>
             <td class="py-3 px-3 font-mono-num text-rose-600 dark:text-rose-400 font-black text-sm">${tfEscapeHtml(this.formatCurrency(o.customerBalanceDue))}</td>
             <td class="py-3 px-3">
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold ${tfEscapeHtml(isOverdue ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300')}">
-                ${tfEscapeHtml(isOverdue ? '⚠️ Overdue' : 'Due')} ${tfEscapeHtml(this.formatDate(o.dueDate))}
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold ${tfEscapeHtml(isOverdue ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300')}">
+                ${tfEscapeHtml(isOverdue ? 'Overdue' : 'Due')} ${tfEscapeHtml(this.formatDate(o.dueDate))}
               </span>
             </td>
             <td class="py-3 px-4 text-right" onclick="event.stopPropagation()">
@@ -22579,16 +22581,16 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
           <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer transition-colors" onclick="app.navigateToOrderDetail('${tfEscapeHtml(tfEscapeJs(o.id))}')">
             <td class="py-3 px-4 font-mono-num font-bold text-slate-900 dark:text-white">
               ${tfEscapeHtml(o.invoiceNumber)}
-              <div class="text-[10px] text-slate-400 font-normal">Buyer: ${tfEscapeHtml(o.retailerName)}</div>
+              <div class="text-xs text-slate-400 font-normal">Buyer: ${tfEscapeHtml(o.retailerName)}</div>
             </td>
             <td class="py-3 px-3">
-              <button type="button" onclick="event.stopPropagation(); app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(o.manufacturerName || 'Factory'))}')" class="font-semibold text-slate-800 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400 hover:underline inline-flex items-center gap-1 group text-left" title="Click to view Factory details">
+              <button type="button" onclick="event.stopPropagation(); app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(o.manufacturerName || 'Factory'))}')" class="font-semibold text-slate-800 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline inline-flex items-center gap-1 group text-left" title="Click to view Factory details">
                 <span>${tfEscapeHtml(o.manufacturerName || 'Factory')}</span>
                 <i data-lucide="arrow-up-right" class="w-3 h-3 opacity-0 group-hover:opacity-100 text-amber-500 shrink-0"></i>
               </button>
               ${o.packagingVendorName ? `
-                <div class="text-[10px] text-slate-400 font-normal mt-0.5">
-                  <button type="button" onclick="event.stopPropagation(); app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(o.packagingVendorName || ''))}')" class="hover:text-amber-500 hover:underline inline-flex items-center gap-0.5" title="Click to view Packaging Vendor">
+                <div class="text-xs text-slate-400 font-normal mt-0.5">
+                  <button type="button" onclick="event.stopPropagation(); app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(o.packagingVendorName || ''))}')" class="hover:text-emerald-700 hover:underline inline-flex items-center gap-0.5" title="Click to view Packaging Vendor">
                     <span>${tfEscapeHtml(o.packagingVendorName)}</span>
                     <i data-lucide="arrow-up-right" class="w-2.5 h-2.5 opacity-60"></i>
                   </button>
@@ -22599,7 +22601,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
             <td class="py-3 px-3 font-mono-num text-blue-600 dark:text-blue-400 font-bold">${tfEscapeHtml(this.formatCurrency(totalAdv))}</td>
             <td class="py-3 px-3 font-mono-num text-amber-600 dark:text-amber-400 font-black text-sm">${tfEscapeHtml(this.formatCurrency(remaining))}</td>
             <td class="py-3 px-3">
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 capitalize">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 capitalize">
                 ${tfEscapeHtml(o.status.replace(/_/g, ' '))}
               </span>
             </td>
@@ -22609,7 +22611,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
                   <i data-lucide="factory" class="w-3 h-3 text-amber-500"></i>
                   <span>PO</span>
                 </button>
-                <button onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(o.id))}', '${tfEscapeHtml(tfEscapeJs(o.manufacturerName || ''))}', 'paid')" class="btn-tactile px-2.5 py-1 text-xs font-bold rounded bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center gap-1 shadow-2xs" title="Disburse Vendor Payment">
+                <button onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(o.id))}', '${tfEscapeHtml(tfEscapeJs(o.manufacturerName || ''))}', 'paid')" class="btn-tactile px-2.5 py-1 text-xs font-bold rounded bg-emerald-700 hover:bg-emerald-800 text-white flex items-center gap-1 shadow-2xs" title="Disburse Vendor Payment">
                   <i data-lucide="send" class="w-3 h-3"></i>
                   <span>Pay Vendor</span>
                 </button>
@@ -22741,7 +22743,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
       // Financial Amount color-coding:
       // Green (+ ₹...) for Inward / Customer Payments / Receivables / Buyer Invoices
       // Red (- ₹...) for Outward / Vendor Payments / Factory Advances / Expenses
-      let amountBadge = '<span class="text-slate-400 font-mono-num text-[11px]">—</span>';
+      let amountBadge = '<span class="text-slate-400 font-mono-num text-xs">—</span>';
       if (f.amountFormatted && f.amountFormatted !== '—') {
         const isOutward = f.direction === 'OUT' || f.amountFormatted.startsWith('-');
         const isInward = f.direction === 'IN' || f.amountFormatted.startsWith('+');
@@ -22772,7 +22774,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
             ${amountBadge}
           </td>
           <td class="py-3 px-3 whitespace-nowrap">
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${tfEscapeHtml(f.category === 'invoice' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300' : f.category === 'excel' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300')}">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${tfEscapeHtml(f.category === 'invoice' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300' : f.category === 'excel' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300')}">
               ${tfEscapeHtml(f.category)}
             </span>
           </td>
@@ -22784,7 +22786,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
                 <i data-lucide="eye" class="w-3 h-3 text-blue-500"></i>
                 <span>Open</span>
               </button>
-              <button onclick="event.stopPropagation(); app.openFileInExplorer('${tfEscapeHtml(tfEscapeJs(encodeURIComponent(f.path)))}')" class="btn-tactile p-1 text-slate-400 hover:text-amber-500 rounded" title="Reveal ${tfEscapeHtml(f.name)} in Windows Explorer">
+              <button onclick="event.stopPropagation(); app.openFileInExplorer('${tfEscapeHtml(tfEscapeJs(encodeURIComponent(f.path)))}')" class="btn-tactile p-1 text-slate-400 hover:text-emerald-700 rounded" title="Reveal ${tfEscapeHtml(f.name)} in Windows Explorer">
                 <i data-lucide="folder-open" class="w-3.5 h-3.5"></i>
               </button>
             </div>
@@ -22853,21 +22855,21 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
 
   async openNativeFolder(target = 'root', orderId = null) {
     try {
-      this.showToast('📂 Opening folder in Windows Explorer...');
+      this.showToast('Opening folder in Windows Explorer...');
       const resp = await fetch('/api/open-folder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ target, orderId })
       });
       if (resp.ok) {
-        this.showToast(`✅ Opened folder in Windows Explorer!`);
+        this.showToast(`Opened folder in Windows Explorer!`);
       } else {
         const err = await resp.json().catch(() => ({}));
-        this.showToast(`⚠️ Could not open folder: ${err.error || 'Unknown error'}`);
+        this.showToast(`Could not open folder: ${err.error || 'Unknown error'}`);
       }
     } catch (e) {
       console.warn('Failed to open native folder:', e);
-      this.showToast('⚠️ Could not open folder on Windows.');
+      this.showToast('Could not open folder on Windows.');
     }
   }
 
@@ -22902,7 +22904,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
         document.execCommand('copy');
         area.remove();
       }
-      this.showToast(`📋 ${label} copied`);
+      this.showToast(`${label} copied`);
       return true;
     } catch (err) {
       this.showToast(`Could not copy ${label}: ${err.message}`);
@@ -22916,19 +22918,19 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
   }
 
   async reindexVaultFiles() {
-    this.showToast('🔄 Scanning directories for newly dropped files...');
+    this.showToast('Scanning directories for newly dropped files...');
     try {
       const resp = await fetch('/api/vault/reindex', { method: 'POST' });
       if (resp.ok) {
         const res = await resp.json();
-        this.showToast(`✨ Vault re-indexed! ${res.newlyIndexed || 0} new documents recorded.`);
+        this.showToast(`Vault re-indexed! ${res.newlyIndexed || 0} new documents recorded.`);
         this.loadVaultFiles();
       } else {
-        this.showToast('⚠️ Vault re-index failed.');
+        this.showToast('Vault re-index failed.');
       }
     } catch (e) {
       console.warn('Reindex error:', e);
-      this.showToast('⚠️ Vault re-index network error.');
+      this.showToast('Vault re-index network error.');
     }
   }
 
@@ -23175,7 +23177,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
       const isPast = s.step < currentStep;
       const isCurrent = s.step === currentStep;
       let badgeBg = 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700';
-      let icon = `<span class="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold">${tfEscapeHtml(s.step)}</span>`;
+      let icon = `<span class="w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold">${tfEscapeHtml(s.step)}</span>`;
 
       if (isPast) {
         badgeBg = 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800';
@@ -23188,11 +23190,11 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
       return `
         <div class="p-2.5 rounded-lg border ${tfEscapeHtml(badgeBg)} flex flex-col justify-between transition-all">
           <div class="flex items-center justify-between mb-1">
-            <span class="text-[10px] font-bold uppercase tracking-wider">Step ${tfEscapeHtml(s.step)}</span>
+            <span class="text-xs font-bold uppercase tracking-wider">Step ${tfEscapeHtml(s.step)}</span>
             ${icon}
           </div>
           <div class="font-bold text-xs truncate">${tfEscapeHtml(s.label)}</div>
-          <div class="text-[10px] opacity-75 truncate mt-0.5">${tfEscapeHtml(s.desc)}</div>
+          <div class="text-xs opacity-75 truncate mt-0.5">${tfEscapeHtml(s.desc)}</div>
         </div>
       `;
     }).join('');
@@ -23204,13 +23206,13 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
 
     if (order.status === 'action_needed') {
       this.openFactoryPOModal(order.id);
-      this.showToast('🚀 Forward Factory PO to advance order to production!');
+      this.showToast('Forward Factory PO to advance order to production!');
     } else if (order.status === 'in_production') {
       if (!order.bottlingDone) {
         order.bottlingDone = true;
         this.saveData();
         this.renderOrderDetailView(order.id);
-        this.showToast('✅ Bottling completed! Ready for transport dispatch.');
+        this.showToast('Bottling completed! Ready for transport dispatch.');
       } else {
         this.openTransportDispatchModal(order.id);
       }
@@ -23218,9 +23220,9 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
       this.openDeliveryConfirmModal(order.id);
     } else if (order.status === 'delivered_overdue') {
       this.openPaymentModal(order.id, order.retailerName, 'received');
-      this.showToast('🧾 Log final settlement to mark order complete!');
+      this.showToast('Log final settlement to mark order complete!');
     } else if (order.status === 'settled') {
-      this.showToast('🎉 Order is completely fulfilled and settled!');
+      this.showToast('Order is completely fulfilled and settled!');
     }
   }
 
@@ -23338,7 +23340,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     if (!file) return;
     this.pendingDispatchBiltyFile = file;
     const label = document.getElementById('dispatch-bilty-label');
-    if (label) label.innerText = `📎 ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    if (label) label.innerText = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
   }
 
   async confirmTransportDispatch() {
@@ -23397,7 +23399,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     this.renderOrderDetailView(order.id);
     this.renderOrdersTable();
     this.renderKpis();
-    this.showToast(`🚚 Order ${order.invoiceNumber} marked Dispatched / In-Transit! (LR: ${lrNumber})`);
+    this.showToast(`Order ${order.invoiceNumber} marked Dispatched / In-Transit! (LR: ${lrNumber})`);
   }
 
   dispatchWithPendingLr() {
@@ -23470,7 +23472,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
     this.renderOrderDetailView(order.id);
     this.renderOrdersTable();
     this.renderKpis();
-    this.showToast(`📦 Order ${order.invoiceNumber} marked Delivered! Balance payment due: ${this.formatCurrency(order.customerBalanceDue)}`);
+    this.showToast(`Order ${order.invoiceNumber} marked Delivered! Balance payment due: ${this.formatCurrency(order.customerBalanceDue)}`);
   }
 
   // --- Universal Modal System (Zero window.prompt and zero window.confirm) ---
@@ -23497,7 +23499,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
         if (suggestions && suggestions.length > 0) {
           suggBox.classList.remove('hidden');
           suggBox.innerHTML = suggestions.map(s => `
-            <button type="button" onclick="document.getElementById('prompt-modal-input').value = '${tfEscapeHtml(tfEscapeJs(s))}'; document.getElementById('prompt-modal-input').focus();" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 hover:bg-amber-500/20 text-slate-700 dark:text-slate-300 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors">
+            <button type="button" onclick="document.getElementById('prompt-modal-input').value = '${tfEscapeHtml(tfEscapeJs(s))}'; document.getElementById('prompt-modal-input').focus();" class="px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 hover:bg-amber-500/20 text-slate-700 dark:text-slate-300 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors">
               ${tfEscapeHtml(s)}
             </button>
           `).join('');
@@ -23619,12 +23621,12 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
       const wrap = document.getElementById(wrapId);
       if (!wrap) return;
       if (!items || items.length === 0) {
-        wrap.innerHTML = `<span class="text-[10px] text-slate-400 italic">No secondary ${tfEscapeHtml(fieldType)}s (click + to add)</span>
-          <button type="button" onclick="app.promptAddAltContact('${tfEscapeHtml(tfEscapeJs(fieldType))}')" class="px-1.5 py-0.2 rounded text-[10px] font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/60">+ Add</button>`;
+        wrap.innerHTML = `<span class="text-xs text-slate-400 italic">No secondary ${tfEscapeHtml(fieldType)}s (click + to add)</span>
+          <button type="button" onclick="app.promptAddAltContact('${tfEscapeHtml(tfEscapeJs(fieldType))}')" class="px-1.5 py-0.2 rounded text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/60">+ Add</button>`;
         return;
       }
       wrap.innerHTML = items.map((val, idx) => `
-        <span class="tf-contact-pill inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 transition-all hover:shadow-2xs">
+        <span class="tf-contact-pill inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-mono font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 transition-all hover:shadow-2xs">
           <span>${tfEscapeHtml(val)}</span>
           <button type="button" onclick="app.swapContactField('${tfEscapeHtml(tfEscapeJs(fieldType))}', ${tfEscapeHtml(idx)})" class="pill-swap-icon hover:text-emerald-950 dark:hover:text-white p-0.5" title="Swap with primary ${tfEscapeHtml(fieldType)}">
             ⇄
@@ -23634,7 +23636,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
           </button>
         </span>
       `).join('') + `
-        <button type="button" onclick="app.promptAddAltContact('${tfEscapeHtml(tfEscapeJs(fieldType))}')" class="px-1.5 py-0.2 rounded text-[10px] font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/60">+ Add</button>
+        <button type="button" onclick="app.promptAddAltContact('${tfEscapeHtml(tfEscapeJs(fieldType))}')" class="px-1.5 py-0.2 rounded text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/60">+ Add</button>
       `;
     };
 
@@ -23733,7 +23735,7 @@ Return valid raw JSON only (no markdown, no quotes around json block) with keys:
 
     if (imageFile) {
       event.preventDefault();
-      this.showToast('📸 Screenshot detected from clipboard! Processing...');
+      this.showToast('Screenshot detected from clipboard! Processing...');
       const reader = new FileReader();
       reader.onload = async (e) => {
         const dataUrl = e.target.result;
@@ -23761,7 +23763,7 @@ Format as plain text line by line like:
               if (input && reply) {
                 input.value = reply;
                 this.parseWhatsAppOrderInput();
-                this.showToast('✨ Gemini Vision extracted order from screenshot!');
+                this.showToast('Gemini Vision extracted order from screenshot!');
               }
             }
           } catch (err) {
@@ -23806,7 +23808,7 @@ Format as plain text line by line like:
       reader.onload = (e) => {
         const dataUrl = e.target.result;
         this.attachPaymentProofData(dataUrl, `clipboard_receipt_${Date.now()}.png`, imageFile.type || 'image/png');
-        this.showToast('📸 Attached payment receipt screenshot from clipboard!');
+        this.showToast('Attached payment receipt screenshot from clipboard!');
       };
       reader.readAsDataURL(imageFile);
       return;
@@ -23859,7 +23861,7 @@ Format as plain text line by line like:
     if (dropzone) dropzone.classList.add('hidden');
     if (previewWrap) previewWrap.classList.remove('hidden');
     if (previewName) previewName.innerText = fileName;
-    if (statusBadge) statusBadge.innerText = 'Attached ✓';
+    if (statusBadge) statusBadge.innerText = 'Attached';
 
     if (mimeType.startsWith('image/')) {
       if (previewImg) { previewImg.src = tfSafeUrl(dataUrl); previewImg.classList.remove('hidden'); }
@@ -23940,7 +23942,7 @@ Format as plain text line by line like:
             inputEl.value = rounded;
             const hint = document.getElementById('pay-math-hint');
             if (hint) {
-              hint.innerText = `✨ ${cleanExpr} = ${this.formatCurrency(rounded)}`;
+              hint.innerText = `${cleanExpr} = ${this.formatCurrency(rounded)}`;
               hint.classList.remove('hidden');
               setTimeout(() => hint.classList.add('hidden'), 4000);
             }
@@ -23985,7 +23987,7 @@ Format as plain text line by line like:
       const fixedAmount = Math.round(amount / 10);
       alertBox.classList.remove('hidden');
       if (textEl) {
-        textEl.innerText = `⚠️ High Zero Alert: Entered ${this.formatCurrency(amount)} (${this.convertNumberToIndianWords(amount).english})`;
+        textEl.innerText = `High Zero Alert: Entered ${this.formatCurrency(amount)} (${this.convertNumberToIndianWords(amount).english})`;
       }
       if (subEl) {
         subEl.innerText = `This is significantly higher than usual (approx ${this.formatCurrency(referenceAmount)}). Did you type an extra zero?`;
@@ -24009,7 +24011,7 @@ Format as plain text line by line like:
       this.updatePaymentAmountWords(suggested);
       this.checkFatFingerZeroWarning(suggested);
       this.recalcPaymentLiveBalance();
-      this.showToast(`✨ Amount corrected to ${this.formatCurrency(suggested)}`);
+      this.showToast(`Amount corrected to ${this.formatCurrency(suggested)}`);
     }
   }
 
@@ -24076,7 +24078,7 @@ Format as plain text line by line like:
     if (typeof this.pendingUndoCallback === 'function') {
       try {
         this.pendingUndoCallback();
-        this.showToast('✅ Action undone successfully!');
+        this.showToast('Action undone successfully!');
       } catch (err) {
         console.error('Undo execution error:', err);
       }
@@ -24125,7 +24127,7 @@ Format as plain text line by line like:
     if (this.activeOrderId === order.id || this.activeTab === 'order-detail') { this.activeOrderId = null; this.activeTab = 'orders'; }
     this.render();
     this.updateRecycleBinBadge();
-    this.showUndoToast(`🗑️ Order ${order.invoiceNumber || order.id} moved to Recycle Bin.`, () => this.restoreDeletedOrder(order.id));
+    this.showUndoToast(`Order ${order.invoiceNumber || order.id} moved to Recycle Bin.`, () => this.restoreDeletedOrder(order.id));
   }
 
   updateRecycleBinBadge() {
@@ -24176,9 +24178,9 @@ Format as plain text line by line like:
             <div>
               <div class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                 <span>Payment: ${tfEscapeHtml(this.formatCurrency(p.amount))}</span>
-                <span class="px-1.5 py-0.2 rounded text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono">${tfEscapeHtml(p.id)}</span>
+                <span class="px-1.5 py-0.2 rounded text-xs bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono">${tfEscapeHtml(p.id)}</span>
               </div>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400">Party: ${tfEscapeHtml(p.partyName || 'General')} · Date: ${tfEscapeHtml(p.date || 'N/A')}</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Party: ${tfEscapeHtml(p.partyName || 'General')} · Date: ${tfEscapeHtml(p.date || 'N/A')}</p>
             </div>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
@@ -24198,13 +24200,13 @@ Format as plain text line by line like:
       html += `
         <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 text-xs">
           <div class="flex items-center gap-2.5">
-            <span class="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 font-bold shrink-0">📦</span>
+            <span class="p-1.5 rounded-lg bg-blue-500/10 text-blue-500 font-bold shrink-0"><i data-lucide="package" class="w-4 h-4 inline-block"></i></span>
             <div>
               <div class="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                 <span>Order: ${tfEscapeHtml(o.id)}</span>
-                <span class="px-1.5 py-0.2 rounded text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${tfEscapeHtml(o.customerName || 'Customer')}</span>
+                <span class="px-1.5 py-0.2 rounded text-xs bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${tfEscapeHtml(o.customerName || 'Customer')}</span>
               </div>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400">Total: ${tfEscapeHtml(this.formatCurrency(o.totalInvoiceAmount || 0))}</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Total: ${tfEscapeHtml(this.formatCurrency(o.totalInvoiceAmount || 0))}</p>
             </div>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
@@ -24235,7 +24237,7 @@ Format as plain text line by line like:
     this.renderPaymentsLedger();
     this.renderRecycleBinList();
     this.updateRecycleBinBadge();
-    this.showToast(`✅ Payment of ${this.formatCurrency(p.amount)} restored successfully.`);
+    this.showToast(`Payment of ${this.formatCurrency(p.amount)} restored successfully.`);
   }
 
   async purgeDeletedPayment(id) {
@@ -24254,7 +24256,7 @@ Format as plain text line by line like:
     this.saveData();
     this.renderRecycleBinList();
     this.updateRecycleBinBadge();
-    this.showToast('🗑️ Payment permanently purged.');
+    this.showToast('Payment permanently purged.');
   }
 
   restoreDeletedOrder(id) {
@@ -24275,7 +24277,7 @@ Format as plain text line by line like:
     this.renderOrdersTable();
     this.renderRecycleBinList();
     this.updateRecycleBinBadge();
-    this.showToast(`✅ Order ${o.id} restored successfully.`);
+    this.showToast(`Order ${o.id} restored successfully.`);
   }
 
   async purgeDeletedOrder(id) {
@@ -24293,7 +24295,7 @@ Format as plain text line by line like:
     this.saveData();
     this.renderRecycleBinList();
     this.updateRecycleBinBadge();
-    this.showToast(`🗑️ Order ${id} permanently purged.`);
+    this.showToast(`Order ${id} permanently purged.`);
   }
 
   async emptyRecycleBin() {
@@ -24318,7 +24320,7 @@ Format as plain text line by line like:
     this.saveData();
     this.renderRecycleBinList();
     this.updateRecycleBinBadge();
-    this.showToast('🗑️ Recycle Bin emptied.');
+    this.showToast('Recycle Bin emptied.');
   }
 
   /* ================= SUGGESTION 3: MOBILE CAMERA QR-SNAP ================= */
@@ -24406,7 +24408,7 @@ Format as plain text line by line like:
   copyMobileSnapLink() {
     if (!this.currentMobileSnapUrl) return;
     navigator.clipboard.writeText(this.currentMobileSnapUrl).then(() => {
-      this.showToast('📋 Temporary mobile link copied to clipboard!');
+      this.showToast('Temporary mobile link copied to clipboard!');
     }).catch(() => {
       this.showToast('Link: ' + this.currentMobileSnapUrl);
     });
@@ -24435,7 +24437,7 @@ Format as plain text line by line like:
   copyMobileSnapPermanentLink() {
     if (!this.currentMobileSnapPermanentUrl) return;
     navigator.clipboard.writeText(this.currentMobileSnapPermanentUrl).then(() => {
-      this.showToast('📋 Permanent phone shortcut link copied!');
+      this.showToast('Permanent phone shortcut link copied!');
     }).catch(() => {
       this.showToast('Link: ' + this.currentMobileSnapPermanentUrl);
     });
@@ -24552,15 +24554,15 @@ Format as plain text line by line like:
         </div>
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-1.5 mb-0.5">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+            <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
               ${tfEscapeHtml(snapRecord.tagDisplay)}
             </span>
-            <span class="text-[10px] font-mono-num text-slate-400">${tfEscapeHtml(snapRecord.timeFormatted)}</span>
+            <span class="text-xs font-mono-num text-slate-400">${tfEscapeHtml(snapRecord.timeFormatted)}</span>
           </div>
           <div class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate" title="${tfEscapeHtml(snapRecord.fileName)}">
             ${tfEscapeHtml(snapRecord.fileName)}
           </div>
-          ${snapRecord.note ? `<p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">"${tfEscapeHtml(snapRecord.note)}"</p>` : `<p class="text-[10px] text-slate-400 mt-0.5">Saved to server disk</p>`}
+          ${snapRecord.note ? `<p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">"${tfEscapeHtml(snapRecord.note)}"</p>` : `<p class="text-xs text-slate-400 mt-0.5">Saved to server disk</p>`}
         </div>
       </div>
 
@@ -24569,9 +24571,9 @@ Format as plain text line by line like:
         <button type="button" onclick="app.deferPendingMobileSnap('${tfEscapeHtml(tfEscapeJs(snapRecord.id))}', true)" class="btn-tactile flex-1 py-2 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 rounded-lg text-center" title="Defer to Urgent section">
           Later
         </button>
-        <button type="button" onclick="app.processPendingMobileSnap('${tfEscapeHtml(tfEscapeJs(snapRecord.id))}', true)" class="btn-tactile flex-1 py-2 px-3 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-lg shadow-sm flex items-center justify-center gap-1.5" title="Start Smart Fill immediately">
+        <button type="button" onclick="app.processPendingMobileSnap('${tfEscapeHtml(tfEscapeJs(snapRecord.id))}', true)" class="btn-tactile flex-1 py-2 px-3 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-emerald-600 hover:from-emerald-500 hover:to-emerald-500 rounded-lg shadow-sm flex items-center justify-center gap-1.5" title="Start Smart Fill immediately">
           <i data-lucide="zap" class="w-3.5 h-3.5"></i>
-          <span>Start Work Now ➔</span>
+          <span>Start Work Now →</span>
         </button>
       </div>
 
@@ -24579,7 +24581,7 @@ Format as plain text line by line like:
       <div class="w-full bg-slate-100 dark:bg-slate-800/80 rounded-full h-1 overflow-hidden mt-0.5">
         <div id="slidein-progress-${tfEscapeHtml(snapRecord.id)}" class="bg-emerald-500 h-full w-full tf-countdown-bar"></div>
       </div>
-      <div class="text-[9px] text-slate-400 text-right -mt-2">Moving to Urgent in 5s if unclicked</div>
+      <div class="text-xs text-slate-400 text-right -mt-2">Moving to Urgent in 5s if unclicked</div>
     `;
 
     container.appendChild(card);
@@ -24611,7 +24613,7 @@ Format as plain text line by line like:
     this.updateSidebarUI();
 
     if (userClicked) {
-      this.showToast('📋 Document moved to Urgent Section.');
+      this.showToast('Document moved to Urgent Section.');
     }
   }
 
@@ -24650,7 +24652,7 @@ Format as plain text line by line like:
       else if (snap.tag === 'bilty' || snap.tag === 'invoice' || snap.targetContext === 'partner') sfContext = 'partner';
       TradeFlowSmartFill.open(sfContext);
       TradeFlowSmartFill.loadFromMobileSnap(snap);
-      this.showToast(`✨ Smart Fill launched for ${snap.fileName}`);
+      this.showToast(`Smart Fill launched for ${snap.fileName}`);
     } else {
       this.openPaymentModal();
       this.attachPaymentProofData(snap.base64 || snap.fileUrl, snap.fileName, snap.fileType);
@@ -24668,7 +24670,7 @@ Format as plain text line by line like:
     this.renderKPIs();
     this.renderUrgentActionsList();
     this.updateSidebarUI();
-    this.showToast('🗑️ Pending mobile document discarded.');
+    this.showToast('Pending mobile document discarded.');
   }
 
   playNotificationSound() {
@@ -24692,7 +24694,7 @@ Format as plain text line by line like:
 
   async uploadMobileSnapToVault(snapData) {
     try {
-      this.showToast('📁 Archiving mobile document into Vault...');
+      this.showToast('Archiving mobile document into Vault...');
       const resp = await fetch('/api/documents/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -24705,7 +24707,7 @@ Format as plain text line by line like:
         })
       });
       if (resp.ok) {
-        this.showToast('✅ Mobile document saved to Vault!');
+        this.showToast('Mobile document saved to Vault!');
         this.reindexVaultFiles();
       }
     } catch (e) {
@@ -24738,12 +24740,12 @@ Format as plain text line by line like:
   switchWhatsAppTemplate(type) {
     this.currentWhatsAppTemplateType = type;
     document.querySelectorAll('.wa-tpl-btn').forEach(b => {
-      b.className = 'wa-tpl-btn py-1.5 px-2 rounded-lg text-[11px] font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300';
+      b.className = 'wa-tpl-btn py-1.5 px-2 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300';
     });
 
     const activeBtn = document.getElementById(`wa-tpl-btn-${type}`);
     if (activeBtn) {
-      activeBtn.className = 'wa-tpl-btn py-1.5 px-2 rounded-lg text-[11px] font-bold border border-emerald-500 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300';
+      activeBtn.className = 'wa-tpl-btn py-1.5 px-2 rounded-lg text-xs font-bold border border-emerald-500 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300';
     }
 
     const textarea = document.getElementById('wa-message-textarea');
@@ -24809,7 +24811,7 @@ Format as plain text line by line like:
     const text = textarea?.value || '';
 
     if (!text) {
-      this.showToast('⚠️ Message text cannot be empty.');
+      this.showToast('Message text cannot be empty.');
       return;
     }
 
@@ -24971,29 +24973,29 @@ Format as plain text line by line like:
           const safeOrder = (p.orderRef || '').replace(/'/g, "\\'");
           return `
             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-              <td class="p-2.5 font-mono text-[11px] text-slate-500 whitespace-nowrap">${tfEscapeHtml(p.time ? this.formatTime(p.time) : this.formatDate(p.date))}</td>
+              <td class="p-2.5 font-mono text-xs text-slate-500 whitespace-nowrap">${tfEscapeHtml(p.time ? this.formatTime(p.time) : this.formatDate(p.date))}</td>
               <td class="p-2.5">
-                <button type="button" onclick="app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(safeParty))}')" class="font-bold text-slate-800 dark:text-slate-100 hover:text-amber-500 hover:underline inline-flex items-center gap-1 group text-left" title="Click to inspect partner coordinates & order history">
+                <button type="button" onclick="app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(safeParty))}')" class="font-bold text-slate-800 dark:text-slate-100 hover:text-emerald-700 hover:underline inline-flex items-center gap-1 group text-left" title="Click to inspect partner coordinates & order history">
                   <span>${tfEscapeHtml(p.partyName || 'Counterparty')}</span>
                   <i data-lucide="arrow-up-right" class="w-3 h-3 opacity-60 group-hover:opacity-100 text-amber-500 shrink-0"></i>
                 </button>
               </td>
               <td class="p-2.5">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${tfEscapeHtml(isRecv ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300')}">
+                <span class="px-2 py-0.5 rounded text-xs font-bold ${tfEscapeHtml(isRecv ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300')}">
                   ${tfEscapeHtml(isRecv ? 'Money In' : 'Money Out')}
                 </span>
               </td>
               <td class="p-2.5 text-right font-mono font-black ${tfEscapeHtml(isRecv ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400')}">
                 ${tfEscapeHtml(isRecv ? '+' : '-')}${tfEscapeHtml(this.formatCurrency(p.amount))}
               </td>
-              <td class="p-2.5 font-mono text-[11px] text-slate-600 dark:text-slate-300">${tfEscapeHtml(p.mode)} · ${tfEscapeHtml(p.utr || 'Direct')}</td>
+              <td class="p-2.5 font-mono text-xs text-slate-600 dark:text-slate-300">${tfEscapeHtml(p.mode)} · ${tfEscapeHtml(p.utr || 'Direct')}</td>
               <td class="p-2.5">
                 ${p.orderRef ? `
-                  <button type="button" onclick="app.openOrderFromDiary('${tfEscapeHtml(tfEscapeJs(safeOrder))}')" class="font-mono text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500 hover:underline inline-flex items-center gap-1 group" title="Click to inspect order ${tfEscapeHtml(p.orderRef)}">
+                  <button type="button" onclick="app.openOrderFromDiary('${tfEscapeHtml(tfEscapeJs(safeOrder))}')" class="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500 hover:underline inline-flex items-center gap-1 group" title="Click to inspect order ${tfEscapeHtml(p.orderRef)}">
                     <span>${tfEscapeHtml(p.orderRef)}</span>
                     <i data-lucide="external-link" class="w-3 h-3 opacity-60 group-hover:opacity-100 shrink-0"></i>
                   </button>
-                ` : '<span class="font-mono text-[11px] text-slate-400">General</span>'}
+                ` : '<span class="font-mono text-xs text-slate-400">General</span>'}
               </td>
             </tr>
           `;
@@ -25013,23 +25015,23 @@ Format as plain text line by line like:
           return `
             <div class="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-between gap-3 text-xs">
               <div class="flex items-center gap-2 min-w-0">
-                <span class="p-1 rounded bg-amber-500/20 text-amber-600 font-bold shrink-0">⚠️</span>
+                <span class="p-1 rounded bg-amber-500/20 text-amber-600 font-bold shrink-0"><i data-lucide="triangle-alert" class="w-4 h-4 inline-block"></i></span>
                 <div class="min-w-0">
                   <div class="flex items-center gap-1.5 flex-wrap">
-                    <button type="button" onclick="app.openOrderFromDiary('${tfEscapeHtml(tfEscapeJs(o.id))}')" class="font-mono font-black text-amber-600 dark:text-amber-400 hover:underline inline-flex items-center gap-1 group" title="Click to inspect order ${tfEscapeHtml(o.id)}">
+                    <button type="button" onclick="app.openOrderFromDiary('${tfEscapeHtml(tfEscapeJs(o.id))}')" class="font-mono font-black text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 group" title="Click to inspect order ${tfEscapeHtml(o.id)}">
                       <span>${tfEscapeHtml(o.id)}</span>
                       <i data-lucide="external-link" class="w-3 h-3 opacity-60 group-hover:opacity-100 shrink-0"></i>
                     </button>
                     <span class="text-slate-400">·</span>
-                    <button type="button" onclick="app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(safeCust))}')" class="font-bold text-slate-800 dark:text-slate-100 hover:text-amber-500 hover:underline inline-flex items-center gap-1 group text-left truncate" title="Click to view customer profile & history">
+                    <button type="button" onclick="app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(safeCust))}')" class="font-bold text-slate-800 dark:text-slate-100 hover:text-emerald-700 hover:underline inline-flex items-center gap-1 group text-left truncate" title="Click to view customer profile & history">
                       <span class="truncate">${tfEscapeHtml(o.customerName || o.retailerName || 'Customer')}</span>
                       <i data-lucide="arrow-up-right" class="w-3 h-3 opacity-60 group-hover:opacity-100 text-amber-500 shrink-0"></i>
                     </button>
                   </div>
-                  <p class="text-[11px] text-slate-500 truncate">Balance Pending: <strong class="text-rose-600 dark:text-rose-400 font-mono-num font-bold">${tfEscapeHtml(this.formatCurrency(o.customerBalanceDue || 0))}</strong> · Due: ${tfEscapeHtml(o.dueDate || 'Soon')}</p>
+                  <p class="text-xs text-slate-500 truncate">Balance Pending: <strong class="text-rose-600 dark:text-rose-400 font-mono-num font-bold">${tfEscapeHtml(this.formatCurrency(o.customerBalanceDue || 0))}</strong> · Due: ${tfEscapeHtml(o.dueDate || 'Soon')}</p>
                 </div>
               </div>
-              <button type="button" onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(o.id))}', '${tfEscapeHtml(tfEscapeJs(safeCust))}', 'received')" class="btn-tactile px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-bold shadow-2xs shrink-0 flex items-center gap-1" title="Log payment collection for this order">
+              <button type="button" onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(o.id))}', '${tfEscapeHtml(tfEscapeJs(safeCust))}', 'received')" class="btn-tactile px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-2xs shrink-0 flex items-center gap-1" title="Log payment collection for this order">
                 <i data-lucide="plus" class="w-3 h-3"></i>
                 <span>Log Collection</span>
               </button>
@@ -25080,7 +25082,7 @@ Format as plain text line by line like:
           <div>
             <div class="flex items-center gap-2">
               <h1 class="text-lg font-black text-slate-900 dark:text-white tracking-tight">Daily Business Diary</h1>
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-400 text-slate-950 uppercase tracking-wider">Evening Closing 6:00 PM</span>
+              <span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-400 text-slate-950 uppercase tracking-wider">Evening Closing 6:00 PM</span>
             </div>
             <p class="text-xs text-slate-500 dark:text-slate-400">Complete day ledger, collections, disbursements, dispatches, and next-day collections pipeline</p>
           </div>
@@ -25102,7 +25104,7 @@ Format as plain text line by line like:
 
           <input type="date" value="${tfEscapeHtml(dateStr)}" onchange="app.setDailyDiaryDate(this.value)" class="p-1.5 text-xs font-mono font-bold rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 outline-none">
 
-          <button type="button" onclick="app.openPaymentModal(null, null, 'received')" class="btn-tactile px-3 py-1.5 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg flex items-center gap-1.5 shadow-xs" title="Log new payment settlement">
+          <button type="button" onclick="app.openPaymentModal(null, null, 'received')" class="btn-tactile px-3 py-1.5 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg flex items-center gap-1.5 shadow-xs" title="Log new payment settlement">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
             <span>Log Payment</span>
           </button>
@@ -25126,7 +25128,7 @@ Format as plain text line by line like:
 
       <!-- Date Banner Subtitle -->
       <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200/60 dark:border-slate-800/60 pb-2">
-        <span class="font-bold text-slate-700 dark:text-slate-300">📅 Closing Statement for: <strong>${tfEscapeHtml(formattedDate)}</strong></span>
+        <span class="font-bold text-slate-700 dark:text-slate-300">Closing Statement for: <strong>${tfEscapeHtml(formattedDate)}</strong></span>
         <span>Auto-synced with TradeFlow General Ledger & Bank Feeds</span>
       </div>
 
@@ -25185,16 +25187,16 @@ Format as plain text line by line like:
               <div class="flex items-center gap-2">
                 <i data-lucide="receipt" class="w-4 h-4 text-emerald-500"></i>
                 <h2 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Settlements Logged Today</h2>
-                <span class="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">${tfEscapeHtml(dayPayments.length)} logs</span>
+                <span class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">${tfEscapeHtml(dayPayments.length)} logs</span>
               </div>
-              <button type="button" onclick="app.openPaymentModal(null, null, 'received')" class="btn-tactile px-2.5 py-1 text-xs font-bold rounded bg-amber-400 hover:bg-amber-300 text-slate-950 flex items-center gap-1 shadow-2xs">
+              <button type="button" onclick="app.openPaymentModal(null, null, 'received')" class="btn-tactile px-2.5 py-1 text-xs font-bold rounded bg-emerald-700 hover:bg-emerald-800 text-white flex items-center gap-1 shadow-2xs">
                 <i data-lucide="plus" class="w-3 h-3"></i> Log Settlement
               </button>
             </div>
 
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs border-collapse">
-                <thead class="bg-slate-100 dark:bg-slate-950 text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">
+                <thead class="bg-slate-100 dark:bg-slate-950 text-xs uppercase font-bold text-slate-500 dark:text-slate-400">
                   <tr>
                     <th class="p-3">Time</th>
                     <th class="p-3">Counterparty (Click to inspect)</th>
@@ -25214,34 +25216,34 @@ Format as plain text line by line like:
                     const safeOrder = (p.orderRef || '').replace(/'/g, "\\'");
                     return `
                       <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                        <td class="p-3 font-mono text-[11px] text-slate-500 whitespace-nowrap">${tfEscapeHtml(p.time ? this.formatTime(p.time) : (p.date ? this.formatDate(p.date) : '—'))}</td>
+                        <td class="p-3 font-mono text-xs text-slate-500 whitespace-nowrap">${tfEscapeHtml(p.time ? this.formatTime(p.time) : (p.date ? this.formatDate(p.date) : '—'))}</td>
                         <td class="p-3">
-                          <button type="button" onclick="app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(safeParty))}')" class="font-bold text-slate-800 dark:text-slate-100 hover:text-amber-500 hover:underline inline-flex items-center gap-1.5 group text-left" title="Click to view detailed partner profile & ledger">
+                          <button type="button" onclick="app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(safeParty))}')" class="font-bold text-slate-800 dark:text-slate-100 hover:text-emerald-700 hover:underline inline-flex items-center gap-1.5 group text-left" title="Click to view detailed partner profile & ledger">
                             <span>${tfEscapeHtml(p.partyName || 'Counterparty')}</span>
                             <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 text-amber-500 shrink-0"></i>
                           </button>
                         </td>
                         <td class="p-3 whitespace-nowrap">
-                          <span class="px-2 py-0.5 rounded text-[10px] font-bold ${tfEscapeHtml(isRecv ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300')}">
+                          <span class="px-2 py-0.5 rounded text-xs font-bold ${tfEscapeHtml(isRecv ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300')}">
                             ${tfEscapeHtml(isRecv ? '↓ Inward' : '↑ Outward')}
                           </span>
                         </td>
                         <td class="p-3 text-right font-mono font-black ${tfEscapeHtml(isRecv ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400')} whitespace-nowrap">
                           ${tfEscapeHtml(isRecv ? '+' : '-')}${tfEscapeHtml(this.formatCurrency(p.amount))}
                         </td>
-                        <td class="p-3 font-mono text-[11px] text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                        <td class="p-3 font-mono text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">
                           ${tfEscapeHtml(p.mode)} · ${tfEscapeHtml(p.utr || 'Direct')}
                         </td>
                         <td class="p-3 whitespace-nowrap">
                           ${p.orderRef ? `
-                            <button type="button" onclick="app.openOrderFromDiary('${tfEscapeHtml(tfEscapeJs(safeOrder))}')" class="font-mono text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500 hover:underline inline-flex items-center gap-1 group" title="Click to view full Order dossier ${tfEscapeHtml(p.orderRef)}">
+                            <button type="button" onclick="app.openOrderFromDiary('${tfEscapeHtml(tfEscapeJs(safeOrder))}')" class="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500 hover:underline inline-flex items-center gap-1 group" title="Click to view full Order dossier ${tfEscapeHtml(p.orderRef)}">
                               <span>${tfEscapeHtml(p.orderRef)}</span>
                               <i data-lucide="external-link" class="w-3 h-3 opacity-60 group-hover:opacity-100 shrink-0"></i>
                             </button>
-                          ` : '<span class="font-mono text-[11px] text-slate-400">General</span>'}
+                          ` : '<span class="font-mono text-xs text-slate-400">General</span>'}
                         </td>
                         <td class="p-3 text-center">
-                          <button type="button" onclick="app.openOrderPaymentFullModal('${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-1 rounded text-slate-400 hover:text-amber-500" title="Inspect settlement voucher">
+                          <button type="button" onclick="app.openOrderPaymentFullModal('${tfEscapeHtml(tfEscapeJs(p.id))}')" class="p-1 rounded text-slate-400 hover:text-emerald-700" title="Inspect settlement voucher">
                             <i data-lucide="file-text" class="w-4 h-4"></i>
                           </button>
                         </td>
@@ -25264,7 +25266,7 @@ Format as plain text line by line like:
                 <i data-lucide="alert-circle" class="w-4 h-4 text-amber-500"></i>
                 <span>Tomorrow's Urgencies &amp; Collections</span>
               </h3>
-              <span class="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">${tfEscapeHtml(overdueOrders.length)} pending</span>
+              <span class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">${tfEscapeHtml(overdueOrders.length)} pending</span>
             </div>
             <div class="p-3 space-y-2.5 max-h-[420px] overflow-y-auto">
               ${overdueOrders.length === 0 ? `
@@ -25275,27 +25277,27 @@ Format as plain text line by line like:
                   <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-2 text-xs">
                     <div class="flex items-center justify-between gap-2">
                       <div class="flex items-center gap-1.5 flex-wrap">
-                        <button type="button" onclick="app.openOrderFromDiary('${tfEscapeHtml(tfEscapeJs(o.id))}')" class="font-mono font-black text-amber-700 dark:text-amber-300 hover:underline inline-flex items-center gap-1 group" title="Click to inspect order ${tfEscapeHtml(o.id)}">
+                        <button type="button" onclick="app.openOrderFromDiary('${tfEscapeHtml(tfEscapeJs(o.id))}')" class="font-mono font-black text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 group" title="Click to inspect order ${tfEscapeHtml(o.id)}">
                           <span>${tfEscapeHtml(o.id)}</span>
                           <i data-lucide="external-link" class="w-3 h-3 opacity-60 group-hover:opacity-100 shrink-0"></i>
                         </button>
                         <span class="text-slate-400">·</span>
-                        <button type="button" onclick="app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(safeCust))}')" class="font-bold text-slate-900 dark:text-slate-100 hover:text-amber-500 hover:underline inline-flex items-center gap-1 group text-left truncate" title="Click to view customer details">
+                        <button type="button" onclick="app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(safeCust))}')" class="font-bold text-slate-900 dark:text-slate-100 hover:text-emerald-700 hover:underline inline-flex items-center gap-1 group text-left truncate" title="Click to view customer details">
                           <span class="truncate">${tfEscapeHtml(o.customerName || o.retailerName || 'Customer')}</span>
                           <i data-lucide="arrow-up-right" class="w-3 h-3 opacity-60 group-hover:opacity-100 text-amber-500 shrink-0"></i>
                         </button>
                       </div>
-                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 uppercase">${tfEscapeHtml((o.status || '').replace(/_/g, ' '))}</span>
+                      <span class="px-2 py-0.5 rounded text-xs font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 uppercase">${tfEscapeHtml((o.status || '').replace(/_/g, ' '))}</span>
                     </div>
-                    <div class="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400">
+                    <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
                       <span>Pending Balance: <strong class="text-rose-600 dark:text-rose-400 font-mono-num font-bold">${tfEscapeHtml(this.formatCurrency(o.customerBalanceDue || 0))}</strong></span>
                       <span>Due: <strong class="text-slate-800 dark:text-slate-200">${tfEscapeHtml(this.formatDate(o.dueDate) || 'Immediate')}</strong></span>
                     </div>
                     <div class="flex items-center justify-end gap-2 pt-1 border-t border-amber-500/20">
-                      <button type="button" onclick="app.dispatchWhatsAppBuyer('${tfEscapeHtml(tfEscapeJs(o.id))}')" class="btn-tactile px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 rounded-lg flex items-center gap-1 border border-emerald-200 dark:border-emerald-800">
+                      <button type="button" onclick="app.dispatchWhatsAppBuyer('${tfEscapeHtml(tfEscapeJs(o.id))}')" class="btn-tactile px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 rounded-lg flex items-center gap-1 border border-emerald-200 dark:border-emerald-800">
                         <i data-lucide="message-square" class="w-3 h-3"></i> WhatsApp Reminder
                       </button>
-                      <button type="button" onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(o.id))}', '${tfEscapeHtml(tfEscapeJs(safeCust))}', 'received')" class="btn-tactile px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-[11px] font-bold shadow-2xs flex items-center gap-1">
+                      <button type="button" onclick="app.openPaymentModal('${tfEscapeHtml(tfEscapeJs(o.id))}', '${tfEscapeHtml(tfEscapeJs(safeCust))}', 'received')" class="btn-tactile px-3 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-2xs flex items-center gap-1">
                         <i data-lucide="plus" class="w-3 h-3"></i> Log Collection
                       </button>
                     </div>
@@ -25312,9 +25314,9 @@ Format as plain text line by line like:
                 <i data-lucide="send" class="w-4 h-4 text-emerald-500"></i>
                 <span>Owner WhatsApp Closing Report</span>
               </h3>
-              <span class="text-[10px] text-slate-400 font-mono">6:00 PM Summary</span>
+              <span class="text-xs text-slate-400 font-mono">6:00 PM Summary</span>
             </div>
-            <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-mono text-[11px] text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+            <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-mono text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
 *DAILY BUSINESS DIARY*
 📅 *Date*: ${tfEscapeHtml(this.formatDateWithDay(dateStr))} (Evening Closing 6:00 PM)
 🏢 *TradeFlow Command Center*
@@ -25395,11 +25397,11 @@ _Automated evening closing report - TradeFlow_
     if (mode === 'operator') {
       document.body.classList.add('operator-mode');
       if (label) label.innerText = 'Operator Mode';
-      if (!silent) this.showToast('👤 Operator Mode: Trade margins & sensitive figures hidden from screen.');
+      if (!silent) this.showToast('Operator Mode: Trade margins & sensitive figures hidden from screen.');
     } else {
       document.body.classList.remove('operator-mode');
       if (label) label.innerText = 'Owner Mode';
-      if (!silent) this.showToast('👑 Owner Mode: Full trade financial visibility unlocked.');
+      if (!silent) this.showToast('Owner Mode: Full trade financial visibility unlocked.');
     }
     if (window.lucide) window.lucide.createIcons();
   }
@@ -25414,7 +25416,7 @@ _Automated evening closing report - TradeFlow_
         const isPill = triggerEl.classList.contains('tf-copy-btn');
         const originalContent = triggerEl.innerHTML;
         if (isPill) {
-          triggerEl.innerHTML = `<i data-lucide="check" class="w-3 h-3 text-emerald-600"></i><span class="text-[10px] font-bold text-emerald-700">✓ Copied!</span>`;
+          triggerEl.innerHTML = `<i data-lucide="check" class="w-3 h-3 text-emerald-600"></i><span class="text-xs font-bold text-emerald-700">Copied!</span>`;
           if (window.lucide) window.lucide.createIcons();
         }
         setTimeout(() => {
@@ -25429,7 +25431,7 @@ _Automated evening closing report - TradeFlow_
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(() => {
-        this.showToast(`✓ ${label} copied to clipboard!`);
+        this.showToast(`${label} copied to clipboard!`);
         flashElement();
       }).catch(() => {
         this.fallbackCopyText(text, label, triggerEl);
@@ -25451,7 +25453,7 @@ _Automated evening closing report - TradeFlow_
     textArea.select();
     try {
       document.execCommand('copy');
-      this.showToast(`✓ ${label} copied to clipboard!`);
+      this.showToast(`${label} copied to clipboard!`);
     } catch (err) {
       this.showToast(`Copy: ${text}`);
     }
@@ -25537,15 +25539,15 @@ _Automated evening closing report - TradeFlow_
     }
     this.updateAIModeUI();
     this.showToast(this.isAIEnabled 
-      ? '🤖 AI Mode: ON (Vision, Ambiguity Resolution & Deep Extraction Active)' 
-      : '🛡️ AI Mode: OFF (100% Offline Local Deterministic Engine Active)');
+      ? 'AI Mode: ON (Vision, Ambiguity Resolution & Deep Extraction Active)' 
+      : 'AI Mode: OFF (100% Offline Local Deterministic Engine Active)');
   }
 
   updateAIModeUI() {
     const btn = document.getElementById('topbar-ai-toggle-btn');
     if (!btn) return;
     if (this.isAIEnabled) {
-      btn.className = 'tf-topbar-pill btn-tactile text-white bg-violet-600 hover:bg-violet-700 border border-violet-500 shadow-2xs flex items-center gap-1.5 transition-all';
+      btn.className = 'tf-topbar-pill btn-tactile text-white bg-purple-600 hover:bg-purple-700 border border-purple-500 shadow-2xs flex items-center gap-1.5 transition-all';
       btn.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> <span class="font-bold text-xs">AI ● ON</span>`;
       btn.title = 'AI Assistance is ACTIVE (Vision, Summaries & Recommendations)';
     } else {
@@ -25609,7 +25611,7 @@ _Automated evening closing report - TradeFlow_
     this.omniboxFilter = filter;
     document.querySelectorAll('.omnibox-tab-btn').forEach(btn => {
       if (btn.getAttribute('data-omnibox-tab') === filter) {
-        btn.className = 'omnibox-tab-btn px-2.5 py-1 rounded-lg font-bold text-xs bg-amber-400 text-slate-950';
+        btn.className = 'omnibox-tab-btn px-2.5 py-1 rounded-lg font-bold text-xs bg-emerald-700 text-white';
       } else {
         btn.className = 'omnibox-tab-btn px-2.5 py-1 rounded-lg font-semibold text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
       }
@@ -25643,10 +25645,10 @@ _Automated evening closing report - TradeFlow_
   highlightOmniboxSelection(items) {
     items.forEach((it, idx) => {
       if (idx === this.omniboxSelectedIdx) {
-        it.classList.add('ring-2', 'ring-amber-500', 'bg-amber-50/50', 'dark:bg-amber-950/20');
+        it.classList.add('ring-2', 'ring-emerald-600', 'bg-emerald-50/50', 'dark:bg-emerald-950/20');
         it.scrollIntoView({ block: 'nearest' });
       } else {
-        it.classList.remove('ring-2', 'ring-amber-500', 'bg-amber-50/50', 'dark:bg-amber-950/20');
+        it.classList.remove('ring-2', 'ring-emerald-600', 'bg-emerald-50/50', 'dark:bg-emerald-950/20');
       }
     });
   }
@@ -25706,7 +25708,7 @@ _Automated evening closing report - TradeFlow_
               this.activeTab = 'payments';
               this.updateSidebarUI();
               this.renderActiveView();
-              this.showToast(`🔍 Showing Payment UTR: ${p.utr || p.id}`);
+              this.showToast(`Showing Payment UTR: ${p.utr || p.id}`);
             }
           });
         }
@@ -25833,7 +25835,7 @@ _Automated evening closing report - TradeFlow_
           action: () => {
             this.closeOmniboxModal();
             if (this.viewDocumentPreview) this.viewDocumentPreview(d.id);
-            else this.showToast(`📄 Document: ${d.fileName}`);
+            else this.showToast(`Document: ${d.fileName}`);
           }
         });
       }
@@ -25881,7 +25883,7 @@ _Automated evening closing report - TradeFlow_
         results.amounts.forEach((item, idx) => {
           html += `
             <div 
-              class="omnibox-result-card p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#11141d] hover:border-amber-400 dark:hover:border-amber-500/50 hover:shadow-md cursor-pointer transition-all flex items-center justify-between"
+              class="omnibox-result-card p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#11141d] hover:border-emerald-600 dark:hover:border-emerald-600/50 hover:shadow-md cursor-pointer transition-all flex items-center justify-between"
               onclick="window._tfOmniboxAction_${tfEscapeHtml(idx)}()"
             >
               <div class="flex items-center gap-3 min-w-0">
@@ -25890,11 +25892,11 @@ _Automated evening closing report - TradeFlow_
                 </span>
                 <div class="min-w-0">
                   <div class="text-xs font-bold text-slate-900 dark:text-white truncate">${tfEscapeHtml(item.title)}</div>
-                  <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">${tfEscapeHtml(item.subtitle)}</div>
+                  <div class="text-xs text-slate-500 dark:text-slate-400 truncate">${tfEscapeHtml(item.subtitle)}</div>
                 </div>
               </div>
               <div class="flex items-center gap-2 shrink-0">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-${tfEscapeHtml(item.badgeColor)}-100 text-${tfEscapeHtml(item.badgeColor)}-800 dark:bg-${tfEscapeHtml(item.badgeColor)}-950/80 dark:text-${tfEscapeHtml(item.badgeColor)}-300">
+                <span class="px-2 py-0.5 rounded text-xs font-bold bg-${tfEscapeHtml(item.badgeColor)}-100 text-${tfEscapeHtml(item.badgeColor)}-800 dark:bg-${tfEscapeHtml(item.badgeColor)}-950/80 dark:text-${tfEscapeHtml(item.badgeColor)}-300">
                   ${tfEscapeHtml(item.badge)}
                 </span>
                 <span class="text-amber-500 font-bold text-xs">Open →</span>
@@ -25913,7 +25915,7 @@ _Automated evening closing report - TradeFlow_
         <div class="mb-4">
           <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
             <span>Orders & Deals (${tfEscapeHtml(results.orders.length)})</span>
-            <span class="text-[10px] font-normal text-slate-500">Click to open 360° dossier</span>
+            <span class="text-xs font-normal text-slate-500">Click to open 360° dossier</span>
           </div>
           <div class="space-y-1.5">
             ${results.orders.map((o, idx) => {
@@ -25921,7 +25923,7 @@ _Automated evening closing report - TradeFlow_
               window[actionKey] = o.action;
               return `
                 <div 
-                  class="omnibox-result-card p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#11141d] hover:border-amber-400 hover:shadow-xs cursor-pointer transition-all flex items-center justify-between"
+                  class="omnibox-result-card p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#11141d] hover:border-emerald-600 hover:shadow-xs cursor-pointer transition-all flex items-center justify-between"
                   onclick="window.${tfEscapeHtml(actionKey)}()"
                 >
                   <div class="flex items-center gap-2.5 min-w-0">
@@ -25934,13 +25936,13 @@ _Automated evening closing report - TradeFlow_
                         <span>•</span>
                         <span class="truncate">${tfEscapeHtml(o.retailerName)}</span>
                       </div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                      <div class="text-xs text-slate-500 dark:text-slate-400">
                         Total ₹${tfEscapeHtml((o.totalAmount || 0).toLocaleString('en-IN'))} • Due: ₹${tfEscapeHtml((o.balanceDue || 0).toLocaleString('en-IN'))} • Date: ${tfEscapeHtml(o.date || 'N/A')}
                       </div>
                     </div>
                   </div>
                   <div class="flex items-center gap-2 shrink-0">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    <span class="px-2 py-0.5 rounded text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                       ${tfEscapeHtml(o.status)}
                     </span>
                     <span class="text-amber-500 font-bold text-xs">View →</span>
@@ -25959,7 +25961,7 @@ _Automated evening closing report - TradeFlow_
         <div class="mb-4">
           <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
             <span>Payments & UTR Settlements (${tfEscapeHtml(results.payments.length)})</span>
-            <span class="text-[10px] font-normal text-slate-500">Click to view in Payments Ledger</span>
+            <span class="text-xs font-normal text-slate-500">Click to view in Payments Ledger</span>
           </div>
           <div class="space-y-1.5">
             ${results.payments.map((p, idx) => {
@@ -25980,13 +25982,13 @@ _Automated evening closing report - TradeFlow_
                         <span>•</span>
                         <span class="truncate">${tfEscapeHtml(p.party || 'Settlement')}</span>
                       </div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                      <div class="text-xs text-slate-500 dark:text-slate-400 font-mono">
                         UTR: ${tfEscapeHtml(p.utr || 'Pending')} • Mode: ${tfEscapeHtml(p.mode || 'UPI')} • Date: ${tfEscapeHtml(p.date || 'N/A')}
                       </div>
                     </div>
                   </div>
                   <div class="flex items-center gap-2 shrink-0">
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300">
+                    <span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300">
                       ${tfEscapeHtml(p.reconciliationStatus || 'Settled')}
                     </span>
                     <span class="text-emerald-500 font-bold text-xs">Inspect →</span>
@@ -26005,7 +26007,7 @@ _Automated evening closing report - TradeFlow_
         <div class="mb-4">
           <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
             <span>Partners & Contacts (${tfEscapeHtml(results.partners.length)})</span>
-            <span class="text-[10px] font-normal text-slate-500">Click to open 360° Partner Spotlight</span>
+            <span class="text-xs font-normal text-slate-500">Click to open 360° Partner Spotlight</span>
           </div>
           <div class="space-y-1.5">
             ${results.partners.map((c, idx) => {
@@ -26013,25 +26015,25 @@ _Automated evening closing report - TradeFlow_
               window[actionKey] = c.action;
               return `
                 <div 
-                  class="omnibox-result-card p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#11141d] hover:border-violet-400 hover:shadow-xs cursor-pointer transition-all flex items-center justify-between"
+                  class="omnibox-result-card p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#11141d] hover:border-purple-400 hover:shadow-xs cursor-pointer transition-all flex items-center justify-between"
                   onclick="window.${tfEscapeHtml(actionKey)}()"
                 >
                   <div class="flex items-center gap-2.5 min-w-0">
-                    <span class="p-1.5 rounded-lg bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 shrink-0">
+                    <span class="p-1.5 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 shrink-0">
                       <i data-lucide="user-check" class="w-4 h-4"></i>
                     </span>
                     <div class="min-w-0">
                       <div class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                         <span class="truncate">${tfEscapeHtml(c.name)}</span>
-                        <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 capitalize">${tfEscapeHtml(c.role)}</span>
+                        <span class="text-xs px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 capitalize">${tfEscapeHtml(c.role)}</span>
                       </div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                      <div class="text-xs text-slate-500 dark:text-slate-400">
                         ${tfEscapeHtml(c.person ? `Contact: ${c.person} • ` : '')}${tfEscapeHtml(c.phone || '')} ${tfEscapeHtml(c.city ? `• ${c.city}` : '')}
                       </div>
                     </div>
                   </div>
                   <div class="flex items-center gap-2 shrink-0">
-                    <span class="text-violet-500 font-bold text-xs">Spotlight →</span>
+                    <span class="text-purple-500 font-bold text-xs">Spotlight →</span>
                   </div>
                 </div>
               `;
@@ -26047,7 +26049,7 @@ _Automated evening closing report - TradeFlow_
         <div class="mb-4">
           <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
             <span>Documents & Vault Records (${tfEscapeHtml(results.documents.length)})</span>
-            <span class="text-[10px] font-normal text-slate-500">Original evidence files</span>
+            <span class="text-xs font-normal text-slate-500">Original evidence files</span>
           </div>
           <div class="space-y-1.5">
             ${results.documents.map((d, idx) => {
@@ -26055,7 +26057,7 @@ _Automated evening closing report - TradeFlow_
               window[actionKey] = d.action;
               return `
                 <div 
-                  class="omnibox-result-card p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#11141d] hover:border-amber-400 hover:shadow-xs cursor-pointer transition-all flex items-center justify-between"
+                  class="omnibox-result-card p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#11141d] hover:border-emerald-600 hover:shadow-xs cursor-pointer transition-all flex items-center justify-between"
                   onclick="window.${tfEscapeHtml(actionKey)}()"
                 >
                   <div class="flex items-center gap-2.5 min-w-0">
@@ -26064,7 +26066,7 @@ _Automated evening closing report - TradeFlow_
                     </span>
                     <div class="min-w-0">
                       <div class="text-xs font-bold text-slate-900 dark:text-white truncate font-mono">${tfEscapeHtml(d.fileName)}</div>
-                      <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                      <div class="text-xs text-slate-500 dark:text-slate-400">
                         Type: ${tfEscapeHtml(d.docType || 'Document')} ${tfEscapeHtml(d.orderId ? `• Linked Order: ${d.orderId}` : '')}
                       </div>
                     </div>
@@ -26144,7 +26146,7 @@ _Automated evening closing report - TradeFlow_
           categoryLabel: isPastDue ? 'Overdue Account Ledger' : 'Uncollected Balance',
           severity: isPastDue ? 'critical' : 'urgent',
           badgeColor: isPastDue ? 'rose' : 'orange',
-          title: `${isPastDue ? '🚨 Overdue Dues' : '⚠️ Outstanding Balance'}: ₹${(o.customerBalanceDue || 0).toLocaleString('en-IN')}`,
+          title: `${isPastDue ? 'Overdue Dues' : 'Outstanding Balance'}: ₹${(o.customerBalanceDue || 0).toLocaleString('en-IN')}`,
           party: o.retailerName,
           orderId: o.id,
           amount: o.customerBalanceDue,
@@ -26258,22 +26260,22 @@ _Automated evening closing report - TradeFlow_
         <div class="p-4 rounded-xl bg-white dark:bg-[#11141d] border border-slate-200 dark:border-slate-800 shadow-2xs">
           <div class="text-xs font-bold text-slate-500 dark:text-slate-400">Total Exceptions</div>
           <div class="text-2xl font-black font-mono-num text-slate-900 dark:text-white mt-1">${tfEscapeHtml(allExceptions.length)}</div>
-          <div class="text-[11px] text-slate-400 mt-0.5">${tfEscapeHtml(criticalCount)} Critical / Urgent</div>
+          <div class="text-xs text-slate-400 mt-0.5">${tfEscapeHtml(criticalCount)} Critical / Urgent</div>
         </div>
         <div class="p-4 rounded-xl bg-white dark:bg-[#11141d] border border-slate-200 dark:border-slate-800 shadow-2xs">
           <div class="text-xs font-bold text-amber-600 dark:text-amber-400">Missing Bilties (LR)</div>
           <div class="text-2xl font-black font-mono-num text-amber-600 dark:text-amber-400 mt-1">${tfEscapeHtml(missingLrCount)}</div>
-          <div class="text-[11px] text-slate-400 mt-0.5">Dispatches without proof</div>
+          <div class="text-xs text-slate-400 mt-0.5">Dispatches without proof</div>
         </div>
         <div class="p-4 rounded-xl bg-white dark:bg-[#11141d] border border-slate-200 dark:border-slate-800 shadow-2xs">
           <div class="text-xs font-bold text-rose-600 dark:text-rose-400">Overdue / Uncollected</div>
           <div class="text-2xl font-black font-mono-num text-rose-600 dark:text-rose-400 mt-1">${tfEscapeHtml(overdueCount)}</div>
-          <div class="text-[11px] text-slate-400 mt-0.5">Delivered orders with dues</div>
+          <div class="text-xs text-slate-400 mt-0.5">Delivered orders with dues</div>
         </div>
         <div class="p-4 rounded-xl bg-white dark:bg-[#11141d] border border-slate-200 dark:border-slate-800 shadow-2xs">
           <div class="text-xs font-bold text-blue-600 dark:text-blue-400">Total Risk Exposure</div>
           <div class="text-2xl font-black font-mono-num text-slate-900 dark:text-white mt-1">₹${tfEscapeHtml(totalRiskAmount.toLocaleString('en-IN'))}</div>
-          <div class="text-[11px] text-slate-400 mt-0.5">Underlying commercial sum</div>
+          <div class="text-xs text-slate-400 mt-0.5">Underlying commercial sum</div>
         </div>
       </div>
 
@@ -26317,7 +26319,7 @@ _Automated evening closing report - TradeFlow_
         const actionKey = `_tfExcAction_${idx}`;
         window[actionKey] = item.action;
         html += `
-          <div class="p-4 rounded-xl bg-white dark:bg-[#11141d] border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-amber-400/80 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="p-4 rounded-xl bg-white dark:bg-[#11141d] border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-emerald-600/80 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-start gap-3 min-w-0">
               <span class="w-2.5 h-2.5 rounded-full bg-${tfEscapeHtml(item.badgeColor)}-500 shrink-0 mt-1.5"></span>
               <div class="min-w-0">
@@ -26333,7 +26335,7 @@ _Automated evening closing report - TradeFlow_
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                   ${tfEscapeHtml(item.description)}
                 </p>
-                <div class="flex items-center gap-3 mt-2 text-[11px] text-slate-500 dark:text-slate-400 flex-wrap">
+                <div class="flex items-center gap-3 mt-2 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
                   ${item.party ? `<span>Party: <b class="text-slate-800 dark:text-slate-200">${tfEscapeHtml(item.party)}</b></span>` : ''}
                   ${item.amount ? `<span>Value: <b class="font-mono text-slate-800 dark:text-slate-200">₹${tfEscapeHtml(item.amount.toLocaleString('en-IN'))}</b></span>` : ''}
                   ${item.orderId ? `<span>Order Ref: <b class="font-mono text-amber-600 dark:text-amber-400">${tfEscapeHtml(item.orderId)}</b></span>` : ''}
@@ -26345,7 +26347,7 @@ _Automated evening closing report - TradeFlow_
               <button 
                 type="button" 
                 onclick="window.${tfEscapeHtml(actionKey)}()" 
-                class="btn-tactile px-4 py-2 rounded-lg text-xs font-bold text-white bg-amber-600 hover:bg-amber-500 shadow-sm flex items-center gap-1.5"
+                class="btn-tactile px-4 py-2 rounded-lg text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 shadow-sm flex items-center gap-1.5"
               >
                 <span>${tfEscapeHtml(item.actionLabel)}</span>
                 <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
@@ -26369,7 +26371,7 @@ _Automated evening closing report - TradeFlow_
       diffContainer.innerHTML = `
         <div class="font-bold text-xs text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
           <span>Partner: ${tfEscapeHtml(contact.name)} (${tfEscapeHtml(contact.role)})</span>
-          <span class="text-[10px] px-2 py-0.5 rounded bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 font-mono font-bold">CRITICAL COORDINATES</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 font-mono font-bold">CRITICAL COORDINATES</span>
         </div>
         <div class="space-y-2">
           ${diffData.map(d => `
@@ -26401,7 +26403,7 @@ _Automated evening closing report - TradeFlow_
     this.closeBankProtectionModal();
     this.handleSaveContact();
     this.isBankProtectionBypassed = false;
-    this.showToast('🛡️ Bank coordinates authorized and updated securely.');
+    this.showToast('Bank coordinates authorized and updated securely.');
   }
 
   /* ================= 5. RETAILER CREDIT CONTROL & EXPOSURE WARNING ================= */
@@ -26445,10 +26447,10 @@ _Automated evening closing report - TradeFlow_
         </div>
         <div class="flex-1">
           <div class="font-extrabold flex items-center justify-between">
-            <span>⚠️ Retailer Credit Exposure Warning: ${tfEscapeHtml(contact.name)}</span>
+            <span>Retailer Credit Exposure Warning: ${tfEscapeHtml(contact.name)}</span>
             <span class="font-mono text-rose-600 dark:text-rose-400 font-black">₹${tfEscapeHtml(totalOverdue.toLocaleString('en-IN'))} Outstanding</span>
           </div>
-          <p class="text-[11px] mt-0.5 opacity-90">
+          <p class="text-xs mt-0.5 opacity-90">
             This customer currently has unpaid balances across <b>${tfEscapeHtml(pendingOrders.length)} previous order(s)</b>. 
             Credit control recommends collecting outstanding balances before booking additional dispatches.
           </p>

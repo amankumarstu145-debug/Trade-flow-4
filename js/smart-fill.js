@@ -105,7 +105,7 @@
         return;
       }
       navigator.clipboard?.writeText?.(text).then(() => {
-        window.app?.showToast?.('📋 Extracted text copied to clipboard!');
+        window.app?.showToast?.('Extracted text copied to clipboard!');
       }).catch(() => {
         window.app?.showToast?.('Could not copy to clipboard.');
       });
@@ -358,7 +358,7 @@
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      window.app?.showToast?.(`📥 Downloading ${fileName}...`);
+      window.app?.showToast?.(`Downloading ${fileName}...`);
     }
 
     openPreviewNewTab() {
@@ -501,10 +501,10 @@
       this.visionMimeType = snapData.fileType || 'image/jpeg';
       this.originalFile = { name: snapData.fileName || 'mobile_snap.jpg', type: snapData.fileType || 'image/jpeg', size: 120000 };
       const label = node('smart-fill-file-label');
-      if (label) label.textContent = `📷 ${snapData.fileName} (From Phone)`;
+      if (label) label.textContent = `${snapData.fileName} (From Phone)`;
       this.renderPreviewContent();
       if (!this.previewOpen) this.togglePreview(true);
-      this.setStatus('📷 Mobile photo received. Running RapidOCR locally...');
+      this.setStatus('Mobile photo received. Running RapidOCR locally...');
 
       // Convert fileUrl to genuine client base64 data URI if not already present
       if (this.fileUrl && (!this.visionDataUrl || !this.visionDataUrl.startsWith('data:'))) {
@@ -550,8 +550,8 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
           </span>
           <div class="min-w-0">
-            <h4 class="text-xs font-extrabold truncate">⚠️ Potential Duplicate Payment Slip Detected!</h4>
-            <p class="text-[11px] text-rose-700 dark:text-rose-300 truncate">
+            <h4 class="text-xs font-extrabold truncate">Potential Duplicate Payment Slip Detected!</h4>
+            <p class="text-xs text-rose-700 dark:text-rose-300 truncate">
               Already recorded for Order <b>${tfEscapeHtml(esc(existing.order_id || existing.orderRef || 'Registered'))}</b> (${tfEscapeHtml(esc(existing.party_name || existing.partyName || ''))}, ₹${tfEscapeHtml(esc(existing.amount || ''))}).
             </p>
           </div>
@@ -676,7 +676,7 @@
       }
 
       const label = node('smart-fill-file-label');
-      if (label) label.textContent = `📂 ${this.originalFile.name} (Restored Draft)`;
+      if (label) label.textContent = `${this.originalFile.name} (Restored Draft)`;
 
       this.renderPreviewContent();
       if (this.visionDataUrl || this.originalDataUrl || this.fileUrl) {
@@ -702,7 +702,7 @@
       }
 
       this.showDraftRestoredBanner(draft);
-      this.setStatus('📂 Unsaved draft restored. You can continue editing right where you left off.', 'emerald');
+      this.setStatus('Unsaved draft restored. You can continue editing right where you left off.', 'emerald');
       if (window.lucide) window.lucide.createIcons();
     }
 
@@ -725,7 +725,7 @@
           </span>
           <span class="text-xs font-semibold truncate">In-progress draft restored (${tfEscapeHtml(timeAgo)})</span>
         </div>
-        <button type="button" onclick="TradeFlowSmartFill.discardDraft()" class="px-2.5 py-1 text-[11px] font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/60 rounded border border-rose-200 dark:border-rose-800 shrink-0">
+        <button type="button" onclick="TradeFlowSmartFill.discardDraft()" class="px-2.5 py-1 text-xs font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/60 rounded border border-rose-200 dark:border-rose-800 shrink-0">
           Discard Draft
         </button>
       `;
@@ -1013,7 +1013,7 @@
       this.context = context;
       document.querySelectorAll('.smart-fill-tab').forEach((button) => {
         const active = button.dataset.smartFillContext === context;
-        button.className = `smart-fill-tab px-3 py-2 rounded-lg text-xs font-bold ${active ? 'bg-violet-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`;
+        button.className = `smart-fill-tab px-3 py-2 rounded-lg text-xs font-bold ${active ? 'bg-purple-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`;
         button.setAttribute('aria-selected', String(active));
       });
       if (this.extracted) this.renderReview();
@@ -1239,13 +1239,13 @@
           if (prominentBtn) {
             prominentBtn.classList.remove('hidden');
             const lbl = node('smart-fill-btn-inspect-text-prominent-label');
-            if (lbl) lbl.textContent = `📄 Show Extracted Text (${linesCount} lines)`;
+            if (lbl) lbl.textContent = `Show Extracted Text (${linesCount} lines)`;
           }
 
           this.setLogProgress(50, '50%');
           this.addLogLine('📄', `RapidOCR Completed: Extracted ${linesCount} lines (${conf}% confidence, ${ocrData.duration_ms}ms)`, 'emerald');
           this.addLogLine('👁️', '“Show Extracted Text” enabled. Ready for side-by-side inspection.', 'amber');
-          this.setStatus(`✅ RapidOCR scan complete (${conf}% confidence). Ready to analyze.`, 'emerald');
+          this.setStatus(`RapidOCR scan complete (${conf}% confidence). Ready to analyze.`, 'emerald');
         }
       } catch (err) {
         console.warn('RapidOCR background scan notice:', err);
@@ -1278,8 +1278,8 @@
       const tones = {
         slate: 'text-slate-300',
         emerald: 'text-emerald-400 font-semibold',
-        violet: 'text-violet-300',
-        blue: 'text-sky-300',
+        violet: 'text-purple-300',
+        blue: 'text-blue-300',
         amber: 'text-amber-300',
         rose: 'text-rose-400'
       };
@@ -1287,7 +1287,7 @@
       const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
       const div = document.createElement('div');
       div.className = `flex items-start gap-1.5 leading-tight ${tones[tone] || tones.slate}`;
-      div.innerHTML = `<span class="text-slate-500 shrink-0 font-mono text-[10px]">[${tfEscapeHtml(timeStr)}]</span> <span class="shrink-0">${tfEscapeHtml(icon)}</span> <span class="break-words">${tfEscapeHtml(esc(message))}</span>`;
+      div.innerHTML = `<span class="text-slate-500 shrink-0 font-mono text-xs">[${tfEscapeHtml(timeStr)}]</span> <span class="shrink-0">${tfEscapeHtml(icon)}</span> <span class="break-words">${tfEscapeHtml(esc(message))}</span>`;
       lines.appendChild(div);
       lines.scrollTop = lines.scrollHeight;
     }
@@ -1552,7 +1552,7 @@
       if (!view) return;
 
       const c = collision.contact;
-      node('smart-fill-partner-merge-title').textContent = `🤝 Existing Trade Partner Detected: "${c.name}"`;
+      node('smart-fill-partner-merge-title').textContent = `Existing Trade Partner Detected: "${c.name}"`;
       node('smart-fill-partner-merge-desc').textContent = `${collision.reason} matches contact record ${c.id || ''} in system.`;
       node('smart-fill-partner-merge-badge').textContent = `ID: ${c.id || 'MATCH'}`;
 
@@ -1583,8 +1583,8 @@
         extractedEl.innerHTML = rows.map(([label, oldVal, newVal]) => {
           const isChanged = newVal && clean(newVal) !== clean(oldVal);
           const isNewVal = isChanged && !clean(oldVal);
-          const badge = isNewVal ? `<span class="px-1 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 ml-1">✨ New</span>`
-                      : isChanged ? `<span class="px-1 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 ml-1">Update</span>` : '';
+          const badge = isNewVal ? `<span class="px-1 py-0.2 rounded text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 ml-1">New</span>`
+                      : isChanged ? `<span class="px-1 py-0.2 rounded text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 ml-1">Update</span>` : '';
           return `
             <div class="flex items-start justify-between gap-1 py-0.5 border-b border-slate-100 dark:border-slate-800/50">
               <span class="text-slate-500 font-semibold shrink-0">${tfEscapeHtml(esc(label))}:</span>
@@ -1629,7 +1629,7 @@
       this.dismissPartnerMerge();
       this.clearDraft();
       this.close();
-      window.app?.showToast?.(`🤝 Successfully merged new details into "${c.name}" (${c.id || 'Partner'}).`);
+      window.app?.showToast?.(`Successfully merged new details into "${c.name}" (${c.id || 'Partner'}).`);
     }
 
     saveAsNewPartner() {
@@ -1775,14 +1775,14 @@
         if (key === 'direction') {
           const isOut = /out|paid/i.test(value);
           inputHtml = `
-            <select data-smart-fill-field="direction" onchange="TradeFlowSmartFill.onDirectionChanged(this.value)" class="w-full px-2 py-1 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-violet-500 font-semibold cursor-pointer">
+            <select data-smart-fill-field="direction" onchange="TradeFlowSmartFill.onDirectionChanged(this.value)" class="w-full px-2 py-1 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-purple-500 font-semibold cursor-pointer">
               <option value="Money Out (Paid)" ${tfEscapeHtml(isOut ? 'selected' : '')}>Money Out (Paid) - Company Paid Counterparty</option>
               <option value="Money In (Received)" ${tfEscapeHtml(!isOut ? 'selected' : '')}>Money In (Received) - Received from Customer</option>
             </select>
           `;
         } else if (key === 'category') {
           inputHtml = `
-            <select data-smart-fill-field="category" class="w-full px-2 py-1 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-violet-500 font-semibold cursor-pointer">
+            <select data-smart-fill-field="category" class="w-full px-2 py-1 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-purple-500 font-semibold cursor-pointer">
               <option value="Manufacturer / Supplier" ${tfEscapeHtml(/manufacturer|supplier|factory|mfg/i.test(value) ? 'selected' : '')}>Manufacturer / Supplier (Factory)</option>
               <option value="Packaging & Labels" ${tfEscapeHtml(/packag|label|jar/i.test(value) ? 'selected' : '')}>Packaging & Labels Vendor</option>
               <option value="Transport & Logistics" ${tfEscapeHtml(/transport|freight|logistics/i.test(value) ? 'selected' : '')}>Transport & Logistics</option>
@@ -1805,31 +1805,31 @@
             })
           ].join('');
           inputHtml = `
-            <select data-smart-fill-field="orderRef" class="w-full px-2 py-1 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-violet-500 font-semibold cursor-pointer">
+            <select data-smart-fill-field="orderRef" class="w-full px-2 py-1 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-purple-500 font-semibold cursor-pointer">
               ${optionsHtml}
             </select>
           `;
         } else if (key === 'utr') {
           const hasDup = this.duplicateConflict && this.duplicateConflict.isDuplicate;
           const badgeClass = hasDup ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
-          const badgeText = hasDup ? '⚠️ DUPLICATE' : 'VERIFIED';
+          const badgeText = hasDup ? 'DUPLICATE' : 'VERIFIED';
           return `
             <div class="rounded-lg border ${tfEscapeHtml(hasDup ? 'border-rose-400 dark:border-rose-700 bg-rose-50/50 dark:bg-rose-950/20' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90')} p-2 shadow-2xs">
               <div class="flex items-center justify-between gap-1 mb-1">
-                <span class="font-bold text-[11px] text-slate-700 dark:text-slate-300 truncate">${tfEscapeHtml(esc(label))}</span>
-                <span class="text-[9px] font-bold px-1.5 py-0.2 rounded ${tfEscapeHtml(badgeClass)}">${tfEscapeHtml(badgeText)}</span>
+                <span class="font-bold text-xs text-slate-700 dark:text-slate-300 truncate">${tfEscapeHtml(esc(label))}</span>
+                <span class="text-xs font-bold px-1.5 py-0.2 rounded ${tfEscapeHtml(badgeClass)}">${tfEscapeHtml(badgeText)}</span>
               </div>
-              <input data-smart-fill-field="${tfEscapeHtml(esc(key))}" value="${tfEscapeHtml(esc(value))}" class="w-full px-2 py-1 text-xs rounded-md border ${tfEscapeHtml(hasDup ? 'border-rose-400 bg-rose-50 dark:bg-rose-950' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950')} text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-violet-500 font-mono font-bold">
+              <input data-smart-fill-field="${tfEscapeHtml(esc(key))}" value="${tfEscapeHtml(esc(value))}" class="w-full px-2 py-1 text-xs rounded-md border ${tfEscapeHtml(hasDup ? 'border-rose-400 bg-rose-50 dark:bg-rose-950' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950')} text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-purple-500 font-mono font-bold">
             </div>
           `;
         } else {
-          inputHtml = `<input data-smart-fill-field="${tfEscapeHtml(esc(key))}" value="${tfEscapeHtml(esc(value))}" class="w-full px-2 py-1 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-violet-500 font-medium">`;
+          inputHtml = `<input data-smart-fill-field="${tfEscapeHtml(esc(key))}" value="${tfEscapeHtml(esc(value))}" class="w-full px-2 py-1 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-purple-500 font-medium">`;
         }
         return `
           <div class="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-2 shadow-2xs">
             <div class="flex items-center justify-between gap-1 mb-1">
-              <span class="font-bold text-[11px] text-slate-700 dark:text-slate-300 truncate">${tfEscapeHtml(esc(label))}</span>
-              <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">Extracted</span>
+              <span class="font-bold text-xs text-slate-700 dark:text-slate-300 truncate">${tfEscapeHtml(esc(label))}</span>
+              <span class="text-xs font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">Extracted</span>
             </div>
             ${inputHtml}
           </div>
@@ -1858,13 +1858,13 @@
           optionalFieldsBar = `
             <div class="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
               <div class="flex items-center gap-1.5">
-                <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">+ Add Optional Field:</span>
-                <select onchange="if(this.value){ TradeFlowSmartFill.addOptionalField(this.value); this.value=''; }" class="px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 outline-none focus:ring-1 focus:ring-violet-500 cursor-pointer">
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-400">+ Add Optional Field:</span>
+                <select onchange="if(this.value){ TradeFlowSmartFill.addOptionalField(this.value); this.value=''; }" class="px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer">
                   <option value="">Choose field to add...</option>
                   ${optionsHtml}
                 </select>
               </div>
-              <span class="text-[10px] font-mono text-slate-400 font-semibold">${tfEscapeHtml(fields.length)} active fields (${tfEscapeHtml(rail)})</span>
+              <span class="text-xs font-mono text-slate-400 font-semibold">${tfEscapeHtml(fields.length)} active fields (${tfEscapeHtml(rail)})</span>
             </div>
           `;
         }
@@ -1924,8 +1924,8 @@
       const pill = document.createElement('button');
       pill.id = 'smart-fill-undo-pill';
       pill.type = 'button';
-      pill.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 z-[150] px-4 py-2.5 rounded-full bg-slate-900 text-white shadow-xl border border-violet-400/60 text-xs font-bold';
-      pill.textContent = '✨ Smart Fill applied · Undo';
+      pill.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 z-[150] px-4 py-2.5 rounded-full bg-slate-900 text-white shadow-xl border border-purple-400/60 text-xs font-bold';
+      pill.textContent = 'Smart Fill applied · Undo';
       pill.addEventListener('click', () => this.restoreSnapshot());
       document.body.appendChild(pill);
     }

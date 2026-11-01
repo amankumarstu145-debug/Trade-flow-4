@@ -1,0 +1,129 @@
+/* =====================================================================================
+   TradeFlow design system (v5)
+   One source for colour, type, shape, spacing, depth and layers, plus shared components.
+   Loaded after styles.css so it wins over older one-off rules.
+   Colour meanings: green = brand / main action · amber = warning · red = overdue / error
+                    blue = in progress / info · purple = AI only · warm neutrals = surfaces
+   ===================================================================================== */
+:root {
+  /* Brand */
+  --tf-brand: #047857; --tf-brand-hover: #065f46; --tf-brand-text: #065f46; --tf-brand-tint: #ecfdf5; --tf-brand-ring: rgba(4, 120, 87, .28);
+  /* Meaning colours: background / text */
+  --tf-ok-bg: #ecfdf5;     --tf-ok-fg: #065f46;
+  --tf-warn-bg: #fffbeb;   --tf-warn-fg: #92400e;   --tf-warn-line: #fde68a;
+  --tf-danger-bg: #fef2f2; --tf-danger-fg: #991b1b; --tf-danger: #b91c1c; --tf-danger-line: #fecaca;
+  --tf-info-bg: #eff6ff;   --tf-info-fg: #1e40af;
+  --tf-ai-bg: #f5f3ff;     --tf-ai-fg: #5b21b6;     --tf-ai: #6d28d9;
+  /* Warm neutrals */
+  --tf-surface: #ffffff; --tf-warm: #f7f4ec; --tf-soft: #faf8f3; --tf-page: #fcfbf8;
+  --tf-line: #e7e2d6; --tf-line-2: #f1ece0;
+  --tf-text: #0f172a; --tf-text-2: #334155; --tf-muted: #475569; --tf-faint: #64748b;
+  /* Type: one family, seven sizes, four weights */
+  --tf-font: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --tf-fs-12: 12px; --tf-fs-13: 13px; --tf-fs-14: 14px; --tf-fs-16: 16px; --tf-fs-19: 19px; --tf-fs-22: 22px; --tf-fs-28: 28px;
+  --tf-fw-regular: 400; --tf-fw-medium: 500; --tf-fw-semibold: 600; --tf-fw-bold: 700;
+  /* Shape and spacing (4 px steps) */
+  --tf-r-sm: 8px; --tf-r-md: 12px; --tf-r-lg: 16px; --tf-r-full: 999px;
+  --tf-s-1: 4px; --tf-s-2: 8px; --tf-s-3: 12px; --tf-s-4: 16px; --tf-s-5: 20px; --tf-s-6: 24px; --tf-s-8: 32px;
+  /* Depth */
+  --tf-shadow-1: 0 1px 2px rgba(15, 23, 42, .05);
+  --tf-shadow-2: 0 6px 18px rgba(15, 23, 42, .08);
+  --tf-shadow-3: 0 20px 50px rgba(15, 23, 42, .25);
+  /* Layers: page < sticky < menus < side panels < pop-ups < partner windows < demo button < confirm < messages */
+  --tf-z-sticky: 10; --tf-z-menu: 40; --tf-z-drawer: 60; --tf-z-modal: 100; --tf-z-overlay: 150; --tf-z-demo: 240; --tf-z-confirm: 250; --tf-z-toast: 300;
+}
+html.dark {
+  --tf-brand: #047857; --tf-brand-hover: #065f46; --tf-brand-text: #6ee7b7; --tf-brand-tint: rgba(16, 185, 129, .14); --tf-brand-ring: rgba(52, 211, 153, .35);
+  --tf-ok-bg: rgba(16, 185, 129, .14); --tf-ok-fg: #6ee7b7;
+  --tf-warn-bg: rgba(245, 158, 11, .14); --tf-warn-fg: #fcd34d; --tf-warn-line: rgba(245, 158, 11, .4);
+  --tf-danger-bg: rgba(239, 68, 68, .14); --tf-danger-fg: #fca5a5; --tf-danger: #f87171; --tf-danger-line: rgba(239, 68, 68, .35);
+  --tf-info-bg: rgba(59, 130, 246, .16); --tf-info-fg: #93c5fd;
+  --tf-ai-bg: rgba(139, 92, 246, .16); --tf-ai-fg: #c4b5fd; --tf-ai: #a78bfa;
+  --tf-surface: #111827; --tf-warm: #1a1f2b; --tf-soft: #161c28; --tf-page: #0b1120;
+  --tf-line: #2a3242; --tf-line-2: #222a38;
+  --tf-text: #f1f5f9; --tf-text-2: #cbd5e1; --tf-muted: #a3b1c4; --tf-faint: #94a3b8;
+}
+
+/* The partner pages read the same tokens */
+.pu-root, html.dark .pu-root {
+  --pu-card: var(--tf-surface); --pu-warm: var(--tf-warm); --pu-soft: var(--tf-soft); --pu-line: var(--tf-line); --pu-line2: var(--tf-line-2);
+  --pu-text: var(--tf-text); --pu-text2: var(--tf-text-2); --pu-muted: var(--tf-muted); --pu-faint: var(--tf-faint);
+  --pu-green: var(--tf-brand-text); --pu-green-bg: var(--tf-ok-bg); --pu-green-fg: var(--tf-ok-fg);
+  --pu-red: var(--tf-danger); --pu-red-bg: var(--tf-danger-bg); --pu-red-fg: var(--tf-danger-fg);
+  --pu-amber-bg: var(--tf-warn-bg); --pu-amber-fg: var(--tf-warn-fg); --pu-amber-line: var(--tf-warn-line);
+  --pu-blue-bg: var(--tf-info-bg); --pu-blue-fg: var(--tf-info-fg);
+}
+.pu-primary { background: var(--tf-brand); border-color: var(--tf-brand); }
+.pu-primary:hover { background: var(--tf-brand-hover); border-color: var(--tf-brand-hover); }
+html.dark .pu-primary { background: #047857; border-color: #047857; }
+
+/* ---------------------------------------------------------------- shared components */
+.tf-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--tf-s-2); min-height: 44px; padding: 0 var(--tf-s-4); border-radius: var(--tf-r-md); border: 1px solid var(--tf-line); background: var(--tf-surface); color: var(--tf-text-2); font: inherit; font-size: var(--tf-fs-14); font-weight: var(--tf-fw-semibold); cursor: pointer; text-decoration: none; white-space: nowrap; }
+.tf-btn:hover { border-color: var(--tf-faint); color: var(--tf-text); }
+.tf-btn:focus-visible, .tf-chip:focus-visible, .tf-input:focus-visible { outline: 2px solid var(--tf-brand); outline-offset: 2px; }
+.tf-btn--primary { background: var(--tf-brand); border-color: var(--tf-brand); color: #fff; }
+.tf-btn--primary:hover { background: var(--tf-brand-hover); border-color: var(--tf-brand-hover); color: #fff; }
+.tf-btn--danger { color: var(--tf-danger); border-color: var(--tf-danger-line); }
+.tf-btn--ghost { border-color: transparent; background: transparent; }
+.tf-btn--ai { background: var(--tf-ai); border-color: var(--tf-ai); color: #fff; }
+.tf-btn--sm { min-height: 36px; padding: 0 var(--tf-s-3); font-size: var(--tf-fs-13); border-radius: var(--tf-r-sm); }
+.tf-chip { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: var(--tf-r-full); border: 1px solid var(--tf-line); background: var(--tf-surface); color: var(--tf-text); font: inherit; font-size: var(--tf-fs-13); font-weight: var(--tf-fw-semibold); cursor: pointer; }
+.tf-chip.is-on { background: var(--tf-text); border-color: var(--tf-text); color: var(--tf-surface); }
+.tf-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: var(--tf-r-full); font-size: var(--tf-fs-12); font-weight: var(--tf-fw-semibold); white-space: nowrap; background: var(--tf-soft); color: var(--tf-text-2); }
+.tf-badge--ok { background: var(--tf-ok-bg); color: var(--tf-ok-fg); }
+.tf-badge--warn { background: var(--tf-warn-bg); color: var(--tf-warn-fg); }
+.tf-badge--danger { background: var(--tf-danger-bg); color: var(--tf-danger-fg); }
+.tf-badge--info { background: var(--tf-info-bg); color: var(--tf-info-fg); }
+.tf-badge--ai { background: var(--tf-ai-bg); color: var(--tf-ai-fg); }
+.tf-card { background: var(--tf-surface); border: 1px solid var(--tf-line); border-radius: var(--tf-r-lg); box-shadow: var(--tf-shadow-1); overflow: hidden; }
+.tf-card__head { background: var(--tf-warm); border-bottom: 1px solid var(--tf-line); padding: var(--tf-s-4); }
+.tf-box { background: var(--tf-surface); border: 1px solid var(--tf-line); border-radius: var(--tf-r-lg); overflow: hidden; }
+.tf-box__head { display: flex; align-items: center; gap: 10px; padding: 12px var(--tf-s-4); background: var(--tf-soft); border-bottom: 1px solid var(--tf-line); }
+.tf-box__title { margin: 0; font-size: var(--tf-fs-16); font-weight: var(--tf-fw-bold); color: var(--tf-text); }
+.tf-box__body { padding: var(--tf-s-3); }
+.tf-tile { background: var(--tf-soft); border: 1px solid var(--tf-line-2); border-radius: 10px; padding: 9px 12px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tf-label { font-size: var(--tf-fs-12); font-weight: var(--tf-fw-semibold); color: var(--tf-muted); }
+.tf-hint { font-size: var(--tf-fs-12); color: var(--tf-muted); }
+.tf-kpi { background: var(--tf-surface); border: 1px solid var(--tf-line); border-radius: var(--tf-r-md); padding: 14px var(--tf-s-4); display: flex; flex-direction: column; gap: 4px; }
+.tf-kpi__value { font-size: var(--tf-fs-22); font-weight: var(--tf-fw-bold); font-variant-numeric: tabular-nums; color: var(--tf-text); }
+.tf-num { font-variant-numeric: tabular-nums; }
+.tf-input { height: 44px; width: 100%; padding: 0 12px; border: 1px solid var(--tf-line); border-radius: var(--tf-r-sm); font: inherit; font-size: var(--tf-fs-14); color: var(--tf-text); background: var(--tf-surface); }
+.tf-table { width: 100%; border-collapse: collapse; font-size: var(--tf-fs-14); }
+.tf-table th { text-align: left; padding: 12px; font-size: var(--tf-fs-12); font-weight: var(--tf-fw-semibold); color: var(--tf-muted); border-bottom: 1px solid var(--tf-line); background: var(--tf-soft); }
+.tf-table td { padding: 12px; border-bottom: 1px solid var(--tf-line-2); }
+.tf-empty { padding: 28px 18px; text-align: center; color: var(--tf-muted); font-size: var(--tf-fs-13); border: 1px dashed var(--tf-line); border-radius: var(--tf-r-lg); background: var(--tf-surface); }
+.tf-dialog { background: var(--tf-surface); color: var(--tf-text); border-radius: 18px; box-shadow: var(--tf-shadow-3); overflow: hidden; }
+
+/* ---------------------------------------------------------------- app-wide rules from the system */
+/* One font; numbers keep even widths without a code font */
+body { font-family: var(--tf-font); }
+.font-mono-num, .font-mono, .font-mono-num * { font-family: var(--tf-font) !important; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+/* Sentence case labels instead of shouted UPPERCASE (codes typed into inputs stay as typed) */
+.uppercase:not(input):not(textarea):not(select) { text-transform: none !important; }
+.tracking-wide, .tracking-wider, .tracking-widest { letter-spacing: normal !important; }
+
+/* Brand is green: active tab, focus, links, highlights that used amber */
+.workspace-tab-item.active { color: var(--tf-brand-text) !important; }
+.dark .workspace-tab-item.active { color: var(--tf-brand-text) !important; }
+.workspace-tab-item.active::after { background-color: var(--tf-brand) !important; }
+.table-cell-input:focus, .dark .table-cell-input:focus { border-color: var(--tf-brand) !important; box-shadow: 0 0 0 2px var(--tf-brand-ring) !important; }
+.breadcrumb-item:hover { color: var(--tf-brand-text) !important; }
+.tf-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(4, 120, 87, .55) !important; }
+.modal-resize-br:hover svg, .modal-resize-bl:hover svg { color: var(--tf-brand) !important; }
+.tf-finance-kpi-card.active-drilldown { border-color: var(--tf-brand) !important; box-shadow: 0 0 0 3px var(--tf-brand-ring) !important; background-color: var(--tf-brand-tint) !important; }
+.tf-timeline-dot { box-shadow: 0 0 0 2px var(--tf-brand); background-color: var(--tf-brand); }
+:root { --tf-border-card-hover: #cfc6b2; }
+html.dark { --tf-border-card-hover: #3b4558; }
+
+/* Fixed layer order */
+#universal-confirm-modal { z-index: var(--tf-z-confirm) !important; }
+.tf-demo-fill-btn { z-index: var(--tf-z-demo) !important; }
+.pu-overlay { z-index: var(--tf-z-overlay); }
+#toast-container, .tf-toast-stack, [data-tf-toast-root] { z-index: var(--tf-z-toast) !important; }
+
+/* Paper documents (invoice preview and print) keep compact print sizes so an A4 page fits;
+   the 12px minimum applies to the app's screens, not to the printed sheet. */
+.studio-invoice-sheet .text-xs, #printable-invoice-container .text-xs { font-size: 10.5px; line-height: 14px; }
+.studio-invoice-sheet .text-sm, #printable-invoice-container .text-sm { font-size: 12px; line-height: 16px; }
+/* Icons and text inside green main buttons that used to be yellow stay readable */
+.bg-emerald-700 .text-slate-950, .bg-emerald-700 .text-slate-900, .dark .dark\:bg-emerald-700 .dark\:text-slate-950 { color: #ffffff !important; }
