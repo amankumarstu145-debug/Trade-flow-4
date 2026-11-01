@@ -354,3 +354,39 @@ test('ai scan: Anthropic and Gemini requests no longer crash on undefined variab
     assert(!/is not defined/.test(JSON.stringify(result.data)), provider + ': ' + JSON.stringify(result.data));
   }
 });
+
+// ---- Partner pages: one contact person by default, money per partner type ----
+function loadPartnerUI() {
+  const vm = require('vm');
+  const sandbox = { console, document: { addEventListener: () => {} } };
+  sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'js', 'partner-ui.js'), 'utf8'), sandbox);
+  return sandbox.TFPartnerUI;
+}
+test('partners: older contacts read as one contact person, and the primary person drives the card', () => {
+  const ui = loadPartnerUI();
+  const legacy = { id: 'RET-9', role: 'retailer', name: 'Old Buyer', contactPerson: 'Asha', phone: '9876543210', email: 'a@x.in' };
+  const people = ui.peopleOf(legacy);
+  assert.equal(people.length, 1);
+  assert.equal(people[0].name, 'Asha');
+  assert.equal(ui.primaryOf(legacy).phone, '9876543210');
+  const two = { ...legacy, people: [{ id: 'p1', name: 'Asha', phone: '1' }, { id: 'p2', name: 'Ravi', phone: '2' }], primaryPersonId: 'p2' };
+  assert.equal(ui.primaryOf(two).name, 'Ravi');
+});
+test('partners: balances follow each partner type and only open orders count as current', () => {
+  const ui = loadPartnerUI();
+  const app = { data: { orders: [
+    { id: 'A', retailerId: 'R', manufacturerId: 'M', status: 'in_transit', date: '2026-10-01', dueDate: '2000-01-01', totalInvoiceAmount: 1000, customerBalanceDue: 400, manufacturerTotalCost: 600, manufacturerAdvancePaid: 200 },
+    { id: 'B', retailerId: 'R', manufacturerId: 'M', status: 'settled', date: '2026-09-01', totalInvoiceAmount: 500, customerBalanceDue: 0, manufacturerTotalCost: 300, manufacturerAdvancePaid: 300 }
+  ], payments: [], contacts: [] }, paymentsPaidToContact: () => 0 };
+  const buyer = ui.summary(app, { id: 'R', role: 'retailer' });
+  assert.equal(buyer.big, 400);
+  assert.equal(buyer.of, 1500);
+  assert.equal(buyer.done, 1100);
+  assert.equal(buyer.overdue, 400);
+  assert.equal(buyer.openCount, 1);
+  const factory = ui.summary(app, { id: 'M', role: 'manufacturer' });
+  assert.equal(factory.big, 400);
+  assert.equal(factory.done, 500);
+  assert.equal(ui.sections({ role: 'transporter' }).find(s => s.id === 'terms').fields.some(f => f.key === 'vehicles'), true);
+});

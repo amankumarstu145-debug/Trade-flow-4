@@ -2920,6 +2920,12 @@ class TradeFlowApp {
     const container = document.getElementById('view-manufacturers-container');
     if (!container) return;
 
+    if (window.TFPartnerUI) {
+      container.innerHTML = window.TFPartnerUI.renderDirectory(this, 'manufacturer');
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
+
     const mfgs = this.data.contacts.filter(c => c.role === 'manufacturer');
 
     const cardsHtml = mfgs.map(mfg => {
@@ -3232,6 +3238,12 @@ class TradeFlowApp {
   renderPackagingView() {
     const container = document.getElementById('view-packaging-container');
     if (!container) return;
+
+    if (window.TFPartnerUI) {
+      container.innerHTML = window.TFPartnerUI.renderDirectory(this, 'packaging');
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
 
     const pkgs = this.data.contacts.filter(c => c.role === 'packaging');
 
@@ -3751,8 +3763,9 @@ class TradeFlowApp {
 
     const orders = this.data.orders;
     const totalFreightPaid = orders.reduce((s, o) => s + (o.transportPaidByUs ? o.totalTransportCost : 0), 0);
+    const partnerDirectory = window.TFPartnerUI ? window.TFPartnerUI.renderDirectory(this, 'transporter') + '<h2 class="text-base font-bold text-slate-900 dark:text-slate-100 mt-8 mb-3">All trips · LR &amp; freight tracker</h2>' : '';
 
-    container.innerHTML = `
+    container.innerHTML = partnerDirectory + `
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-2xs mb-4 flex items-center justify-between">
         <div>
           <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Lorry Receipt (LR / Bilty) & Freight Tracker</h3>
@@ -3826,6 +3839,12 @@ class TradeFlowApp {
     const container = document.getElementById('view-retailers-container');
     if (!container) return;
 
+    if (window.TFPartnerUI) {
+      container.innerHTML = window.TFPartnerUI.renderDirectory(this, 'retailer');
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
+
     if (window.TFComponents && typeof window.TFComponents.renderRetailersDirectory === 'function') {
       const retailers = this.data.contacts.filter(c => c.role === 'retailer');
       container.innerHTML = window.TFComponents.renderRetailersDirectory(retailers, this.data.orders, this.data.payments);
@@ -3890,6 +3909,12 @@ class TradeFlowApp {
   renderMarketeersView() {
     const container = document.getElementById('view-marketeers-container');
     if (!container) return;
+
+    if (window.TFPartnerUI) {
+      container.innerHTML = window.TFPartnerUI.renderDirectory(this, 'marketeer');
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
 
     if (window.TFComponents && typeof window.TFComponents.renderMarketeersDirectory === 'function') {
       const marketeers = this.data.contacts.filter(c => c.role === 'marketeer');
@@ -5662,6 +5687,12 @@ class TradeFlowApp {
           </button>
         </div>
       `;
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
+
+    if (window.TFPartnerUI) {
+      container.innerHTML = window.TFPartnerUI.renderPage(this, contact);
       if (window.lucide) window.lucide.createIcons();
       return;
     }
