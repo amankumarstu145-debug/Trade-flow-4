@@ -472,7 +472,7 @@ window.TFComponents = {
         </div>
 
         <!-- 4 Cards Per Row Grid with Responsive Squeezing -->
-        <div id="marketeers-card-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-4.5 w-full">
+        <div id="marketeers-card-grid" class="grid gap-4 w-full tf-partner-grid">
           ${cardsHtml}
         </div>
       </div>
@@ -741,9 +741,9 @@ window.TFComponents = {
                   ${latestOrders.slice(0, 2).map(o => `
                     <div onclick="event.stopPropagation(); app.openOrderDetailPage('${tfEscapeHtml(tfEscapeJs(o.id))}')" class="minitable-row" title="Click to inspect order ${tfEscapeHtml(o.invoiceNumber)}">
                       <span class="font-mono font-bold text-slate-900 dark:text-white truncate">${tfEscapeHtml(o.invoiceNumber)}</span>
-                      <span class="truncate text-slate-700 dark:text-slate-300 font-medium">${tfEscapeHtml((o.items && o.items[0]) ? (o.items[0].variant || o.items[0].name) : 'Mixed Pickle')}</span>
+                      <span class="truncate text-slate-700 dark:text-slate-300 font-medium">${tfEscapeHtml((o.items && o.items[0]) ? (o.items[0].variant || o.items[0].name) : '—')}</span>
                       <span class="text-right font-medium text-slate-600 dark:text-slate-400 flex items-center justify-end gap-0.5 truncate">
-                        <span>${tfEscapeHtml((o.items || []).reduce((sum, i) => sum + (i.quantity || 0), 0) || 15)} Cases</span>
+                        <span>${tfEscapeHtml((o.items || []).reduce((sum, i) => sum + (Number(i.cases) || 0), 0))} Cases</span>
                         <i data-lucide="chevron-right" class="w-2.5 h-2.5 text-slate-400 shrink-0"></i>
                       </span>
                     </div>
@@ -796,7 +796,7 @@ window.TFComponents = {
         </div>
 
         <!-- 4 Cards Per Row Grid with Responsive Squeezing -->
-        <div id="retailers-card-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-4.5 w-full">
+        <div id="retailers-card-grid" class="grid gap-4 w-full tf-partner-grid">
           ${cardsHtml}
         </div>
       </div>
@@ -866,7 +866,7 @@ window.TFComponents = {
 
     // Role-specific badge & color themes
     const roleThemes = {
-      manufacturer: { label: 'PICKLE FACTORY', bg: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20', icon: 'factory', color: 'text-emerald-600', balanceLabel: 'Payable to Factory' },
+      manufacturer: { label: 'MANUFACTURER', bg: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20', icon: 'factory', color: 'text-emerald-600', balanceLabel: 'Payable to Factory' },
       retailer: { label: 'RETAILER / BUYER', bg: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20', icon: 'store', color: 'text-emerald-600', balanceLabel: 'Receivable from Buyer' },
       marketeer: { label: 'SALES BROKER', bg: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20', icon: 'handshake', color: 'text-purple-600', balanceLabel: 'Payable Brokerage' },
       packaging: { label: 'PACKAGING SUPPLIER', bg: 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20', icon: 'package', color: 'text-sky-600', balanceLabel: 'Payable to Supplier' },
@@ -1794,16 +1794,16 @@ window.TFComponents = {
             <div class="p-3 rounded-xl bg-amber-500/5 dark:bg-amber-950/20 border border-amber-500/20 space-y-2 text-xs mb-3.5">
               <div class="flex justify-between items-center">
                 <span class="text-slate-500 dark:text-slate-400">Selling to Retailer:</span>
-                <span class="font-mono-num font-black text-sm text-slate-900 dark:text-white">${tfEscapeHtml(typeof app !== 'undefined' ? app.formatCurrency(sellingPrice) : '₹' + sellingPrice)}</span>
+                <span class="font-mono-num font-black text-sm ${tfEscapeHtml(sellingPrice > 0 ? 'text-slate-900 dark:text-white' : 'text-amber-700 dark:text-amber-300')}">${tfEscapeHtml(sellingPrice > 0 ? (typeof app !== 'undefined' ? app.formatCurrency(sellingPrice) : '₹' + sellingPrice) : 'Price not set')}</span>
               </div>
               <div class="flex justify-between items-center text-[11px] text-slate-400">
                 <span>MRP (Retail Price):</span>
-                <span class="font-mono-num font-semibold text-slate-600 dark:text-slate-300">${tfEscapeHtml(typeof app !== 'undefined' ? app.formatCurrency(mrp) : '₹' + mrp)}</span>
+                <span class="font-mono-num font-semibold text-slate-600 dark:text-slate-300">${tfEscapeHtml(mrp > 0 ? (typeof app !== 'undefined' ? app.formatCurrency(mrp) : '₹' + mrp) : '—')}</span>
               </div>
               <div class="pt-1.5 border-t border-amber-500/15 flex justify-between items-center">
                 <span class="text-emerald-700 dark:text-emerald-400 font-bold text-[11px]">Gross Unit Margin:</span>
-                <span class="inline-flex items-center gap-1 font-mono-num font-black text-xs ${tfEscapeHtml(parseFloat(marginPct) >= 30 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600')}">
-                  ${tfEscapeHtml(grossMargin >= 0 ? '+' : '−')}${tfEscapeHtml(typeof app !== 'undefined' ? app.formatCurrency(Math.abs(grossMargin)) : '₹' + Math.abs(grossMargin))} (${tfEscapeHtml(marginPct)}%)
+                <span class="inline-flex items-center gap-1 font-mono-num font-black text-xs ${tfEscapeHtml(sellingPrice <= 0 ? 'text-slate-500 dark:text-slate-400' : grossMargin < 0 ? 'text-rose-600 dark:text-rose-400' : parseFloat(marginPct) >= 30 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400')}">
+                  ${sellingPrice <= 0 ? 'Set a selling price' : `${tfEscapeHtml(grossMargin >= 0 ? '+' : '−')}${tfEscapeHtml(typeof app !== 'undefined' ? app.formatCurrency(Math.abs(grossMargin)) : '₹' + Math.abs(grossMargin))} (${tfEscapeHtml(marginPct)}%)`}
                 </span>
               </div>
             </div>

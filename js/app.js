@@ -684,7 +684,7 @@ class TradeFlowApp {
     if (badge) {
       badge.textContent = `${items.length} ${items.length === 1 ? 'Matter' : 'Matters'}`;
       if (items.length > 0) {
-        badge.className = 'px-2 py-0.5 text-xs font-mono-num font-bold rounded-md bg-amber-500 text-slate-950 animate-pulse';
+        badge.className = 'px-2 py-0.5 text-xs font-mono-num font-bold rounded-md bg-amber-500 text-slate-950';
       } else {
         badge.className = 'px-2 py-0.5 text-xs font-mono-num font-bold rounded-md bg-emerald-500 text-white';
       }
@@ -2196,12 +2196,35 @@ class TradeFlowApp {
     if (typeof this.closeEditContactModal === 'function') this.closeEditContactModal();
   }
 
+  // Phones and tablets: the sidebar slides in over the page instead of taking a fixed column.
+  toggleMobileSidebar(force) {
+    const open = typeof force === 'boolean' ? force : !document.body.classList.contains('tf-sidebar-open');
+    document.body.classList.toggle('tf-sidebar-open', open);
+    const btn = document.getElementById('tf-menu-btn');
+    if (btn) { btn.setAttribute('aria-expanded', String(open)); btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu'); }
+  }
+
   bindEvents() {
+    // Close the mobile sidebar after choosing a screen, and with Escape.
+    document.getElementById('app-sidebar')?.addEventListener('click', e => {
+      if (e.target.closest('button, a') && window.matchMedia('(max-width: 1023px)').matches) this.toggleMobileSidebar(false);
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.body.classList.contains('tf-sidebar-open')) this.toggleMobileSidebar(false); });
+
     // Left Sidebar Navigation Items
     document.querySelectorAll('[data-sidebar-tab]').forEach(btn => {
       btn.addEventListener('click', () => {
         this.activeTab = btn.getAttribute('data-sidebar-tab');
+        // The fixed first tab always shows the sidebar screen you are on (it used to stay "Orders Pipeline").
+        const homeTab = (this.openTabs || []).find(t => t.id === 'tab-orders');
+        if (homeTab) {
+          homeTab.type = this.activeTab;
+          homeTab.title = (btn.querySelector('span') || btn).textContent.trim() || this.getCurrentViewLabel();
+          homeTab.icon = btn.querySelector('[data-lucide]')?.getAttribute('data-lucide') || homeTab.icon;
+          this.activeWorkspaceTab = 'tab-orders';
+        }
         this.updateSidebarUI();
+        this.renderWorkspaceTabs();
         this.renderActiveView();
       });
     });
@@ -2939,7 +2962,7 @@ class TradeFlowApp {
               <div class="flex items-center gap-1.5 flex-wrap min-w-0">
                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/15 backdrop-blur-md text-white border border-white/20 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
-                  <span>PICKLE FACTORY</span>
+                  <span>MANUFACTURER</span>
                 </span>
                 <span class="font-mono text-[10px] text-white/90 font-bold bg-white/15 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15">${tfEscapeHtml(mfg.id)}</span>
                 <span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${tfEscapeHtml(healthBadgeClass)}">${tfEscapeHtml(healthBadgeText)}</span>
@@ -3141,9 +3164,9 @@ class TradeFlowApp {
                   ${latestBatches.slice(0, 2).map(o => `
                     <div onclick="event.stopPropagation(); app.openOrderDetailPage('${tfEscapeHtml(tfEscapeJs(o.id))}')" class="minitable-row" title="Click to inspect batch ${tfEscapeHtml(o.invoiceNumber)}">
                       <span class="font-mono font-bold text-slate-900 dark:text-white truncate">${tfEscapeHtml(o.invoiceNumber)}</span>
-                      <span class="truncate text-slate-700 dark:text-slate-300 font-medium">${tfEscapeHtml((o.items && o.items[0]) ? (o.items[0].variant || o.items[0].name) : 'Mixed Pickle')}</span>
+                      <span class="truncate text-slate-700 dark:text-slate-300 font-medium">${tfEscapeHtml((o.items && o.items[0]) ? (o.items[0].variant || o.items[0].name) : '—')}</span>
                       <span class="text-right font-medium text-slate-600 dark:text-slate-400 flex items-center justify-end gap-0.5 truncate">
-                        <span>${tfEscapeHtml((o.items || []).reduce((sum, i) => sum + (i.quantity || 0), 0) || 15)} Cases</span>
+                        <span>${tfEscapeHtml((o.items || []).reduce((sum, i) => sum + (Number(i.cases) || 0), 0))} Cases</span>
                         <i data-lucide="chevron-right" class="w-2.5 h-2.5 text-slate-400 shrink-0"></i>
                       </span>
                     </div>
@@ -3196,7 +3219,7 @@ class TradeFlowApp {
         </div>
 
         <!-- 4 Cards Per Row Grid with Responsive Squeezing -->
-        <div id="manufacturers-card-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-4.5 w-full">
+        <div id="manufacturers-card-grid" class="grid gap-4 w-full tf-partner-grid">
           ${cardsHtml}
         </div>
       </div>
@@ -3508,7 +3531,7 @@ class TradeFlowApp {
         </div>
 
         <!-- 4 Cards Per Row Grid with Responsive Squeezing -->
-        <div id="packaging-card-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-4.5 w-full">
+        <div id="packaging-card-grid" class="grid gap-4 w-full tf-partner-grid">
           ${cardsHtml}
         </div>
       </div>
@@ -4079,7 +4102,7 @@ class TradeFlowApp {
             class="text-[11px] font-medium text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 px-2 py-0.5 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
             title="Close all inspection tabs"
           >
-            Close Other Tabs
+            Close tabs
           </button>
         ` : ''}
       </div>
@@ -4721,7 +4744,7 @@ class TradeFlowApp {
         <!-- Right Side: The 6 Action Buttons (Alert + 5 Main Actions) in ONE Row -->
         <div class="flex items-center gap-2 flex-wrap">
           <!-- 1. Manufacturing PO Placement Alert Button (Persistent Across All Orders) -->
-          <button onclick="app.toggleOrderPoAlert()" id="order-po-alert-btn" class="btn-tactile px-3 py-1.5 text-xs font-bold ${tfEscapeHtml(order.urgentAlert ? 'text-amber-950 dark:text-amber-100 bg-amber-400 hover:bg-amber-300 dark:bg-amber-500 dark:hover:bg-amber-400 border border-amber-500 shadow-xs animate-pulse' : 'text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 shadow-2xs')} rounded-lg flex items-center gap-1.5 transition-all" title="${tfEscapeHtml(order.urgentAlert ? 'Click to view urgent Manufacturing PO placement alert' : 'Click to view Manufacturing PO production status')}">
+          <button onclick="app.toggleOrderPoAlert()" id="order-po-alert-btn" class="btn-tactile px-3 py-1.5 text-xs font-bold ${tfEscapeHtml(order.urgentAlert ? 'text-amber-950 dark:text-amber-100 bg-amber-400 hover:bg-amber-300 dark:bg-amber-500 dark:hover:bg-amber-400 border border-amber-500 shadow-xs ring-2 ring-amber-300/70 dark:ring-amber-400/40' : 'text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 shadow-2xs')} rounded-lg flex items-center gap-1.5 transition-all" title="${tfEscapeHtml(order.urgentAlert ? 'Click to view urgent Manufacturing PO placement alert' : 'Click to view Manufacturing PO production status')}">
             <i data-lucide="alert-triangle" class="w-3.5 h-3.5 ${tfEscapeHtml(order.urgentAlert ? 'text-amber-900 dark:text-amber-950' : 'text-slate-400 dark:text-slate-400')}"></i>
             <span>⚠️ PO Alert</span>
           </button>
@@ -4839,7 +4862,7 @@ class TradeFlowApp {
             <div>
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="font-black text-amber-950 dark:text-amber-200 uppercase tracking-wide">⚠️ Attention: ${tfEscapeHtml(orderIssues.length)} Missing Document(s) Detected</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-500 text-white font-mono-num animate-pulse">Audit Action Needed</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-500 text-white font-mono-num">Audit Action Needed</span>
               </div>
               <div class="flex items-center gap-1.5 flex-wrap mt-1">
                 ${orderIssues.map(iss => `
@@ -6051,7 +6074,7 @@ class TradeFlowApp {
         floatBadgeEl.className = 'px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300';
         floatBadgeEl.innerText = 'Positive Buffer (Safe)';
       } else {
-        floatBadgeEl.className = 'px-2 py-0.5 text-[10px] font-bold rounded bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 animate-pulse';
+        floatBadgeEl.className = 'px-2 py-0.5 text-[10px] font-bold rounded bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300';
         floatBadgeEl.innerText = 'Negative Float Deficit!';
       }
     }
@@ -10692,9 +10715,8 @@ class TradeFlowApp {
               </p>
               <div class="flex items-center gap-2 mt-2 flex-wrap text-[11px] font-bold">
                 <span class="px-2 py-0.5 rounded bg-white/10 text-emerald-200 border border-white/15">${tfEscapeHtml(p.cin ? `CIN/LLPIN: ${p.cin}` : 'CIN/LLPIN not set')}</span>
-                <span class="px-2 py-0.5 rounded bg-white/10 text-teal-200 border border-white/15">GST Active • Regular</span>
-                <span class="px-2 py-0.5 rounded bg-white/10 text-amber-200 border border-white/15">FSSAI Central Compliant</span>
-                <span class="px-2 py-0.5 rounded bg-white/10 text-white border border-white/15">v3.0 Pro</span>
+                ${p.gstin ? `<span class="px-2 py-0.5 rounded bg-white/10 text-teal-100 border border-white/15">GSTIN ${tfEscapeHtml(p.gstin)}</span>` : '<span class="px-2 py-0.5 rounded bg-white/10 text-amber-100 border border-white/15">GSTIN not set</span>'}
+                ${p.fssai ? `<span class="px-2 py-0.5 rounded bg-white/10 text-amber-100 border border-white/15">FSSAI ${tfEscapeHtml(p.fssai)}</span>` : ''}
               </div>
             </div>
           </div>
@@ -10795,7 +10817,7 @@ class TradeFlowApp {
               <div class="min-w-0 pr-2">
                 <span class="text-[10px] font-black uppercase tracking-wider text-violet-800 dark:text-violet-300 block mb-1">MSME / Udyam Registration</span>
                 <span class="font-mono-num font-black text-base text-slate-900 dark:text-white block select-all tracking-wide">${tfEscapeHtml(p.udyam || 'Not set')}</span>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Micro &amp; Small Food Processing Enterprise</p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Udyam Registration Portal (MSME)</p>
               </div>
               <button type="button" onclick="app.copyToClipboard('${tfEscapeHtml(tfEscapeJs(p.udyam || ''))}', 'MSME Udyam number')" class="p-1.5 rounded-lg bg-violet-500/10 hover:bg-violet-500/20 text-violet-700 dark:text-violet-300 transition-colors shrink-0" title="Copy MSME">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
@@ -10819,7 +10841,7 @@ class TradeFlowApp {
               <div class="min-w-0 pr-2">
                 <span class="text-[10px] font-black uppercase tracking-wider text-teal-800 dark:text-teal-300 block mb-1">Legal Constitution &amp; Form</span>
                 <span id="hub-view-legalName" class="font-black text-sm text-slate-900 dark:text-white block truncate">—</span>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Trade Brand: <strong id="hub-view-brandName" class="text-emerald-600">${tfEscapeHtml(this.config().brand)}</strong> • Mumbai RoC</p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Trade Brand: <strong id="hub-view-brandName" class="text-emerald-600">${tfEscapeHtml(this.config().brand)}</strong></p>
               </div>
               <button type="button" onclick="app.copyStudioValue('hub-view-legalName', 'Legal Name')" class="p-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 transition-colors shrink-0" title="Copy Legal Name">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
@@ -12664,7 +12686,7 @@ BANKING & PAYMENT COORDINATES:
     if (retailerSelect) {
       retailerSelect.innerHTML = '<option value="">Select Retailer / Customer...</option>' + 
         this.data.contacts.filter(c => c.role === 'retailer').map(c => 
-          `<option value="${tfEscapeHtml(c.id)}">${tfEscapeHtml(c.name)} (${tfEscapeHtml(c.state || 'MH')})</option>`
+          `<option value="${tfEscapeHtml(c.id)}">${tfEscapeHtml(c.name)}${c.state ? ` (${tfEscapeHtml(c.state)})` : ''}</option>`
         ).join('');
       retailerSelect.onchange = (e) => {
         this.checkRetailerCreditExposure(e.target.value);
@@ -12679,19 +12701,19 @@ BANKING & PAYMENT COORDINATES:
     }
 
     if (mfgSelect) {
-      mfgSelect.innerHTML = this.data.contacts.filter(c => c.role === 'manufacturer').map(c => 
-        `<option value="${tfEscapeHtml(c.id)}">${tfEscapeHtml(c.name)} (${tfEscapeHtml(c.state || 'GJ')})</option>`
+      mfgSelect.innerHTML = '<option value="">— Select manufacturer —</option>' + this.data.contacts.filter(c => c.role === 'manufacturer').map(c => 
+        `<option value="${tfEscapeHtml(c.id)}">${tfEscapeHtml(c.name)}${c.state ? ` (${tfEscapeHtml(c.state)})` : ''}</option>`
       ).join('');
     }
 
     if (pkgSelect) {
-      pkgSelect.innerHTML = this.data.contacts.filter(c => c.role === 'packaging').map(c => 
+      pkgSelect.innerHTML = '<option value="">— Select packaging supplier —</option>' + this.data.contacts.filter(c => c.role === 'packaging').map(c => 
         `<option value="${tfEscapeHtml(c.id)}">${tfEscapeHtml(c.name)}</option>`
       ).join('');
     }
 
     if (transporterSelect) {
-      transporterSelect.innerHTML = this.data.contacts.filter(c => c.role === 'transporter').map(c => 
+      transporterSelect.innerHTML = '<option value="">— Select transporter —</option>' + this.data.contacts.filter(c => c.role === 'transporter').map(c => 
         `<option value="${tfEscapeHtml(c.id)}">${tfEscapeHtml(c.name)}</option>`
       ).join('');
     }
@@ -12701,6 +12723,14 @@ BANKING & PAYMENT COORDINATES:
         this.data.contacts.filter(c => c.role === 'marketeer').map(c => 
           `<option value="${tfEscapeHtml(c.id)}">${tfEscapeHtml(c.name)}</option>`
         ).join('');
+    }
+
+    // Quick-add buttons: one per pack size in the catalogue, labelled with its units per case.
+    const quickSizes = document.getElementById('new-order-quick-sizes');
+    if (quickSizes) {
+      const sizes = [...new Map((this.data.products || []).filter(p => p.active !== false && (p.defaultPackSize || p.packSize))
+        .map(p => [p.defaultPackSize || p.packSize, Number(p.casePack) || this.casePackConfig[p.defaultPackSize || p.packSize] || this.config().defaultCasePack])).entries()].slice(0, 4);
+      quickSizes.innerHTML = sizes.map(([size, perCase]) => `<button type="button" onclick="app.quickAddSkuRow('${tfEscapeHtml(tfEscapeJs(size))}')" class="btn-tactile px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600 rounded-lg">+ ${tfEscapeHtml(size)} Row (${tfEscapeHtml(perCase)}/cs)</button>`).join('');
     }
   }
 
@@ -12794,31 +12824,15 @@ BANKING & PAYMENT COORDINATES:
   }
 
   // Load the exact WhatsApp order from the user's uploaded screenshot
+  // Sample WhatsApp message built from your own buyers and products, so it always parses.
   loadS3MDemoOrder() {
     const input = document.getElementById('whatsapp-order-input');
     if (!input) return;
-
-    input.value = 
-`S3m venture (order)
-Magic roots
-
-500gm
-MIX.        500gm. - 4case
-Mango.      500gm. - 5case
-MIRCH.      500gm - 4case
-CARROT      500gm - 4case
-GARLIC.     500gm- 4case
-KATHAL.     500gm 4case
-RED CHILLI  500gm - 4case
-DELLA.      500gm - 5case
-KARELA.     500gm - 2case.
-SWEET MANGO 500gm - 2case.
-SWEET LEMON 500gm - 2case.
-
-1kg
-Carrot 1kg - 2case
-Red chilli 1kg - 1case.
-Della 1kg - 1case.`;
+    const buyer = (this.data.contacts || []).find(c => c.role === 'retailer');
+    const products = (this.data.products || []).filter(p => p.active !== false).slice(0, 4);
+    if (!products.length) { this.showToast('Add products in the Products tab to load a sample order.'); return; }
+    input.value = [`${buyer ? buyer.name : 'Buyer name'} (order)`, '']
+      .concat(products.map((p, i) => `${p.shortName || p.name} ${p.defaultPackSize || p.packSize || ''} - ${i + 2}case`)).join('\n');
 
     this.parseWhatsAppOrderInput();
   }
@@ -15872,6 +15886,8 @@ Della 1kg - 1case.`;
 
   /* ---------- LIVE BALANCE CALCULATION PILL ---------- */
   recalcPaymentLiveBalance() {
+    // Amount in words follows the amount however it was filled (typed, preset, order balance, auto-fill).
+    this.updatePaymentAmountWords(this.parseAmount(document.getElementById('pay-input-amount')?.value));
     const pill = document.getElementById('payment-live-balance-pill');
     if (!pill) return;
 
@@ -25281,7 +25297,7 @@ _Automated evening closing report - TradeFlow_
             <div class="flex items-center justify-end gap-2">
               <button type="button" onclick="app.sendDailyDiaryToOwnerWhatsApp()" class="btn-tactile w-full py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg flex items-center justify-center gap-1.5 shadow-sm">
                 <i data-lucide="send" class="w-3.5 h-3.5"></i>
-                <span>Dispatch Summary to Sethji / Owner</span>
+                <span>Dispatch Summary to Owner</span>
               </button>
             </div>
           </div>
@@ -25328,7 +25344,7 @@ _Automated evening closing report - TradeFlow_
 
   initRoleMode() {
     const saved = localStorage.getItem('tradeflow_role_mode') || 'operator';
-    this.setRoleMode(saved);
+    this.setRoleMode(saved, { silent: true }); // no toast on every page load
   }
 
   toggleUserRoleMode() {
@@ -25337,7 +25353,7 @@ _Automated evening closing report - TradeFlow_
     this.setRoleMode(next);
   }
 
-  setRoleMode(mode) {
+  setRoleMode(mode, { silent = false } = {}) {
     this.currentRoleMode = mode;
     localStorage.setItem('tradeflow_role_mode', mode);
 
@@ -25347,11 +25363,11 @@ _Automated evening closing report - TradeFlow_
     if (mode === 'operator') {
       document.body.classList.add('operator-mode');
       if (label) label.innerText = 'Operator Mode';
-      this.showToast('👤 Operator Mode: Trade margins & sensitive figures hidden from screen.');
+      if (!silent) this.showToast('👤 Operator Mode: Trade margins & sensitive figures hidden from screen.');
     } else {
       document.body.classList.remove('operator-mode');
-      if (label) label.innerText = 'Owner Mode (Sethji)';
-      this.showToast('👑 Owner Mode (Sethji): Full trade financial visibility unlocked.');
+      if (label) label.innerText = 'Owner Mode';
+      if (!silent) this.showToast('👑 Owner Mode: Full trade financial visibility unlocked.');
     }
     if (window.lucide) window.lucide.createIcons();
   }

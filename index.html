@@ -51,7 +51,7 @@
 <body class="h-full bg-slate-50 text-slate-900 dark:bg-[#090a0f] dark:text-slate-100 flex overflow-hidden selection:bg-amber-500/20 selection:text-amber-500">
 
   <!-- ================= 2026 MODERN LEFT SIDEBAR ================= -->
-  <aside class="w-64 bg-white dark:bg-[#0e1117] border-r border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between shrink-0 no-print transition-colors z-20">
+  <aside id="app-sidebar" aria-label="Main navigation" class="tf-app-sidebar w-64 bg-white dark:bg-[#0e1117] border-r border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between shrink-0 no-print transition-colors z-20">
     
     <div class="flex flex-col h-full overflow-hidden">
       <!-- Sidebar Header -->
@@ -247,6 +247,10 @@
       
       <!-- Header Left Controls (AI Mode, Mobile Scan, Backups) -->
       <div class="flex items-center gap-1.5 shrink-0">
+        <!-- Menu button: opens the sidebar on phones and tablets -->
+        <button id="tf-menu-btn" type="button" onclick="app.toggleMobileSidebar()" aria-label="Open menu" aria-controls="app-sidebar" aria-expanded="false" class="tf-menu-btn btn-tactile w-9 h-9 rounded-lg items-center justify-center text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
         <!-- Topbar AI Intelligence Control Gate (OFF = 100% Deterministic Local, ON = AI Vision Assist) -->
         <button id="topbar-ai-toggle-btn" type="button" onclick="app.toggleAIMode()" class="tf-topbar-pill btn-tactile text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-2xs flex items-center gap-1.5 transition-all" title="Toggle AI Assistance: OFF = 100% Offline Local Engine, ON = Vision & Semantic Assist">
           <span id="ai-toggle-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
@@ -273,10 +277,10 @@
         <input 
           id="global-search" 
           type="text" 
-          placeholder="Search ₹ amounts, UTR, orders, partners..." 
+          placeholder="Search orders, partners, UTR, ₹…" 
           autocomplete="off"
           onclick="app.openOmniboxModal(this.value)"
-          class="w-full pl-9 pr-14 py-2 text-xs bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 transition-all font-medium cursor-pointer shadow-2xs"
+          class="w-full pl-9 pr-[4.5rem] py-2 text-xs text-ellipsis bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 text-slate-800 dark:text-slate-200 placeholder-slate-400 transition-all font-medium cursor-pointer shadow-2xs"
         >
         <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono-num font-semibold text-slate-400 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded shadow-2xs pointer-events-none">
           Ctrl+K
@@ -393,7 +397,6 @@
                 <span>Working Orders</span>
               </span>
               <div class="flex items-center gap-1.5">
-                <span class="text-[10px] font-bold text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">Filter →</span>
                 <span class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
                   <i data-lucide="truck" class="w-4 h-4"></i>
                 </span>
@@ -401,9 +404,9 @@
             </div>
             <div class="mt-3">
               <div id="kpi-working-count" class="text-2xl font-black font-mono-num text-slate-900 dark:text-white">0 Batches</div>
-              <div class="flex items-center justify-between mt-0.5">
-                <span id="kpi-working-sub" class="text-xs font-medium text-slate-500 dark:text-slate-400">0 Bottling · 0 In Transit</span>
-                <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 group-hover:underline">View Pipeline</span>
+              <div class="flex items-center justify-between gap-2 mt-0.5">
+                <span id="kpi-working-sub" class="min-w-0 line-clamp-2 text-xs font-medium text-slate-500 dark:text-slate-400">0 Bottling · 0 In Transit</span>
+                <span class="shrink-0 text-[10px] font-bold text-blue-600 dark:text-blue-400 group-hover:underline">View Pipeline</span>
               </div>
             </div>
           </div>
@@ -421,7 +424,6 @@
                 <span>Upcoming Orders</span>
               </span>
               <div class="flex items-center gap-1.5">
-                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">Action →</span>
                 <span class="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300">
                   <i data-lucide="clock" class="w-4 h-4"></i>
                 </span>
@@ -429,9 +431,9 @@
             </div>
             <div class="mt-3">
               <div id="kpi-upcoming-count" class="text-2xl font-black font-mono-num text-amber-600 dark:text-amber-400">0 Batches</div>
-              <div class="flex items-center justify-between mt-0.5">
-                <span id="kpi-upcoming-sub" class="text-xs font-bold text-amber-700 dark:text-amber-300">Advance in Hand · PO Pending</span>
-                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 group-hover:underline">Forward POs</span>
+              <div class="flex items-center justify-between gap-2 mt-0.5">
+                <span id="kpi-upcoming-sub" class="min-w-0 line-clamp-2 text-xs font-bold text-amber-700 dark:text-amber-300">Advance in Hand · PO Pending</span>
+                <span class="shrink-0 text-[10px] font-bold text-amber-600 dark:text-amber-400 group-hover:underline">Forward POs</span>
               </div>
             </div>
           </div>
@@ -449,7 +451,6 @@
                 <span>Completed Orders</span>
               </span>
               <div class="flex items-center gap-1.5">
-                <span class="text-[10px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">History →</span>
                 <span class="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
                   <i data-lucide="check-circle-2" class="w-4 h-4"></i>
                 </span>
@@ -457,9 +458,9 @@
             </div>
             <div class="mt-3">
               <div id="kpi-completed-count" class="text-2xl font-black font-mono-num text-slate-900 dark:text-white">0 Batches</div>
-              <div class="flex items-center justify-between mt-0.5">
-                <span id="kpi-completed-sub" class="text-xs font-medium text-slate-500 dark:text-slate-400">Delivered & Closed</span>
-                <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:underline">Inspect</span>
+              <div class="flex items-center justify-between gap-2 mt-0.5">
+                <span id="kpi-completed-sub" class="min-w-0 line-clamp-2 text-xs font-medium text-slate-500 dark:text-slate-400">Delivered & Closed</span>
+                <span class="shrink-0 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 group-hover:underline">Inspect</span>
               </div>
             </div>
           </div>
@@ -474,10 +475,9 @@
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                 <i data-lucide="badge-indian-rupee" class="w-3.5 h-3.5 text-amber-500"></i>
-                <span>Finance Cockpit ↗</span>
+                <span>Finance Cockpit</span>
               </span>
               <div class="flex items-center gap-1.5">
-                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">Open Hub →</span>
                 <span class="p-1.5 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-300">
                   <i data-lucide="wallet" class="w-4 h-4"></i>
                 </span>
@@ -494,9 +494,9 @@
                   <span id="kpi-finance-pay">₹0</span>
                 </span>
               </div>
-              <div class="flex items-center justify-between mt-1">
-                <span class="text-xs font-semibold text-amber-700 dark:text-amber-300">Receivables & Payables Hub</span>
-                <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 group-hover:underline">Open Tab ↗</span>
+              <div class="flex items-center justify-between gap-2 mt-1">
+                <span class="min-w-0 line-clamp-2 text-xs font-semibold text-amber-700 dark:text-amber-300">Receivables & Payables Hub</span>
+                <span class="shrink-0 text-[10px] font-bold text-amber-600 dark:text-amber-400 group-hover:underline">Open Tab ↗</span>
               </div>
             </div>
           </div>
@@ -509,7 +509,7 @@
           <!-- Left Panel: Status Filter Pills & Orders Table -->
           <div id="dashboard-orders-panel" class="w-full min-w-[320px] flex-1 space-y-4 xl:pr-3 transition-all duration-75">
             <!-- Commercial Quick-Filter Chips Bar -->
-            <div class="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 text-xs no-print">
+            <div class="flex flex-wrap items-center gap-2 py-1 text-xs no-print">
               <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
                 <i data-lucide="filter" class="w-3.5 h-3.5 text-amber-500"></i>
                 <span>Quick Filters:</span>
@@ -578,20 +578,20 @@
             </div>
 
             <!-- Orders Table -->
-            <div class="bg-white dark:bg-[#11141d] rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs overflow-hidden">
+            <div class="bg-white dark:bg-[#11141d] rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs overflow-hidden tf-orders-table-shell">
               <div class="overflow-x-auto">
-                <table id="orders-master-table" class="w-full min-w-[900px] text-left border-collapse table-fixed select-text">
+                <table id="orders-master-table" class="w-full min-w-[640px] text-left border-collapse table-fixed select-text">
                   <colgroup>
-                    <col style="width: 14%;">
-                    <col style="width: 33%;">
+                    <col style="width: 17%;">
+                    <col style="width: 25%;">
+                    <col style="width: 13%;">
                     <col style="width: 15%;">
-                    <col style="width: 15%;">
-                    <col style="width: 15%;">
-                    <col style="width: 8%;">
+                    <col style="width: 19%;">
+                    <col style="width: 11%;">
                   </colgroup>
                   <thead>
                     <tr class="border-b border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      <th class="w-[14%] px-4 py-3.5 whitespace-nowrap select-none">
+                      <th class="px-4 py-3.5 whitespace-nowrap select-none">
                         <button type="button" onclick="app.sortOrders('invoice')" class="inline-flex items-center gap-0.5 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer" title="Sort by Order Number">
                           <span>Order</span><span id="sort-icon-invoice" class="text-[11px] text-slate-400 ml-0.5">⇅</span>
                         </button>
@@ -600,27 +600,27 @@
                           <span>Date</span><span id="sort-icon-date" class="text-[11px] text-slate-400 ml-0.5">⇅</span>
                         </button>
                       </th>
-                      <th class="w-[33%] px-4 py-3.5 select-none">
+                      <th class="px-4 py-3.5 select-none">
                         <button type="button" onclick="app.sortOrders('retailer')" class="inline-flex items-center gap-1 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer" title="Sort by Buyer Name">
                           <span>Buyer / Retailer</span><span id="sort-icon-retailer" class="text-[11px] text-slate-400">⇅</span>
                         </button>
                       </th>
-                      <th class="w-[15%] px-4 py-3.5 whitespace-nowrap select-none">
+                      <th class="px-4 py-3.5 whitespace-nowrap select-none">
                         <button type="button" onclick="app.sortOrders('quantity')" class="inline-flex items-center gap-1 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer" title="Sort by Quantity">
                           <span>Quantity</span><span id="sort-icon-quantity" class="text-[11px] text-slate-400">⇅</span>
                         </button>
                       </th>
-                      <th class="w-[15%] px-4 py-3.5 text-right whitespace-nowrap select-none">
+                      <th class="px-4 py-3.5 text-right whitespace-nowrap select-none">
                         <button type="button" onclick="app.sortOrders('amount')" class="inline-flex items-center gap-1 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer ml-auto" title="Sort by Total Amount">
                           <span>Total Amount</span><span id="sort-icon-amount" class="text-[11px] text-slate-400">⇅</span>
                         </button>
                       </th>
-                      <th class="w-[15%] px-4 py-3.5 text-center whitespace-nowrap select-none">
+                      <th class="px-4 py-3.5 text-center whitespace-nowrap select-none">
                         <button type="button" onclick="app.sortOrders('status')" class="inline-flex items-center gap-1 hover:text-amber-600 dark:hover:text-amber-400 cursor-pointer mx-auto" title="Sort by Status Lifecycle">
                           <span>Status</span><span id="sort-icon-status" class="text-[11px] text-slate-400">⇅</span>
                         </button>
                       </th>
-                      <th class="w-[8%] px-4 py-3.5 text-right whitespace-nowrap"></th>
+                      <th class="px-4 py-3.5 text-right whitespace-nowrap"></th>
                     </tr>
                   </thead>
                   <tbody id="orders-table-body" class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
@@ -655,7 +655,7 @@
                 <div class="flex items-center gap-2 min-w-0">
                   <div class="relative flex items-center justify-center px-2 py-1 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-black text-xs font-mono-num shadow-2xs shrink-0">
                     <i data-lucide="alert-triangle" class="w-3.5 h-3.5 mr-1 text-rose-500"></i>
-                    <span id="audit-total-badge" class="animate-pulse">0</span>
+                    <span id="audit-total-badge">0</span>
                   </div>
                   <div class="min-w-0">
                     <h3 class="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 whitespace-nowrap">Attention &amp; Missing Files</h3>
@@ -842,7 +842,7 @@
               <div id="fc-receivables-val" class="text-xl font-black font-mono-num text-rose-600 dark:text-rose-400">₹0</div>
               <div class="flex items-center justify-between mt-1 text-[11px]">
                 <span id="fc-receivables-sub" class="text-slate-400 font-medium">0 Overdue</span>
-                <span class="text-rose-600 dark:text-rose-400 font-bold group-hover:underline">Drill-down →</span>
+                <span class="text-rose-600 dark:text-rose-400 font-bold group-hover:underline whitespace-nowrap shrink-0">Drill-down →</span>
               </div>
             </div>
           </div>
@@ -857,7 +857,7 @@
               <div id="fc-payables-val" class="text-xl font-black font-mono-num text-amber-600 dark:text-amber-400">₹0</div>
               <div class="flex items-center justify-between mt-1 text-[11px]">
                 <span id="fc-payables-sub" class="text-slate-400 font-medium">Factory &amp; Pkg</span>
-                <span class="text-amber-600 dark:text-amber-400 font-bold group-hover:underline">Drill-down →</span>
+                <span class="text-amber-600 dark:text-amber-400 font-bold group-hover:underline whitespace-nowrap shrink-0">Drill-down →</span>
               </div>
             </div>
           </div>
@@ -872,7 +872,7 @@
               <div id="fc-adv-hand-val" class="text-xl font-black font-mono-num text-emerald-600 dark:text-emerald-400">₹0</div>
               <div class="flex items-center justify-between mt-1 text-[11px]">
                 <span id="fc-adv-hand-sub" class="text-slate-400 font-medium">Cash Collected</span>
-                <span class="text-emerald-600 dark:text-emerald-400 font-bold group-hover:underline">Drill-down →</span>
+                <span class="text-emerald-600 dark:text-emerald-400 font-bold group-hover:underline whitespace-nowrap shrink-0">Drill-down →</span>
               </div>
             </div>
           </div>
@@ -887,7 +887,7 @@
               <div id="fc-adv-paid-val" class="text-xl font-black font-mono-num text-blue-600 dark:text-blue-400">₹0</div>
               <div class="flex items-center justify-between mt-1 text-[11px]">
                 <span id="fc-adv-paid-sub" class="text-slate-400 font-medium">Disbursed with UTR</span>
-                <span class="text-blue-600 dark:text-blue-400 font-bold group-hover:underline">Drill-down →</span>
+                <span class="text-blue-600 dark:text-blue-400 font-bold group-hover:underline whitespace-nowrap shrink-0">Drill-down →</span>
               </div>
             </div>
           </div>
@@ -1768,7 +1768,7 @@
             <div class="flex items-center gap-2">
               <button type="button" onclick="app.loadS3MDemoOrder()" class="btn-tactile px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-700 rounded-lg flex items-center gap-1 shadow-2xs">
                 <i data-lucide="clipboard-paste" class="w-3.5 h-3.5"></i>
-                <span>Load 'S3M Venture' Order Message</span>
+                <span>Load Sample Message</span>
               </button>
               <button type="button" onclick="app.clearWhatsAppOrderInput()" class="btn-tactile px-2 py-1 text-[11px] font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded">
                 Clear
@@ -1779,8 +1779,7 @@
           <div class="p-4 space-y-3">
             <div class="relative">
               <textarea id="whatsapp-order-input" rows="4" class="w-full p-3 font-mono text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all" placeholder="Paste WhatsApp message here... Example:
-S3m venture (order)
-Magic roots
+Buyer name (order)
 500gm
 MIX 4case, Mango 5case, MIRCH 4case...
 1kg
@@ -1882,12 +1881,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
               <span id="order-item-count-badge" class="px-2 py-0.5 text-[11px] font-black rounded-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200">0 SKUs</span>
             </div>
             <div class="flex items-center gap-2">
-              <button type="button" onclick="app.quickAddSkuRow('500g')" class="btn-tactile px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg flex items-center gap-1">
-                + 500g Row (24/cs)
-              </button>
-              <button type="button" onclick="app.quickAddSkuRow('1kg')" class="btn-tactile px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg flex items-center gap-1">
-                + 1kg Row (12/cs)
-              </button>
+              <span id="new-order-quick-sizes" class="contents"></span>
               <button type="button" onclick="app.addEmptySkuRow()" class="btn-tactile px-3 py-1 text-xs font-bold text-white bg-slate-900 dark:bg-amber-500 dark:text-slate-950 hover:bg-slate-800 rounded-lg flex items-center gap-1.5 shadow-2xs">
                 <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
                 <span>Add SKU Line</span>
@@ -2050,7 +2044,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
       <div class="bg-white dark:bg-slate-900 p-4 px-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between flex-wrap gap-3 shrink-0">
         <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <i data-lucide="info" class="w-4 h-4 text-amber-500"></i>
-          <span>Case pack math: 24 jars/case for 500g PET, 12 jars/case for 1kg Glass. Jars & GST computed live.</span>
+          <span>Units per case come from each product (editable above). Units, GST and totals update live.</span>
         </div>
         <div class="flex items-center gap-2.5">
           <button type="button" onclick="app.closeNewOrderModal()" class="btn-tactile px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 rounded-lg">
@@ -2753,7 +2747,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
           <div class="min-w-0">
             <div class="flex items-center gap-2">
               <h3 id="payment-modal-title" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">Log Payment &amp; Settlement</h3>
-              <span id="payment-modal-order-badge" class="hidden px-2 py-0.5 text-xs font-mono-num font-bold rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700">ORD-1004</span>
+              <span id="payment-modal-order-badge" class="hidden whitespace-nowrap shrink-0 px-2 py-0.5 text-xs font-mono-num font-bold rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700">ORD-1004</span>
             </div>
             <p id="payment-modal-sub" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">Attach receipt, paste clipboard image, or enter settlement details directly</p>
           </div>
@@ -5880,6 +5874,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
   <div id="mobile-snap-slidein-container" class="fixed top-5 right-5 z-[999998] max-w-sm w-full pointer-events-none space-y-3 no-print"></div>
 
   <!-- Floating Notification Toast Container (Topmost Stack Layer: Always Visible Above All Screens & Modals) -->
+  <div id="tf-sidebar-backdrop" onclick="app.toggleMobileSidebar(false)" aria-hidden="true"></div>
   <div id="toast-container" class="fixed bottom-5 right-5 z-[999999] pointer-events-none flex flex-col gap-2"></div>
 
   <!-- ================= UNIVERSAL OMNIBOX MODAL (Ctrl+K) ================= -->
