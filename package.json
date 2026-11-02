@@ -1,6 +1,6 @@
 {
   "name": "tradeflow",
-  "version": "3.0.0",
+  "version": "5.0.0",
   "description": "Magic Roots TradeFlow - Enterprise Multi-Party Trade & Commercial Intelligence ERP",
   "main": "server.js",
   "scripts": {
