@@ -557,3 +557,16 @@ test('browser code: the WhatsApp window is loaded and served', async () => {
   assert(fs.readFileSync(path.join(root, 'index.html'), 'utf8').includes('<script src="js/whatsapp.js"></script>'));
   assert.equal((await fetch(env.base + '/js/whatsapp.js')).status, 200);
 });
+test('windows: work windows get the full-window button, small confirm and warning boxes do not', async () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  assert(html.includes('<script src="js/window-size.js"></script>'));
+  assert.equal((await fetch(env.base + '/js/window-size.js')).status, 200);
+  const vm = require('vm');
+  const sandbox = { console, document: { readyState: 'loading', addEventListener: () => {} }, localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} } };
+  sandbox.window = sandbox;
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'js', 'window-size.js'), 'utf8'), sandbox);
+  const work = sandbox.TFWindowSize.WORK;
+  for (const id of ['new-order-modal', 'payment-modal', 'contact-edit-modal', 'invoice-studio-modal', 'system-settings-modal', 'tf-inbox-modal', 'tf-wa']) assert(work.has(id), id);
+  for (const id of ['universal-confirm-modal', 'universal-prompt-modal', 'bank-protection-modal', 'delivery-confirm-modal', 'mobile-snap-modal', 'universal-omnibox-modal']) assert(!work.has(id), id);
+  for (const id of work) if (id.endsWith('-modal') && id !== 'tf-inbox-modal') assert(html.includes(`id="${id}"`), id + ' exists in index.html');
+});

@@ -341,3 +341,20 @@ body.wa-lock { overflow: hidden; }
   .wa-text { min-height: 200px; }
   .wa-foot .wa-send { flex: 1; }
 }
+
+/* ===================================================================== Full window / normal size (js/window-size.js) */
+.tf-win-btn { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tf-win-btn svg { pointer-events: none; }
+.tf-win-full {
+  position: fixed !important;
+  top: var(--tf-win-top, 12px) !important; left: var(--tf-win-left, 12px) !important;
+  right: var(--tf-win-gap, 12px) !important; bottom: var(--tf-win-gap, 12px) !important;
+  width: auto !important; height: auto !important; max-width: none !important; max-height: none !important; min-height: 0 !important;
+  margin: 0 !important; transform: none !important; translate: none !important;
+  display: flex !important; flex-direction: column;
+  border-radius: var(--tf-r-lg) !important;
+}
+.tf-win-full .tf-window-resize-handle { display: none !important; }
+.tf-win-full .tf-draggable-header { cursor: default !important; }
+@media (max-width: 1023px) { .tf-win-full { border-radius: 0 !important; } }
+.tf-win-full .tf-inbox-list { max-height: none; flex: 1; min-height: 0; }
