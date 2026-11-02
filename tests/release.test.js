@@ -200,7 +200,7 @@ test('Excel export, preview, and import preserve a field edit', async () => {
   } finally { manager.dbManager.db.close(); }
 });
 test('security: every PDF.js call disables font evaluation', () => {
-  for (const file of ['js/app.js', 'js/smart-fill.js']) {
+  for (const file of ['js/app.js', 'js/smart-fill.js', ...fs.readdirSync(path.join(root, 'js/app')).map(name => 'js/app/' + name)]) {
     const source = fs.readFileSync(path.join(root, file), 'utf8');
     for (const match of source.matchAll(/pdfjsLib\.getDocument\(([^\n]+)/g)) assert(match[1].includes('isEvalSupported: false'), file);
   }
@@ -485,4 +485,15 @@ test('data: change saves keep newer records, refuse bad input and change nothing
   }
   assert.equal((await post('/api/data/changes', {})).status, 400);
   assert.equal(JSON.stringify((await (await fetch(env.base + '/api/data')).json()).data.payments), before, 'nothing written');
+});
+test('browser code: every screen file is loaded by the page and served', async () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const files = fs.readdirSync(path.join(root, 'js/app')).filter(name => name.endsWith('.js'));
+  assert(files.length >= 20);
+  for (const name of files) {
+    assert(html.includes(`<script src="js/app/${name}"></script>`), name + ' is not loaded by index.html');
+    assert.equal((await fetch(env.base + '/js/app/' + name)).status, 200, name);
+  }
+  assert(html.indexOf('src="js/app.js"') < html.indexOf('src="js/app/'), 'core loads before screen files');
+  assert.equal((await fetch(env.base + '/js/app/../../server.js')).status, 403);
 });

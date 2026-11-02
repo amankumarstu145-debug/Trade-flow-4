@@ -7,7 +7,7 @@ const path = require('path');
 const esbuild = require('esbuild');
 const root = path.resolve(__dirname, '..');
 const lucide = require('lucide');
-const files = ['index.html', 'mobile_snap.html', ...fs.readdirSync(path.join(root, 'js')).filter(f => f.endsWith('.js')).map(f => 'js/' + f)];
+const files = ['index.html', 'mobile_snap.html', ...fs.readdirSync(path.join(root, 'js')).filter(f => f.endsWith('.js')).map(f => 'js/' + f), ...fs.readdirSync(path.join(root, 'js/app')).filter(f => f.endsWith('.js')).map(f => 'js/app/' + f)];
 const source = files.map(f => fs.readFileSync(path.join(root, f), 'utf8')).join('\n');
 const pascal = s => s.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join('');
 const names = [...new Set(source.match(/[a-z][a-z0-9]*(?:-[a-z0-9]+)*/g))].map(pascal).filter(n => lucide.icons && lucide.icons[n]).sort();

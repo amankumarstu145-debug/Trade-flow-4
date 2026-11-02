@@ -3819,7 +3819,7 @@ Format:
     }
   }
 
-  const publicAsset = /^\/(?:index\.html|mobile_snap\.html|js\/(?:app|components|smart-fill|security-ui|form-guard|partner-ui|shell|smart|lazy-modals)\.js|css\/(?:styles|design-system|tailwind)\.css|vendor\/(?:tailwind|lucide|html2pdf|qrcode|dompurify)\.js|lib\/(?:pdf\.min|pdf\.worker|pdf\.worker\.min)\.js|data\/mock-data\.js)$/.test(reqPath);
+  const publicAsset = /^\/(?:index\.html|mobile_snap\.html|js\/(?:app|components|smart-fill|security-ui|form-guard|partner-ui|shell|smart|lazy-modals)\.js|js\/app\/[a-z-]+\.js|css\/(?:styles|design-system|tailwind)\.css|vendor\/(?:tailwind|lucide|html2pdf|qrcode|dompurify)\.js|lib\/(?:pdf\.min|pdf\.worker|pdf\.worker\.min)\.js|data\/mock-data\.js)$/.test(reqPath);
   const dataDocument = /^\/data\/(?:orders|partners|uploads|vault)\//.test(reqPath) && allowedDocument(reqPath);
   const safePath = path.resolve(PUBLIC_DIR, '.' + reqPath);
   if ((!publicAsset && !dataDocument) || !isWithin(PUBLIC_DIR, safePath)) {
