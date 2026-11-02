@@ -529,6 +529,7 @@
     const n = prettyPhone(state.number);
     close();
     const a = app(); if (!a) return;
+    if (window.TFPartnerUI && TFPartnerUI.quickAdd) { TFPartnerUI.quickAdd(null, { phone: n }); return; }
     a.openEditContactModal(null, 'retailer');
     setTimeout(() => { const f = document.getElementById('edit-contact-phone'); if (f) { f.value = n; f.dispatchEvent(new Event('input', { bubbles: true })); } }, 120);
   }

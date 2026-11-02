@@ -260,7 +260,7 @@
         <div class="pu-row-wrap">
           <label class="pu-sr" for="pu-search-${role}">Search ${esc(r.plural)}</label>
           <input id="pu-search-${role}" type="search" class="pu-input pu-search" placeholder="Search name, city, GSTIN, person or product" value="${esc(state.query[role] || '')}" oninput="TFPartnerUI.setQuery('${role}', this.value)">
-          <button type="button" class="pu-btn pu-primary" onclick="app.openEditContactModal(null, '${role}')">${esc(r.addLabel)}</button>
+          <button type="button" class="pu-btn pu-primary" onclick="TFPartnerUI.quickAdd('${role}')">${esc(r.addLabel)}</button>
         </div>
       </div>
       <div class="pu-kpis">${tiles.map((t, i) => { const fk = i === 0 ? 'balance' : /overdue/i.test(t[0]) ? 'overdue' : /open|production|transit/i.test(t[0]) ? 'open' : 'all'; return `<button type="button" class="pu-kpi ${f === fk && fk !== 'all' ? 'is-active' : ''}" onclick="TFPartnerUI.setFilter('${role}','${fk}')" title="${fk === 'all' ? 'Show all partners' : 'Show only these partners'}"><span class="pu-label">${esc(t[0])}</span><span class="pu-kpi-val ${t[3]}">${esc(t[1])}</span><span class="pu-hint">${esc(t[2])}</span></button>`; }).join('')}</div>
@@ -726,6 +726,113 @@
       state.editing = editSection ? contactId + '|' + editSection : null;
       state.overlay = null;
       appRef().navigateToContact(contactId, tab);
+    },
+    /* ---------------- Quick add: a small window with the basics; the rest is added on the partner page. */
+    quickAdd(role, preset = {}) {
+      const types = [['retailer', 'Buyer'], ['manufacturer', 'Manufacturer'], ['transporter', 'Transport'], ['packaging', 'Packaging'], ['marketeer', 'Marketeer']];
+      const current = (appRef() && appRef().activeTab) || '';
+      const fromPage = { retailers: 'retailer', manufacturers: 'manufacturer', transport: 'transporter', packaging: 'packaging', marketeers: 'marketeer' }[current];
+      const r = ROLES[role] ? role : (fromPage || state.lastAddRole || 'retailer');
+      state.qaForce = false;
+      let el = document.getElementById('tf-quickadd-modal');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'tf-quickadd-modal';
+        el.className = 'pu-qa-overlay';
+        el.addEventListener('mousedown', e => { if (e.target === el) TFPartnerUI.quickClose(); });
+        el.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); TFPartnerUI.quickClose(); } });
+        document.body.appendChild(el);
+      }
+      const field = (id, label, opts = {}) => `<label class="pu-qa-field${opts.wide ? ' is-wide' : ''}"><span>${esc(label)}${opts.req ? ' <b aria-hidden="true">*</b>' : ''}</span><input id="${id}" class="tf-input" ${opts.req ? 'required' : ''} ${opts.attrs || ''} value="${esc(preset[opts.key] || '')}" placeholder="${esc(opts.ph || '')}">${opts.hint ? `<small id="${id}-hint" class="pu-qa-hint">${esc(opts.hint)}</small>` : ''}</label>`;
+      el.innerHTML = `
+        <div class="pu-qa" role="dialog" aria-modal="true" aria-labelledby="pu-qa-title">
+          <header class="pu-qa-head">
+            <div><h2 id="pu-qa-title">Add partner</h2><p>Just the basics. Bank, licences, addresses and rates go on the partner page.</p></div>
+            <button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" onclick="TFPartnerUI.quickClose()" aria-label="Close"><i data-lucide="x" class="w-5 h-5"></i></button>
+          </header>
+          <form id="pu-qa-form" class="pu-qa-body" novalidate onsubmit="event.preventDefault(); TFPartnerUI.quickSave()">
+            <fieldset class="pu-qa-types"><legend>Partner type</legend>${types.map(([k, label]) => `<label class="pu-qa-type"><input type="radio" name="pu-qa-role" value="${k}" ${k === r ? 'checked' : ''}><span>${esc(label)}</span></label>`).join('')}</fieldset>
+            <div class="pu-qa-grid">
+              ${field('pu-qa-name', 'Company / trade name', { req: true, wide: true, key: 'name', ph: 'e.g. Sunrise Pantry', attrs: 'autocomplete="off"' })}
+              ${field('pu-qa-person', 'Contact person', { key: 'person', ph: 'e.g. Ramesh Patil' })}
+              ${field('pu-qa-phone', 'Phone / WhatsApp', { req: true, key: 'phone', ph: '98765 43210', attrs: 'inputmode="tel" autocomplete="off"' })}
+              ${field('pu-qa-city', 'City', { key: 'city', ph: 'e.g. Pune' })}
+              ${field('pu-qa-gstin', 'GSTIN', { key: 'gstin', ph: 'Optional, 15 characters', attrs: 'autocomplete="off" style="text-transform:uppercase" oninput="TFPartnerUI.quickCheckGst(this.value)"', hint: ' ' })}
+            </div>
+            <div id="pu-qa-msg" class="pu-qa-msg" role="alert" hidden></div>
+          </form>
+          <footer class="pu-qa-foot">
+            <button type="button" class="tf-btn tf-btn--sm" onclick="TFPartnerUI.quickScan()" title="Fill the details from a visiting card, screenshot or GST certificate"><i data-lucide="scan-line" class="w-4 h-4"></i>Scan card / screenshot</button>
+            <span class="pu-qa-spacer"></span>
+            <button type="button" class="tf-btn tf-btn--sm" onclick="TFPartnerUI.quickClose()">Cancel</button>
+            <button type="submit" form="pu-qa-form" class="tf-btn tf-btn--primary tf-btn--sm">Save and open page</button>
+          </footer>
+        </div>`;
+      el.hidden = false;
+      if (window.lucide) window.lucide.createIcons();
+      if (preset.gstin) TFPartnerUI.quickCheckGst(preset.gstin);
+      setTimeout(() => { const f = document.getElementById(preset.name ? 'pu-qa-phone' : 'pu-qa-name'); if (f) f.focus(); }, 30);
+    },
+    quickClose() { const el = document.getElementById('tf-quickadd-modal'); if (el) el.hidden = true; },
+    quickCheckGst(v) {
+      const hint = document.getElementById('pu-qa-gstin-hint');
+      if (!hint) return true;
+      const value = String(v || '').trim().toUpperCase();
+      if (!value) { hint.textContent = ' '; hint.className = 'pu-qa-hint'; return true; }
+      const check = window.TFFormGuard && TFFormGuard.checks && TFFormGuard.checks.gstin ? TFFormGuard.checks.gstin(value) : { level: 'ok', msg: '' };
+      hint.textContent = check.msg || '';
+      hint.className = 'pu-qa-hint ' + (check.level === 'error' ? 'is-bad' : 'is-good');
+      return check.level !== 'error';
+    },
+    quickValues() {
+      const v = id => (document.getElementById(id) || {}).value || '';
+      return { role: (document.querySelector('input[name="pu-qa-role"]:checked') || {}).value || 'retailer', name: v('pu-qa-name').trim(), person: v('pu-qa-person').trim(), phone: v('pu-qa-phone').trim(), city: v('pu-qa-city').trim(), gstin: v('pu-qa-gstin').trim().toUpperCase() };
+    },
+    quickSave(force) {
+      const a = appRef();
+      const x = TFPartnerUI.quickValues();
+      const msg = document.getElementById('pu-qa-msg');
+      const say = html => { if (msg) { msg.innerHTML = html; msg.hidden = !html; } };
+      const digits = String(x.phone).replace(/\D/g, '');
+      const key10 = digits.length > 10 ? digits.slice(-10) : digits;
+      if (!x.name) { say('Please enter the company or trade name.'); document.getElementById('pu-qa-name').focus(); return null; }
+      if (key10.length !== 10) { say('Please enter a 10-digit phone number.'); document.getElementById('pu-qa-phone').focus(); return null; }
+      if (x.gstin && !TFPartnerUI.quickCheckGst(x.gstin)) { say('The GSTIN does not look right. Fix it or leave it empty.'); document.getElementById('pu-qa-gstin').focus(); return null; }
+      const list = (a.data.contacts || []).filter(c => !c.isDeleted);
+      const same = list.find(c => String(c.name || '').trim().toLowerCase() === x.name.toLowerCase())
+        || list.find(c => [c.phone, c.whatsappPhone, ...peopleOf(c).map(p => p.phone)].some(p => { const d = String(p || '').replace(/\D/g, ''); return d.length >= 10 && d.slice(-10) === key10; }));
+      if (same && !force) {
+        say(`Already saved: <b>${esc(same.name)}</b> (${esc(roleOf(same).single)}${same.city ? ', ' + esc(same.city) : ''}). <button type="button" class="tf-btn tf-btn--sm" onclick="TFPartnerUI.quickClose(); TFPartnerUI.open(${jsArg(same.id)}, 'company')">Open it</button> <button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" onclick="TFPartnerUI.quickSave(true)">Save anyway</button>`);
+        return null;
+      }
+      const phone = key10;
+      const now = new Date().toISOString();
+      const c = {
+        id: a.nextContactId(), role: x.role, name: x.name, contactPerson: x.person, phone, whatsappPhone: phone, city: x.city,
+        status: 'Active Trade Partner', currentBalanceDue: 0, totalOrders: 0, createdAt: now,
+        people: [{ id: 'p1', name: x.person, role: '', phone, whatsapp: phone, email: '', language: '', bestTime: '', upi: '', bankAccount: '', note: '' }], primaryPersonId: 'p1'
+      };
+      if (x.gstin) { c.gstin = x.gstin; c.stateCode = x.gstin.slice(0, 2); }
+      if (!a.data.contacts) a.data.contacts = [];
+      a.data.contacts.push(c);
+      state.lastAddRole = x.role;
+      a.saveData('Operator', 'Added partner ' + c.name);
+      TFPartnerUI.quickClose();
+      if (a.showToast) a.showToast(`Added ${c.name}. Add bank and licence details here when you have them.`);
+      TFPartnerUI.open(c.id, 'company');
+      return c;
+    },
+    quickScan() {
+      const x = TFPartnerUI.quickValues();
+      TFPartnerUI.quickClose();
+      const a = appRef();
+      a.openEditContactModal(null, x.role);
+      setTimeout(() => {
+        for (const [id, v] of [['edit-contact-name', x.name], ['edit-contact-person', x.person], ['edit-contact-phone', x.phone], ['edit-contact-city', x.city], ['edit-contact-gstin', x.gstin]]) {
+          const f = document.getElementById(id);
+          if (f && v) { f.value = v; f.dispatchEvent(new Event('input', { bubbles: true })); }
+        }
+      }, 60);
     },
     // Partner card: a click on the upper half opens Company & contact, on the lower half the money/work tab.
     // Real controls inside (copy lines, edit, photo, reminder, the two buttons) keep their own action.

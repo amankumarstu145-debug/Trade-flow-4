@@ -1027,16 +1027,7 @@ class TradeFlowApp {
 
     // Status Filter Pills
     document.querySelectorAll('[data-filter-status]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        this.statusFilter = btn.getAttribute('data-filter-status');
-        document.querySelectorAll('[data-filter-status]').forEach(b => {
-          b.classList.remove('bg-emerald-700', 'text-white', 'dark:bg-emerald-700', 'dark:text-white', 'shadow-xs');
-          b.classList.add('bg-slate-100', 'text-slate-600', 'dark:bg-slate-800/80', 'dark:text-slate-400');
-        });
-        btn.classList.remove('bg-slate-100', 'text-slate-600', 'dark:bg-slate-800/80', 'dark:text-slate-400');
-        btn.classList.add('bg-emerald-700', 'text-white', 'dark:bg-emerald-700', 'dark:text-white', 'shadow-xs');
-        this.renderOrdersTable();
-      });
+      btn.addEventListener('click', () => this.setOrdersFilter(btn.getAttribute('data-filter-status')));
     });
 
     // Forms

@@ -566,7 +566,7 @@ TradeFlowApp.addMethods(class {
                     <span>${tfEscapeHtml(p.orderRef)}</span>
                     <i data-lucide="external-link" class="w-3 h-3 opacity-60 group-hover:opacity-100"></i>
                   </button>
-                ` : '<span class="text-slate-400">—</span>'}
+                ` : '<span class="tf-on-account" title="Not linked to an order; counted in the party\'s account">On account</span>'}
               </td>
               <td class="px-4 py-3">
                 <button type="button" class="font-bold text-slate-900 dark:text-white truncate max-w-[200px] text-left hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline inline-flex items-center gap-1 group" onclick="event.stopPropagation(); app.openPartyProfile('${tfEscapeHtml(tfEscapeJs(p.partyName || ''))}')" title="Click to view partner profile & coordinates">
@@ -830,6 +830,8 @@ TradeFlowApp.addMethods(class {
 
   setFieldHighlight(id, tagId, isExtracted, isError = false) {
     const el = document.getElementById(id);
+    // Details filled in by Smart Fill (or with an error) must be visible, so open "More details" for them.
+    if ((isExtracted || isError) && el && el.closest('#pay-more-details')) el.closest('#pay-more-details').open = true;
     const tag = tagId ? document.getElementById(tagId) : null;
     const greenClasses = ['border-emerald-500', 'bg-emerald-50/70', 'dark:bg-emerald-950/30', 'ring-1', 'ring-emerald-500/50'];
     const redClasses = ['border-rose-500', 'bg-rose-50/70', 'dark:bg-rose-950/40', 'ring-1', 'ring-rose-500'];
@@ -871,15 +873,15 @@ TradeFlowApp.addMethods(class {
 
     // Reset Title
     const title = document.getElementById('payment-modal-title');
-    if (title) title.innerText = 'Log Payment & Financial Settlement';
+    if (title) title.innerText = 'Record payment';
     const sub = document.getElementById('payment-modal-sub');
-    if (sub) sub.innerText = 'Attach a bank advice or enter payment details directly';
+    if (sub) sub.innerText = 'Attach a bank slip, or type the details';
 
-    // Populate Order Dropdown (Mandatory Order attachment)
+    // Order list (optional: a payment can be on account, without an order)
     const orderSelect = document.getElementById('pay-select-order');
     if (orderSelect) {
-      orderSelect.innerHTML = '<option value="">-- Select Order to Attach (Required) * --</option>' +
-        this.data.orders.map(o => {
+      orderSelect.innerHTML = '<option value="">No order (on account)</option>' +
+        this.data.orders.filter(o => !o.isDeleted).map(o => {
           const inv = o.invoiceNumber || o.id;
           const label = `${inv} · ${o.retailerName || 'Order'} (Bal: ${this.formatCurrency(o.customerBalanceDue)})`;
           return `<option value="${tfEscapeHtml(inv)}" data-orderid="${tfEscapeHtml(o.id)}">${tfEscapeHtml(label)}</option>`;
@@ -892,6 +894,16 @@ TradeFlowApp.addMethods(class {
         });
       }
     }
+
+    // Party search list: every partner, so typing shows matches (picking one fills party type and bank details).
+    const partyList = document.getElementById('pay-party-list');
+    if (partyList) {
+      const roleLabel = { retailer: 'Buyer', manufacturer: 'Manufacturer', packaging: 'Packaging', transporter: 'Transport', marketeer: 'Marketeer' };
+      partyList.innerHTML = (this.data.contacts || []).filter(c => !c.isDeleted && c.name)
+        .map(c => `<option value="${tfEscapeHtml(c.name)}">${tfEscapeHtml([roleLabel[c.role] || 'Partner', c.city].filter(Boolean).join(' · '))}</option>`).join('');
+    }
+    const more = document.getElementById('pay-more-details');
+    if (more) more.open = false;
 
     // Attach real-time input error-clearing listeners
     ['pay-input-date', 'pay-input-amount', 'pay-input-party'].forEach(id => {
@@ -2404,16 +2416,8 @@ TradeFlowApp.addMethods(class {
     const editId = document.getElementById('pay-hidden-edit-id')?.value;
 
     // --- MANDATORY VALIDATIONS ---
-    // 1. Order attachment is STRICTLY mandatory: Every bill must be attached to an order
-    if (!orderRef) {
-      this.setFieldHighlight('pay-select-order', null, false, true);
-      if (orderErr) orderErr.classList.remove('hidden');
-      if (orderSelect) orderSelect.focus();
-      this.showToast('Every bill must be attached to an order. Please select an order.');
-      return;
-    } else {
-      if (orderErr) orderErr.classList.add('hidden');
-    }
+    // An order is optional: without one the payment is kept "on account" against the party.
+    if (orderErr) orderErr.classList.add('hidden');
 
     // 2. Date is mandatory
     if (!date) {

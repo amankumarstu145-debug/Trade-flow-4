@@ -14,7 +14,7 @@
     'invoice-studio-modal', 'studio-magic-drawer-modal', 'smart-fill-modal', 'excel-preview-modal', 'backup-recovery-modal',
     'change-history-modal', 'dual-slip-comparison-modal', 'dual-slip-order-dossier-modal', 'vault-document-viewer-modal',
     'whatsapp-dispatch-modal', 'partner-spotlight-modal', 'daily-diary-modal', 'recycle-bin-modal', 'transport-dispatch-modal',
-    'system-settings-modal', 'company-executive-hub-modal', 'sheets-sync-hub-modal', 'tf-inbox-modal', 'tf-wa'
+    'system-settings-modal', 'company-executive-hub-modal', 'sheets-sync-hub-modal', 'tf-inbox-modal', 'tf-wa', 'tf-quickadd-modal'
   ]);
   const OLD_MAX = /toggle[A-Za-z]*Maximize\(\)/;
   const KEY = id => 'tf-win-full:' + id;

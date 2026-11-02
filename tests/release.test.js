@@ -568,7 +568,7 @@ test('windows: work windows get the full-window button, small confirm and warnin
   const work = sandbox.TFWindowSize.WORK;
   for (const id of ['new-order-modal', 'payment-modal', 'contact-edit-modal', 'invoice-studio-modal', 'system-settings-modal', 'tf-inbox-modal', 'tf-wa']) assert(work.has(id), id);
   for (const id of ['universal-confirm-modal', 'universal-prompt-modal', 'bank-protection-modal', 'delivery-confirm-modal', 'mobile-snap-modal', 'universal-omnibox-modal']) assert(!work.has(id), id);
-  for (const id of work) if (id.endsWith('-modal') && id !== 'tf-inbox-modal') assert(html.includes(`id="${id}"`), id + ' exists in index.html');
+  for (const id of work) if (id.endsWith('-modal') && !['tf-inbox-modal', 'tf-quickadd-modal'].includes(id)) assert(html.includes(`id="${id}"`), id + ' exists in index.html');
 });
 test('layout: the live clock is in the top bar, not hidden in the More menu', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
@@ -586,4 +586,26 @@ test('partners: a card click on the top half opens Company, on the lower half Or
   ui.cardClick(target(false), 'RET-1', 'work');
   ui.cardClick(target(true), 'RET-1', 'company');
   assert.equal(opened.join(','), 'RET-1:company,RET-1:work');
+});
+test('payments: an order is optional (payments can be on account) and the form uses plain words', () => {
+  const src = fs.readFileSync(path.join(root, 'js', 'app', 'payments.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  assert(!/Every bill must be attached to an order/.test(src), 'no forced order');
+  assert(/No order \(on account\)/.test(src));
+  assert(!/<select id="pay-select-order" required/.test(html));
+  assert(/id="pay-more-details"/.test(html) && /list="pay-party-list"/.test(html));
+  assert(!/Ecosystem Role/.test(html.slice(html.indexOf('id="payment-modal"'), html.indexOf('id="payment-preview-pane"'))));
+});
+test('orders: pill counts use the same rules as the table, and pills share one click path', () => {
+  const src = fs.readFileSync(path.join(root, 'js', 'app', 'orders.js'), 'utf8');
+  assert(/getFilteredOrders\(status, true\)/.test(src), 'counts come from getFilteredOrders');
+  assert(/renderActiveOrderFilters\(\)/.test(src) && /clearAllOrderFilters\(\)/.test(src));
+  assert(/addEventListener\('click', \(\) => this\.setOrdersFilter\(btn\.getAttribute\('data-filter-status'\)\)\)/.test(fs.readFileSync(path.join(root, 'js', 'app.js'), 'utf8')));
+});
+test('partners: "+ Partner" and the add buttons open the quick add window', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  assert(html.includes('onclick="TFPartnerUI.quickAdd()"'));
+  assert(!html.includes("app.openEditContactModal(null, 'retailer')"));
+  const ui = loadPartnerUI();
+  for (const fn of ['quickAdd', 'quickSave', 'quickClose', 'quickScan', 'quickCheckGst']) assert.equal(typeof ui[fn], 'function', fn);
 });

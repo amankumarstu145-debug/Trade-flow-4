@@ -193,7 +193,9 @@ TradeFlowApp.addMethods(class {
   }
 
   // View: Orders Pipeline
-  getFilteredOrders() {
+  // statusOverride lets the pill counts use the exact same rules as the table (quick chip and search included).
+  getFilteredOrders(statusOverride, skipSort = false) {
+    const statusFilter = statusOverride !== undefined ? statusOverride : this.statusFilter;
     const filtered = this.data.orders.filter(order => {
       if (order.isDeleted) return false;
       // 1. Commercial Quick-Filter Chip Logic
@@ -217,20 +219,20 @@ TradeFlowApp.addMethods(class {
       }
 
       // 2. Status Filter Logic
-      if (this.statusFilter !== 'all') {
-        if (this.statusFilter === 'working') {
+      if (statusFilter !== 'all') {
+        if (statusFilter === 'working') {
           if (order.status !== 'in_production' && order.status !== 'in_transit') return false;
-        } else if (this.statusFilter === 'completed') {
+        } else if (statusFilter === 'completed') {
           if (order.status !== 'settled' && order.status !== 'delivered_overdue') return false;
-        } else if (this.statusFilter === 'action_needed' && order.status !== 'action_needed') {
+        } else if (statusFilter === 'action_needed' && order.status !== 'action_needed') {
           return false;
-        } else if (this.statusFilter === 'in_production' && order.status !== 'in_production') {
+        } else if (statusFilter === 'in_production' && order.status !== 'in_production') {
           return false;
-        } else if (this.statusFilter === 'in_transit' && order.status !== 'in_transit') {
+        } else if (statusFilter === 'in_transit' && order.status !== 'in_transit') {
           return false;
-        } else if (this.statusFilter === 'delivered_overdue' && order.status !== 'delivered_overdue') {
+        } else if (statusFilter === 'delivered_overdue' && order.status !== 'delivered_overdue') {
           return false;
-        } else if (this.statusFilter === 'settled' && order.status !== 'settled') {
+        } else if (statusFilter === 'settled' && order.status !== 'settled') {
           return false;
         }
       }
@@ -267,6 +269,7 @@ TradeFlowApp.addMethods(class {
       return true;
     });
 
+    if (skipSort) return filtered;
     // Apply multi-column sort
     const sf = this.ordersSortField || 'date';
     const sd = this.ordersSortDirection || 'desc';
@@ -350,6 +353,8 @@ TradeFlowApp.addMethods(class {
     });
 
     const filtered = this.getFilteredOrders();
+    this.updateFilterCounts();
+    this.renderActiveOrderFilters();
     const totalOrders = filtered.length;
     const pageSize = this.ordersPageSize || 15;
     const totalPages = Math.ceil(totalOrders / pageSize) || 1;
@@ -363,7 +368,8 @@ TradeFlowApp.addMethods(class {
         <tr>
           <td colspan="7" class="text-center py-12 text-slate-400 dark:text-slate-500">
             <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2 text-slate-300 dark:text-slate-600"></i>
-            <p class="text-sm font-medium">No orders match your filter.</p>
+            <p class="text-sm font-medium">${tfEscapeHtml(this.emptyOrdersMessage())}</p>
+            ${(this.searchQuery || this.quickFilterChip || this.statusFilter !== 'all') ? `<button type="button" class="tf-btn tf-btn--sm" style="margin-top:12px" onclick="app.clearAllOrderFilters()">Clear filters</button>` : ''}
           </td>
         </tr>
       `;
@@ -478,18 +484,49 @@ TradeFlowApp.addMethods(class {
     this.enableTableResizing('orders-master-table');
   }
 
+  // Pill counts = what the table will show after clicking that pill (same chip and search rules).
   updateFilterCounts() {
-    const orders = this.data.orders || [];
     const setBadge = (id, count) => {
       const el = document.getElementById(id);
       if (el) el.innerText = count;
     };
+    for (const status of ['all', 'action_needed', 'in_production', 'in_transit', 'delivered_overdue']) {
+      setBadge('filter-count-' + status, this.getFilteredOrders(status, true).length);
+    }
+  }
 
-    setBadge('filter-count-all', orders.length);
-    setBadge('filter-count-action_needed', orders.filter(o => o.status === 'action_needed').length);
-    setBadge('filter-count-in_production', orders.filter(o => o.status === 'in_production').length);
-    setBadge('filter-count-in_transit', orders.filter(o => o.status === 'in_transit').length);
-    setBadge('filter-count-delivered_overdue', orders.filter(o => o.status === 'delivered_overdue').length);
+  // Search word and quick chip are easy to forget: show them above the table with a way to clear each.
+  renderActiveOrderFilters() {
+    const table = document.getElementById('orders-table-body');
+    const shell = table && table.closest('.tf-orders-table-shell, table');
+    if (!shell) return;
+    let bar = document.getElementById('orders-active-filters');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'orders-active-filters';
+      bar.className = 'tf-active-filters';
+      shell.parentElement.insertBefore(bar, shell);
+    }
+    const chipNames = { missing_lr: 'Missing LR', overdue_accounts: 'Overdue accounts', advance_idle: 'Advance idle (PO pending)', high_margin: 'High margin (>18%)' };
+    const parts = [];
+    if (this.searchQuery) parts.push(`<button type="button" class="tf-af-chip" onclick="app.setOrderSearchQuery(''); app.renderOrdersTable()" title="Remove this search">Search: “${tfEscapeHtml(this.searchQuery)}”<i data-lucide="x" class="w-3.5 h-3.5"></i></button>`);
+    if (this.quickFilterChip) parts.push(`<button type="button" class="tf-af-chip" onclick="app.clearQuickFilterChip()" title="Remove this filter">${tfEscapeHtml(chipNames[this.quickFilterChip] || this.quickFilterChip)}<i data-lucide="x" class="w-3.5 h-3.5"></i></button>`);
+    bar.hidden = !parts.length;
+    bar.innerHTML = parts.length ? `<span class="tf-af-label">Filtered by</span>${parts.join('')}<button type="button" class="tf-af-clear" onclick="app.clearAllOrderFilters()">Clear all</button>` : '';
+    const inline = document.getElementById('orders-inline-search');
+    if (inline && document.activeElement !== inline && inline.value !== (this.searchQuery || '')) inline.value = this.searchQuery || '';
+    const clearBtn = document.getElementById('orders-search-clear');
+    if (clearBtn) clearBtn.classList.toggle('hidden', !this.searchQuery);
+  }
+
+  clearAllOrderFilters() {
+    this.searchQuery = '';
+    const g = document.getElementById('global-search'); if (g) g.value = '';
+    this.quickFilterChip = null;
+    const clearBtn = document.getElementById('chip-clear-filter');
+    if (clearBtn) clearBtn.classList.add('hidden');
+    document.querySelectorAll('.tf-chip-filter').forEach(c => c.classList.remove('ring-2', 'ring-emerald-600', 'shadow-xs'));
+    this.setOrdersFilter('all');
   }
 
   /* ---------- DASHBOARD SPLIT RESIZER (ORDERS vs ATTENTION PANEL) ---------- */
@@ -564,6 +601,16 @@ TradeFlowApp.addMethods(class {
   }
 
   // Bottom part of a dashboard card: show exactly those orders in the table below.
+  emptyOrdersMessage() {
+    const status = { action_needed: 'action-needed', in_production: 'in-production', in_transit: 'in-transit', delivered_overdue: 'overdue', working: 'working', completed: 'completed', settled: 'settled' }[this.statusFilter];
+    const what = status ? `No ${status} orders` : 'No orders';
+    const why = [];
+    if (this.searchQuery) why.push(`match the search “${this.searchQuery}”`);
+    if (this.quickFilterChip) why.push('fit the quick filter');
+    if (!(this.data.orders || []).some(o => !o.isDeleted)) return 'No orders yet. Create your first order with “New”.';
+    return why.length ? `${what} ${why.join(' and ')}.` : `${what} right now.`;
+  }
+
   showKpiOrders(kind) {
     const filter = { working: 'working', upcoming: 'action_needed', completed: 'completed' }[kind] || 'all';
     this.setOrdersFilter(filter);
@@ -1461,6 +1508,7 @@ TradeFlowApp.addMethods(class {
   // ================= OPERATIONAL & QUICK FILTER CONTROLLERS =================
   setOrdersFilter(filter) {
     this.statusFilter = filter;
+    this.ordersPage = 1;
     const kpiPill = document.getElementById('kpi-filter-pill');
     if (kpiPill) kpiPill.remove();
     this.quickFilterChip = null;
@@ -1475,6 +1523,7 @@ TradeFlowApp.addMethods(class {
       b.classList.toggle('dark:bg-emerald-700', match);
       b.classList.toggle('dark:text-white', match);
       b.classList.toggle('shadow-xs', match);
+      ['bg-slate-100', 'text-slate-600', 'dark:bg-slate-800/80', 'dark:text-slate-400'].forEach(c => b.classList.toggle(c, !match));
     });
 
     if (this.activeTab !== 'orders') {

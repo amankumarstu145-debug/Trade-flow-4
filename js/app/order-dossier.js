@@ -973,6 +973,9 @@ TradeFlowApp.addMethods(class {
         }
       }
     }
+    // Show the extra bank fields when this payment has any of them.
+    const more = document.getElementById('pay-more-details');
+    if (more) more.open = ['pay-input-txnid', 'pay-input-beneficiary-acc', 'pay-input-payer-acc', 'pay-input-notes'].some(f => (document.getElementById(f) || {}).value);
   }
 
   async deletePayment(paymentId) {
