@@ -365,7 +365,7 @@
         </div>
         <div class="pu-row-wrap pu-hero-actions">
           ${phone ? `<a class="pu-btn" href="tel:${esc(phone)}">Call</a>` : ''}
-          ${wa ? `<a class="pu-btn" href="https://wa.me/${esc(wa.length === 10 ? '91' + wa : wa)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+          ${wa ? `<button type="button" class="pu-btn" onclick="TFWhatsApp.open({ contactId: ${id} })">WhatsApp</button>` : ''}
           ${s.overdue > 0 ? `<button type="button" class="pu-btn pu-btn-remind" onclick="TFPartnerUI.remind(${id})">Send reminder</button>` : ''}
           <button type="button" class="pu-btn pu-dark" onclick="TFPartnerUI.edit(${id}, 'company')">${svg(ICON.edit, 15)} Edit company</button>
         </div>

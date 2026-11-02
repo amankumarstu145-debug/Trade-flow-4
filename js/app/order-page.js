@@ -37,7 +37,7 @@ TradeFlowApp.addMethods(class {
         <button 
           id="workspace-tab-whatsapp-templates-btn"
           type="button" 
-          onclick="app.openStudioMagicDrawer()" 
+          onclick="TFWhatsApp.open()" 
           class="btn-tactile h-8 px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/80 shadow-2xs flex items-center gap-1.5 transition-all duration-150 hover:-translate-y-0.5 group cursor-pointer"
           title="WhatsApp Quick Messenger & Live Templates"
         >

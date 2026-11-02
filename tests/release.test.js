@@ -497,3 +497,63 @@ test('browser code: every screen file is loaded by the page and served', async (
   assert(html.indexOf('src="js/app.js"') < html.indexOf('src="js/app/'), 'core loads before screen files');
   assert.equal((await fetch(env.base + '/js/app/../../server.js')).status, 403);
 });
+function loadWhatsApp(data) {
+  const vm = require('vm');
+  const sandbox = { console, document: { addEventListener: () => {} }, Date };
+  sandbox.window = sandbox;
+  sandbox.app = { data, paymentsPaidToContact: () => 0, saveData: () => {} };
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'js', 'partner-ui.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'js', 'whatsapp.js'), 'utf8'), sandbox);
+  return sandbox.TFWhatsApp;
+}
+const waData = () => ({
+  businessProfile: { brandName: 'Pickle Co', legalName: 'Pickle Co Pvt Ltd', phone: '09876500000', bankName: 'Good Bank', accountNumber: '1234', ifsc: 'GOOD0001', upiId: 'pickle@upi' },
+  contacts: [
+    { id: 'R', role: 'retailer', name: 'Sunrise Mart', city: 'Pune', contactPerson: 'Asha', phone: '+91 98765 43210' },
+    { id: 'T', role: 'transporter', name: 'Fast Lorry', city: 'Nagpur', people: [{ id: 'p1', name: 'Ravi', phone: '9000011111' }, { id: 'p2', name: 'Meena', role: 'Accounts', phone: '9000022222' }] },
+    { id: 'M', role: 'manufacturer', name: 'Spice Works', city: 'Satara', phone: '0000000000' }
+  ],
+  orders: [{ id: 'O1', invoiceNumber: 'INV-7', retailerId: 'R', retailerName: 'Sunrise Mart', transporterId: 'T', manufacturerId: 'M', date: '2026-10-01', dueDate: '2000-01-01', status: 'delivered', totalInvoiceAmount: 1000, customerAdvanceReceived: 400, customerBalanceDue: 600, items: [{ name: 'Mango Pickle', variant: '500g', cases: 10 }], totalTransportCost: 300, lrNumber: '', vehicleNumber: 'MH12 AB 1234' }],
+  payments: [{ id: 'P1', direction: 'received', partyName: 'Sunrise Mart', amount: 400, date: '2026-10-02', mode: 'UPI', utr: 'UTR9' }]
+});
+test('whatsapp: phone numbers in any format match and dial as +91', () => {
+  const wa = loadWhatsApp(waData());
+  for (const v of ['+91 98765 43210', '098765 43210', '919876543210', '98765-43210']) { assert.equal(wa.phoneKey(v), '9876543210', v); assert.equal(wa.waNumber(v), '919876543210', v); }
+  assert.equal(wa.prettyPhone('9876543210'), '+91 98765 43210');
+  assert.equal(wa.link('9876543210', 'Hi & bye'), 'https://wa.me/919876543210?text=Hi%20%26%20bye');
+});
+test('whatsapp: search finds contacts by name, city, person or any part of a number', () => {
+  const wa = loadWhatsApp(waData());
+  const ids = q => wa.search(q).map(h => h.c.id).join(',');
+  assert.equal(ids('sunrise'), 'R');
+  assert.equal(ids('nagpur'), 'T');
+  assert.equal(ids('43210'), 'R');
+  assert.equal(ids('+91 98765 43210'), 'R');
+  assert.equal(wa.search('22222')[0].person.name, 'Meena', 'number of the second person picks that person');
+  assert.equal(wa.search('meena')[0].person.id, 'p2');
+  assert.equal(ids('nobody'), '');
+  assert.equal(ids('0000000000'), 'M', 'placeholder numbers can still be searched');
+});
+test('whatsapp: messages are short, use real figures and leave out empty details', () => {
+  const data = waData();
+  const wa = loadWhatsApp(data);
+  const [r, t] = [data.contacts[0], data.contacts[1]];
+  const o = data.orders[0];
+  const confirm = wa.compose('confirm', r, null, o);
+  assert.match(confirm, /^Hello Asha,/); assert.match(confirm, /\*Order INV-7\*/); assert.match(confirm, /Mango Pickle 500g × 10 cases/);
+  assert.match(confirm, /Advance received: ₹400/); assert.match(confirm, /Balance: ₹600/); assert.match(confirm, /Pickle Co · \+91 98765 00000$/);
+  const reminder = wa.compose('reminder', r, null, null);
+  assert.match(reminder, /overdue since/); assert.match(reminder, /\*Total due: ₹600\*/); assert.match(reminder, /UPI: pickle@upi/); assert.match(reminder, /IFSC GOOD0001/);
+  const dispatch = wa.compose('dispatch', r, null, o);
+  assert.doesNotMatch(dispatch, /LR no/, 'empty LR is left out'); assert.match(dispatch, /Vehicle: MH12 AB 1234/);
+  assert.match(wa.compose('thanks', r, null, null), /Amount: \*₹400\*.*\n.*UPI · UTR UTR9/);
+  const pickup = wa.compose('pickup', t, t.people[1], o);
+  assert.match(pickup, /^Hello Meena,/); assert.match(pickup, /Pickup: Spice Works, Satara/); assert.match(pickup, /Agreed freight: ₹300/);
+  for (const text of [confirm, reminder, dispatch, pickup]) { assert.doesNotMatch(text, /undefined|null|NaN|: \n|: $/m); assert(text.length < 700, 'short'); }
+  assert.deepEqual(JSON.parse(JSON.stringify(wa.templatesFor(t).map(k => k[0]))), ['pickup', 'lr', 'paid', 'summary', 'custom']);
+  assert.deepEqual(JSON.parse(JSON.stringify(wa.templatesFor(null).map(k => k[0]))), ['hello', 'bank', 'custom']);
+});
+test('browser code: the WhatsApp window is loaded and served', async () => {
+  assert(fs.readFileSync(path.join(root, 'index.html'), 'utf8').includes('<script src="js/whatsapp.js"></script>'));
+  assert.equal((await fetch(env.base + '/js/whatsapp.js')).status, 200);
+});
