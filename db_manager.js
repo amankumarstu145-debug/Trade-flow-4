@@ -3,6 +3,21 @@ const fs = require('fs');
 const { DatabaseSync } = require('node:sqlite');
 const { isDeepStrictEqual } = require('util');
 
+const SNAPSHOT_ENTITIES = [['orders', 'ORDER'], ['contacts', 'PARTNER'], ['payments', 'PAYMENT'], ['products', 'SKU'], ['documents', 'DOCUMENT']];
+const SNAPSHOT_GROUPS = SNAPSHOT_ENTITIES.map(([table]) => table);
+const NUMERIC_FIELDS = ['mrp', 'amount', 'totalInvoiceAmount', 'totalAmount', 'customerBalanceDue', 'customerAdvanceReceived'];
+function checkRows(key, rows) {
+  if (!Array.isArray(rows)) throw new Error(key + ' must be an array');
+  if (rows.some(row => !row || typeof row !== 'object' || Array.isArray(row))) throw new Error('Invalid record in ' + key);
+  const ids = rows.map(row => row.id);
+  if (ids.some(id => typeof id !== 'string' || !id.trim()) || new Set(ids).size !== ids.length) throw new Error('Missing or duplicate IDs in ' + key);
+  for (const row of rows) {
+    for (const field of NUMERIC_FIELDS) {
+      if (row[field] !== undefined && !Number.isFinite(Number(row[field]))) throw new Error('Invalid numeric field: ' + field);
+    }
+  }
+}
+
 class DBManager {
   constructor(baseDir) {
     this.baseDir = baseDir || __dirname;
@@ -316,25 +331,16 @@ class DBManager {
   // after that (by another window, the phone, Excel import or a rollback) are kept, not deleted or
   // overwritten, and are reported back as conflicts so the window can reload.
   saveSnapshot(data, userName = 'Admin', options = {}) {
-    const groups = ['orders', 'contacts', 'products', 'payments', 'documents'];
+    const groups = SNAPSHOT_GROUPS;
     if (!data || typeof data !== 'object') throw new Error('Invalid dataset');
-    for (const key of groups) {
-      if (!Array.isArray(data[key])) throw new Error(key + ' must be an array');
-      const ids = data[key].map(row => row && row.id);
-      if (ids.some(id => typeof id !== 'string' || !id.trim()) || new Set(ids).size !== ids.length) throw new Error('Missing or duplicate IDs in ' + key);
-      for (const row of data[key]) {
-        for (const field of ['mrp', 'amount', 'totalInvoiceAmount', 'totalAmount', 'customerBalanceDue', 'customerAdvanceReceived']) {
-          if (row[field] !== undefined && !Number.isFinite(Number(row[field]))) throw new Error('Invalid numeric field: ' + field);
-        }
-      }
-    }
+    for (const key of groups) checkRows(key, data[key]);
     const baseMs = options && typeof options.baseTimestamp === 'string' ? Date.parse(options.baseTimestamp) : NaN;
     const base = Number.isFinite(baseMs) ? new Date(baseMs).toISOString() : null;
     const conflicts = [];
     const accepted = {};
     this.db.exec('BEGIN IMMEDIATE');
     try {
-      for (const [table, entity] of [['orders', 'ORDER'], ['contacts', 'PARTNER'], ['payments', 'PAYMENT'], ['products', 'SKU'], ['documents', 'DOCUMENT']]) {
+      for (const [table, entity] of SNAPSHOT_ENTITIES) {
         const incoming = new Map(data[table].map(row => [row.id, row]));
         const stampColumn = table === 'documents' ? 'created_at' : 'updated_at';
         for (const row of this.db.prepare('SELECT id, data_json, ' + stampColumn + ' AS stamp FROM ' + table).all()) {
@@ -350,30 +356,88 @@ class DBManager {
         }
         accepted[table] = [...incoming.values()];
       }
-      accepted.orders.forEach(row => this.saveOrder(row, userName));
-      accepted.contacts.forEach(row => this.saveContact(row, userName));
-      accepted.payments.forEach(row => this.savePayment(row, userName));
-      const now = new Date().toISOString();
-      const existingProduct = this.db.prepare('SELECT data_json FROM products WHERE id = ?');
-      const product = this.db.prepare('INSERT OR REPLACE INTO products (id, name, short_name, sku, hsn, mrp, data_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
-      accepted.products.forEach(row => {
-        const json = JSON.stringify(row);
-        if (existingProduct.get(row.id)?.data_json === json) return; // unchanged: keep its timestamp
-        product.run(row.id, row.name || '', row.shortName || '', row.sku || '', row.hsn || '', Number(row.mrp || 0), json, row.createdAt || now, now);
-      });
-      const document = this.db.prepare('INSERT OR REPLACE INTO documents (id, order_id, category, file_name, file_url, data_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
-      accepted.documents.forEach(row => document.run(row.id, row.orderId || '', row.category || '', row.fileName || row.storedFileName || '', row.fileUrl || '', JSON.stringify(row), row.createdAt || now));
-      const setting = this.db.prepare('INSERT OR REPLACE INTO system_settings (key, value, updated_at) VALUES (?, ?, ?)');
-      const metadata = Object.fromEntries(Object.entries(data).filter(([key]) => !groups.includes(key)));
-      setting.run('snapshotMetadata', JSON.stringify(metadata), now);
-      if (data.businessProfile) setting.run('businessProfile', JSON.stringify(data.businessProfile), now);
-      else this.db.prepare("DELETE FROM system_settings WHERE key = 'businessProfile'").run();
+      this.writeRows(accepted, userName);
+      this.writeMetadata(Object.fromEntries(Object.entries(data).filter(([key]) => !groups.includes(key))));
       this.db.exec('COMMIT');
     } catch (error) {
       this.db.exec('ROLLBACK');
       throw error;
     }
     return { conflicts };
+  }
+
+  // Save only what changed: { tables: { orders: { upsert: [rows], remove: [ids] }, ... }, meta? }.
+  // Records not named are left alone. A record changed elsewhere after `baseTimestamp` is kept, as in saveSnapshot.
+  applyChanges(changes, userName = 'Admin', options = {}) {
+    if (!changes || typeof changes !== 'object' || Array.isArray(changes)) throw new Error('Invalid changes');
+    const tables = changes.tables && typeof changes.tables === 'object' ? changes.tables : {};
+    for (const key of Object.keys(tables)) {
+      if (!SNAPSHOT_GROUPS.includes(key)) throw new Error('Unknown table: ' + key);
+      const part = tables[key] || {};
+      checkRows(key, part.upsert || []);
+      const remove = part.remove || [];
+      if (!Array.isArray(remove) || remove.some(id => typeof id !== 'string' || !id.trim())) throw new Error('Invalid removed IDs in ' + key);
+    }
+    if (changes.meta !== undefined && (!changes.meta || typeof changes.meta !== 'object' || Array.isArray(changes.meta))) throw new Error('Invalid metadata');
+    const baseMs = options && typeof options.baseTimestamp === 'string' ? Date.parse(options.baseTimestamp) : NaN;
+    const base = Number.isFinite(baseMs) ? new Date(baseMs).toISOString() : null;
+    const conflicts = [];
+    const accepted = Object.fromEntries(SNAPSHOT_GROUPS.map(key => [key, []]));
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      for (const [table, entity] of SNAPSHOT_ENTITIES) {
+        const part = tables[table];
+        if (!part) continue;
+        const stampColumn = table === 'documents' ? 'created_at' : 'updated_at';
+        const current = this.db.prepare('SELECT data_json, ' + stampColumn + ' AS stamp FROM ' + table + ' WHERE id = ?');
+        const newer = row => Boolean(base && row && row.stamp && row.stamp > base);
+        for (const id of part.remove || []) {
+          const row = current.get(id);
+          if (!row) continue;
+          if (newer(row)) { conflicts.push({ table, id, reason: 'kept_newer_record' }); continue; }
+          this.db.prepare('DELETE FROM ' + table + ' WHERE id = ?').run(id);
+          this.logActivity({ userName, actionType: 'DELETE', entityType: entity, entityId: id, summary: 'Deleted ' + entity + ' ' + id, previousState: JSON.parse(row.data_json) });
+        }
+        for (const incoming of part.upsert || []) {
+          const row = current.get(incoming.id);
+          if (newer(row) && !isDeepStrictEqual(JSON.parse(row.data_json), incoming)) { conflicts.push({ table, id: incoming.id, reason: 'kept_newer_version' }); continue; }
+          accepted[table].push(incoming);
+        }
+      }
+      this.writeRows(accepted, userName);
+      if (changes.meta) this.writeMetadata(changes.meta);
+      this.db.exec('COMMIT');
+    } catch (error) {
+      this.db.exec('ROLLBACK');
+      throw error;
+    }
+    return { conflicts };
+  }
+
+  // Shared by saveSnapshot and applyChanges; runs inside their transaction.
+  writeRows(accepted, userName) {
+    accepted.orders.forEach(row => this.saveOrder(row, userName));
+    accepted.contacts.forEach(row => this.saveContact(row, userName));
+    accepted.payments.forEach(row => this.savePayment(row, userName));
+    const now = new Date().toISOString();
+    const existingProduct = this.db.prepare('SELECT data_json FROM products WHERE id = ?');
+    const product = this.db.prepare('INSERT OR REPLACE INTO products (id, name, short_name, sku, hsn, mrp, data_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    accepted.products.forEach(row => {
+      const json = JSON.stringify(row);
+      if (existingProduct.get(row.id)?.data_json === json) return; // unchanged: keep its timestamp
+      product.run(row.id, row.name || '', row.shortName || '', row.sku || '', row.hsn || '', Number(row.mrp || 0), json, row.createdAt || now, now);
+    });
+    const document = this.db.prepare('INSERT OR REPLACE INTO documents (id, order_id, category, file_name, file_url, data_json, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    accepted.documents.forEach(row => document.run(row.id, row.orderId || '', row.category || '', row.fileName || row.storedFileName || '', row.fileUrl || '', JSON.stringify(row), row.createdAt || now));
+  }
+
+  // Everything outside the five record tables (business profile, settings, counters).
+  writeMetadata(metadata) {
+    const now = new Date().toISOString();
+    const setting = this.db.prepare('INSERT OR REPLACE INTO system_settings (key, value, updated_at) VALUES (?, ?, ?)');
+    setting.run('snapshotMetadata', JSON.stringify(metadata), now);
+    if (metadata.businessProfile) setting.run('businessProfile', JSON.stringify(metadata.businessProfile), now);
+    else this.db.prepare("DELETE FROM system_settings WHERE key = 'businessProfile'").run();
   }
 
   // Load canonical full dataset

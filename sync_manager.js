@@ -82,13 +82,27 @@ class SyncManager {
     if (result.conflicts.length) data = this.dbManager.getFullData();
 
     // Also update mock-data.js for filesystem consistency
+    this.writeMockData(data);
+    // Tell every open window so none keeps working on stale data.
+    this.notifyChange('data_saved', { originTabId: options.originTabId || null, conflicts: result.conflicts.length });
+    return result;
+  }
+
+  // Save only the records that changed. mock-data.js is a copy of the database; it is refreshed
+  // later together with Excel (see writeMockData), not on every small save.
+  saveChanges(changes, userName = 'Admin', reason = 'Data Update', options = {}) {
+    const result = this.dbManager.applyChanges(changes, userName, options);
+    this.mockDataStale = true;
+    this.notifyChange('data_saved', { originTabId: options.originTabId || null, conflicts: result.conflicts.length });
+    return result;
+  }
+
+  writeMockData(data = this.dbManager.getFullData()) {
     const fileContent = `// Mock Data for TradeFlow - Authoritative Store: tradeflow.db\nconst INITIAL_DATA = ${JSON.stringify(data, null, 2).replace(/</g, '\\u003c')};\n\nif (typeof module !== 'undefined') {\n  module.exports = INITIAL_DATA;\n}\n`;
     const temporary = this.mockDataPath + '.tmp';
     fs.writeFileSync(temporary, fileContent, 'utf8');
     fs.renameSync(temporary, this.mockDataPath);
-    // Tell every open window so none keeps working on stale data.
-    this.notifyChange('data_saved', { originTabId: options.originTabId || null, conflicts: result.conflicts.length });
-    return result;
+    this.mockDataStale = false;
   }
 
   getSyncStatus() {

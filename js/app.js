@@ -1,6 +1,7 @@
 // TradeFlow 2026 - Master State Engine & Modern Interactive Architecture
 
 class TradeFlowApp {
+  static RECORD_TABLES = ['orders', 'contacts', 'products', 'payments', 'documents'];
   constructor() {
     this.storageKey = 'TRADEFLOW_DATA_V3';
     this.data = this.loadData();
@@ -865,17 +866,28 @@ class TradeFlowApp {
       console.warn('Failed to save to localStorage', e);
     }
 
-    // 2. Persist to authoritative backend SQLite master store
+    // 2. Persist to authoritative backend SQLite master store.
+    //    Only the records that changed since the last save are sent; the whole set goes only when
+    //    there is nothing to compare against yet (first save, or the server was not reachable at start).
+    const diff = this.collectChanges();
+    if (diff && diff.count === 0) return;
     try {
-      const resp = await fetch('/api/data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: this.data, userName, reason, baseTimestamp: this.serverSyncedAt || null, tabId: this.tabId })
-      });
+      const resp = diff
+        ? await fetch('/api/data/changes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ changes: diff.changes, userName, reason, baseTimestamp: this.serverSyncedAt || null, tabId: this.tabId })
+        })
+        : await fetch('/api/data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: this.data, userName, reason, baseTimestamp: this.serverSyncedAt || null, tabId: this.tabId })
+        });
       const res = await resp.json();
 
       if (res.success) {
         if (res.timestamp) this.serverSyncedAt = res.timestamp;
+        this.rememberSaved(diff ? diff.saved : this.savedState(this.data));
         if (Array.isArray(res.conflicts) && res.conflicts.length) {
           // Another window, the phone or an import changed these records first; their version was kept.
           const ids = res.conflicts.map(c => c.id).slice(0, 5).join(', ');
@@ -899,6 +911,47 @@ class TradeFlowApp {
       this.showSyncAlert('Backend server unreachable. Running in offline fallback mode.');
       this.updateExcelSyncPill('offline');
     }
+  }
+
+  // What the server holds, as text per record, so the next save can send only what changed.
+  savedState(data) {
+    const state = { tables: {}, meta: '' };
+    for (const table of TradeFlowApp.RECORD_TABLES) {
+      const rows = Array.isArray(data && data[table]) ? data[table] : [];
+      const map = new Map();
+      for (const row of rows) {
+        if (!row || typeof row.id !== 'string' || !row.id.trim() || map.has(row.id)) return null; // let the server report it
+        map.set(row.id, JSON.stringify(row));
+      }
+      state.tables[table] = map;
+    }
+    state.meta = JSON.stringify(this.metadataOf(data));
+    return state;
+  }
+
+  metadataOf(data) {
+    return Object.fromEntries(Object.entries(data || {}).filter(([key]) => !TradeFlowApp.RECORD_TABLES.includes(key)));
+  }
+
+  rememberSaved(state) { this._savedState = state || null; }
+
+  // Returns null when a full save is needed, otherwise { changes, count, saved }.
+  collectChanges() {
+    const before = this._savedState;
+    if (!before || !this.serverSyncedAt) return null;
+    const now = this.savedState(this.data);
+    if (!now) return null;
+    const changes = { tables: {} };
+    let count = 0;
+    for (const table of TradeFlowApp.RECORD_TABLES) {
+      const was = before.tables[table], is = now.tables[table];
+      const upsert = [], remove = [];
+      for (const [id, json] of is) if (was.get(id) !== json) upsert.push(JSON.parse(json));
+      for (const id of was.keys()) if (!is.has(id)) remove.push(id);
+      if (upsert.length || remove.length) { changes.tables[table] = { upsert, remove }; count += upsert.length + remove.length; }
+    }
+    if (now.meta !== before.meta) { changes.meta = JSON.parse(now.meta); count++; }
+    return { changes, count, saved: now };
   }
 
   showSyncAlert(msg) {
@@ -971,6 +1024,7 @@ class TradeFlowApp {
         if (json.success && json.data) {
           this.data = json.data;
           if (json.timestamp) this.serverSyncedAt = json.timestamp;
+          this.rememberSaved(this.savedState(this.data));
           try {
             localStorage.setItem(this.storageKey, JSON.stringify(this.data));
           } catch (_) {}

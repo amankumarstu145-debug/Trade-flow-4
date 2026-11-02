@@ -440,3 +440,49 @@ test('partners: statement balance and reminder text come from orders and payment
   assert.match(msg.text, /INV-1/); assert.match(msg.text, /Total due: ₹600/); assert.match(msg.text, /UPI: me@upi/);
   assert.equal(JSON.stringify(sandbox.TFPartnerUI.dealSuggestions('R')), JSON.stringify(['Mango Pickle']));
 });
+test('data: saving only what changed updates, adds and removes single records and leaves the rest alone', async () => {
+  const start = await (await fetch(env.base + '/api/data')).json();
+  await new Promise(resolve => setTimeout(resolve, 5));
+  const order = structuredClone(start.data.orders[0]);
+  order.status = 'delivered';
+  const untouched = start.data.orders.slice(1).map(o => JSON.stringify(o));
+  const saved = await post('/api/data/changes', { baseTimestamp: start.timestamp, changes: { tables: {
+    orders: { upsert: [order], remove: [] },
+    payments: { upsert: [{ id: 'PAY-DIFF-1', partyName: 'Diff', direction: 'received', amount: 12, date: '2026-11-01' }], remove: [] }
+  } } });
+  assert.equal(saved.status, 200); assert.deepEqual(saved.data.conflicts, []);
+  let now = (await (await fetch(env.base + '/api/data')).json()).data;
+  assert.equal(now.orders.find(o => o.id === order.id).status, 'delivered');
+  assert(now.payments.some(p => p.id === 'PAY-DIFF-1'));
+  assert.deepEqual(now.orders.filter(o => o.id !== order.id).map(o => JSON.stringify(o)).sort(), untouched.sort(), 'other orders unchanged');
+  // Settings travel as metadata only when sent.
+  const meta = Object.fromEntries(Object.entries(now).filter(([k]) => !['orders', 'contacts', 'products', 'payments', 'documents'].includes(k)));
+  meta.businessProfile = { ...meta.businessProfile, companyName: 'Diff Traders' };
+  const fresh = await (await fetch(env.base + '/api/data')).json();
+  await post('/api/data/changes', { baseTimestamp: fresh.timestamp, changes: { tables: { payments: { upsert: [], remove: ['PAY-DIFF-1'] } }, meta } });
+  now = (await (await fetch(env.base + '/api/data')).json()).data;
+  assert(!now.payments.some(p => p.id === 'PAY-DIFF-1'), 'removed');
+  assert.equal(now.businessProfile.companyName, 'Diff Traders');
+  assert.equal(now.orders.length, start.data.orders.length);
+});
+test('data: change saves keep newer records, refuse bad input and change nothing on error', async () => {
+  const stale = await (await fetch(env.base + '/api/data')).json();
+  await new Promise(resolve => setTimeout(resolve, 5));
+  const fresh = await (await fetch(env.base + '/api/data')).json();
+  const id = fresh.data.orders[0].id;
+  const newer = { ...structuredClone(fresh.data.orders[0]), status: 'in_production' };
+  assert.deepEqual((await post('/api/data/changes', { baseTimestamp: fresh.timestamp, changes: { tables: { orders: { upsert: [newer] } } } })).data.conflicts, []);
+  const older = { ...structuredClone(stale.data.orders[0]), status: 'settled' };
+  const res = await post('/api/data/changes', { baseTimestamp: stale.timestamp, changes: { tables: { orders: { upsert: [older], remove: [] }, payments: { remove: [] } } } });
+  assert(res.data.conflicts.some(c => c.id === id && c.reason === 'kept_newer_version'));
+  const removed = await post('/api/data/changes', { baseTimestamp: stale.timestamp, changes: { tables: { orders: { remove: [id] } } } });
+  assert(removed.data.conflicts.some(c => c.id === id && c.reason === 'kept_newer_record'));
+  assert.equal((await (await fetch(env.base + '/api/data')).json()).data.orders.find(o => o.id === id).status, 'in_production');
+  const before = JSON.stringify((await (await fetch(env.base + '/api/data')).json()).data.payments);
+  for (const changes of [{ tables: { users: { upsert: [] } } }, { tables: { payments: { upsert: [{ id: 'P-OK', amount: 1 }, { id: 'P-OK', amount: 2 }] } } }, { tables: { payments: { upsert: [{ id: 'P-BAD', amount: 'lots' }] } } }, { tables: { payments: { remove: [5] } } }, { tables: {}, meta: [] }]) {
+    const r = await post('/api/data/changes', { changes });
+    assert.equal(r.status, 400, JSON.stringify(changes)); assert.equal(r.data.success, false);
+  }
+  assert.equal((await post('/api/data/changes', {})).status, 400);
+  assert.equal(JSON.stringify((await (await fetch(env.base + '/api/data')).json()).data.payments), before, 'nothing written');
+});

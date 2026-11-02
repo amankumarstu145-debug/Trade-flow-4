@@ -20,7 +20,9 @@ function scheduleExcelExport() {
 }
 function flushExcelExport() {
   if (excelExportTimer) { clearTimeout(excelExportTimer); excelExportTimer = null; }
-  try { if (typeof syncManager !== 'undefined' && syncManager) return syncManager.exportToExcel(); } catch (err) { console.error('[Excel] Export failed:', err.message); }
+  if (typeof syncManager === 'undefined' || !syncManager) return null;
+  try { if (syncManager.mockDataStale) syncManager.writeMockData(); } catch (err) { console.error('[Data] mock-data.js refresh failed:', err.message); }
+  try { return syncManager.exportToExcel(); } catch (err) { console.error('[Excel] Export failed:', err.message); }
   return null;
 }
 const VAULT_DIR = path.join(DATA_DIR, 'vault');
@@ -363,6 +365,39 @@ const requestHandler = (req, res) => {
         }));
       } catch (err) {
         res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // --- API: POST /api/data/changes (save only the records that changed) ---
+  if (pathname === '/api/data/changes' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        if (!payload.changes || typeof payload.changes !== 'object') {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ success: false, error: 'Changes payload is required' }));
+        }
+        const saveResult = syncManager.saveChanges(payload.changes, String(payload.userName || 'Operator'), String(payload.reason || 'App State Update'), {
+          baseTimestamp: payload.baseTimestamp,
+          originTabId: typeof payload.tabId === 'string' ? payload.tabId.slice(0, 64) : null
+        });
+        const excelRes = scheduleExcelExport();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({
+          success: true,
+          savedToDb: true,
+          conflicts: saveResult.conflicts,
+          timestamp: new Date().toISOString(),
+          excelSync: excelRes,
+          status: syncManager.getSyncStatus()
+        }));
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ success: false, error: err.message }));
       }
     });
