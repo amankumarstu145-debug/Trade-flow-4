@@ -2415,13 +2415,13 @@ html:not(.dark) .bg-emerald-500\/15.px-1\.5 { color: #065f46; }
 /* Links like "Drill-down →" stay on one line */
 .tf-kpi-interactive [class*="Drill"], .tf-kpi-interactive .whitespace-nowrap { white-space: nowrap; }
 
-/* Workspace tab bar: with several tabs open, tool buttons become icon-only and tabs shrink,
-   so nothing is pushed off-screen. */
+/* Workspace tab bar: tool buttons keep their names; only on a narrow screen do they become
+   icon-only, and tabs shrink first, so nothing is pushed off-screen. */
 #workspace-tabs-bar { container-type: inline-size; overflow-x: auto; }
 #workspace-tabs-bar .workspace-tab-item { flex: 0 1 auto; min-width: 84px; }
 #workspace-tabs-bar .workspace-tab-item > span { min-width: 0; }
 #workspace-tabs-bar button { white-space: nowrap; }
-@container (max-width: 1180px) {
+@container (max-width: 640px) {
   #workspace-tab-whatsapp-templates-btn > span,
   #workspace-tab-profit-calc-btn > span,
   #workspace-tab-invoice-studio-btn > span { display: none; }

@@ -248,8 +248,11 @@
         </div>
       </div>
 
-      <!-- Slim top bar: Inbox, New and More (the other tools live in the More menu) -->
+      <!-- Slim top bar: Scan with phone, Inbox, New and More (the other tools live in the More menu) -->
       <div class="tf-topbar-actions flex items-center gap-2 shrink-0 ml-auto">
+        <button id="tf-scan-btn" type="button" class="tf-btn tf-btn--sm" onclick="app.openMobileSnapModal('smart-fill')" title="Scan a bill, slip or document with your phone">
+          <i data-lucide="smartphone" class="w-4 h-4"></i><span class="tf-hide-sm">Scan with phone</span>
+        </button>
         <button id="tf-inbox-btn" type="button" class="tf-btn tf-btn--sm" onclick="app.openUrgentActionsModal()" title="Inbox · things to do">
           <i data-lucide="inbox" class="w-4 h-4"></i><span class="tf-hide-sm">Inbox</span><span id="tf-inbox-count" class="tf-badge tf-badge--warn" hidden>0</span>
         </button>
@@ -262,7 +265,6 @@
           <button type="button" role="menuitem" class="tf-menu-item" onclick="TFShell.run(() => app.openPaymentModal())"><i data-lucide="indian-rupee" class="w-4 h-4 "></i><span>Record payment</span></button>
           <button type="button" role="menuitem" class="tf-menu-item" onclick="TFShell.run(() => app.openEditContactModal(null, 'retailer'))"><i data-lucide="user-plus" class="w-4 h-4 "></i><span>Add partner</span></button>
           <button type="button" role="menuitem" class="tf-menu-item" onclick="TFShell.run(() => TradeFlowSmartFill.open('auto'))"><i data-lucide="sparkles" class="w-4 h-4 tf-ai-icon"></i><span>Smart Fill (AI)</span></button>
-          <button type="button" role="menuitem" class="tf-menu-item" onclick="TFShell.run(() => app.openMobileSnapModal('smart-fill'))"><i data-lucide="smartphone" class="w-4 h-4 "></i><span>Scan with phone</span></button>
           </div>
         </div>
         <div class="tf-menu-wrap">
@@ -274,12 +276,6 @@
         <button id="topbar-ai-toggle-btn" type="button" onclick="app.toggleAIMode()" class="tf-topbar-pill btn-tactile text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-2xs flex items-center gap-1.5 transition-all" title="Toggle AI Assistance: OFF = 100% Offline Local Engine, ON = Vision & Semantic Assist">
           <span id="ai-toggle-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
           <span id="ai-toggle-text" class="text-xs font-bold tracking-tight">AI ● OFF</span>
-        </button>
-        <!-- Mobile Camera QR-Scan / Smart Fill Button -->
-        <button id="topbar-mobile-scan-btn" type="button" onclick="app.openMobileSnapModal('smart-fill')" class="tf-topbar-pill btn-tactile text-white bg-gradient-to-r from-emerald-600 via-emerald-600 to-emerald-600 hover:from-emerald-500 hover:to-emerald-500 border border-emerald-400/40 shadow-xs shadow-emerald-600/20 flex items-center gap-1.5 font-bold cursor-pointer group transition-all" title="Mobile Camera QR-Scan: Scan with phone to snap bills, receipts & documents directly into Smart Fill">
-          <i data-lucide="smartphone" class="w-3.5 h-3.5 text-emerald-100 group-hover:scale-110 transition-transform"></i>
-          <span class="text-xs font-bold tracking-tight">Mobile Scan</span>
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
         </button>
         <!-- Backups Center Button -->
         <button id="topbar-backups-btn" onclick="app.openBackupModal()" class="tf-topbar-pill btn-tactile text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-2xs" title="Backup & Recovery Center">

@@ -42,7 +42,7 @@ TradeFlowApp.addMethods(class {
           title="WhatsApp Quick Messenger & Live Templates"
         >
           <i data-lucide="message-square" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform"></i>
-          <span>WhatsApp Quick Messenger</span>
+          <span>WhatsApp</span>
         </button>
 
         <button 
@@ -53,7 +53,7 @@ TradeFlowApp.addMethods(class {
           title="Smart Trade Margin & Profit Calculator"
         >
           <i data-lucide="calculator" class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform"></i>
-          <span>Profit Calculator</span>
+          <span>Calculator</span>
         </button>
 
         <button 
