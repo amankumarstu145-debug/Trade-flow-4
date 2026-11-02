@@ -1,6 +1,6 @@
 <div align="center">
 
-# TradeFlow 3
+# TradeFlow 5
 
 **Orders, partner operations, billing and commercial visibility — in one local workstation.**
 
@@ -71,9 +71,13 @@ Pair a phone from the desktop QR screen, capture a slip and send it to the local
 
 ### Install and launch
 
+Easiest: download **[the ZIP of the latest version](https://github.com/amankumarstu145-debug/Trade-flow-4/archive/refs/heads/main.zip)**, unzip it (right-click > Extract All), open the folder and double-click **`start.server.bat`**. The first start installs what it needs (about a minute), then the app opens in your browser.
+
+With Git instead:
+
 ```powershell
-git clone https://github.com/aimummatv/TradeFlow-v3.git
-cd TradeFlow-v3
+git clone https://github.com/amankumarstu145-debug/Trade-flow-4.git
+cd Trade-flow-4
 npm ci --omit=dev
 ```
 
@@ -115,7 +119,7 @@ All runtime data stays under ignored `data/`. The committed seed is in `examples
 ## Storage and project layout
 
 ```text
-TradeFlow-v3/
+Trade-flow-4/
 ├── server.js                  Local HTTP API, SSE, documents and OCR bridge
 ├── security.js                Request, origin, host and file-path checks
 ├── db_manager.js              SQLite records, activity and rollback

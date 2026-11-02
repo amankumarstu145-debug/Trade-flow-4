@@ -1,6 +1,6 @@
 # Security and operating scope
 
-TradeFlow 3 is a local, single-user Windows application. Desktop endpoints accept loopback clients; phones can access limited capture resources and upload using pairing tokens. Host/origin checks, bounded JSON requests, file-root containment, HTML escaping and sanitized rich messages are implemented in the source.
+TradeFlow 5 is a local, single-user Windows application. Desktop endpoints accept loopback clients; phones can access limited capture resources and upload using pairing tokens. Host/origin checks, bounded JSON requests, file-root containment, HTML escaping and sanitized rich messages are implemented in the source.
 
 Owner/Operator is a screen-visibility preference, not a server-enforced authorization role. There is no account login or separation between users sharing a Windows account. Public hosting, reverse-proxy access and shared-user deployment require an authentication and authorization design before use.
 

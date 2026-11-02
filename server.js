@@ -3855,7 +3855,7 @@ server.on('error', err => {
   process.exit(1);
 });
 server.listen(PORT, '0.0.0.0', () => {
-  console.log('TradeFlow 3 running at http://localhost:' + PORT);
+  console.log('TradeFlow 5 running at http://localhost:' + PORT);
   console.log('Desktop APIs are local-only; phones require a pairing QR code.');
   if (process.argv.includes('--open') || process.env.OPEN_BROWSER === 'true') {
     const url = 'http://localhost:' + PORT;
