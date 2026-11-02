@@ -1,6 +1,6 @@
 # TradeFlow design system
 
-All tokens and shared components live in [`css/design-system.css`](../css/design-system.css), which loads after `styles.css`. Tailwind's settings in `index.html` point at the same scale, so utility classes follow it too.
+All tokens and shared components live in [`css/design-system.css`](../css/design-system.css), which loads after `styles.css`. Tailwind's settings in `tailwind.config.js` point at the same scale, so utility classes follow it too.
 
 ## Colour: one meaning each
 
@@ -53,3 +53,9 @@ Lucide icons only, from the bundled set. No emoji in buttons, chips, labels or m
 | `tf-dialog` | Pop-up window body |
 
 The partner pages (`js/partner-ui.js`, `pu-*` classes) read the same tokens.
+
+## Building
+
+- `npm run css:build` builds `css/tailwind.css` from `tailwind.config.js` (same values as the tokens above). It loads after `design-system.css`, so utility classes keep their usual priority.
+- `npm run icons:build` bundles only the Lucide icons that appear in the app into `vendor/lucide.js`.
+- Pop-up windows live in `<template data-tf-lazy>` in `index.html` and are added to the page the first time code asks for them (`js/lazy-modals.js`).

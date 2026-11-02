@@ -7,32 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23d97706'/%3E%3Cpath d='M8 10h16M8 16h16M8 22h10' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
   
   <!-- Tailwind CSS CDN with dark mode support -->
-  <script src="/vendor/tailwind.js"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-            mono: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif']
-          },
-          /* Design system: seven text sizes, nothing below 12px */
-          fontSize: {
-            xs: ['12px', '16px'], sm: ['14px', '20px'], base: ['16px', '24px'], lg: ['19px', '26px'],
-            xl: ['22px', '28px'], '2xl': ['28px', '34px'], '3xl': ['28px', '34px'], '4xl': ['28px', '34px']
-          },
-          /* Four weights only */
-          fontWeight: { light: '400', normal: '400', medium: '500', semibold: '600', bold: '700', extrabold: '700', black: '700' },
-          /* Three corner sizes */
-          borderRadius: { sm: '8px', DEFAULT: '8px', md: '8px', lg: '12px', xl: '12px', '2xl': '16px', '3xl': '16px' },
-          colors: {
-            brand: { 50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981', 600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b' }
-          }
-        }
-      }
-    }
-  </script>
+  <!-- Tailwind is built ahead of time into css/tailwind.css (npm run css:build); settings in tailwind.config.js -->
 
   <!-- Lucide Icons CDN -->
   <script src="/vendor/lucide.js"></script>
@@ -49,6 +24,7 @@
   <!-- Custom Craft Styles & Print CSS -->
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/tailwind.css">
 </head>
 <body class="h-full bg-slate-50 text-slate-900 dark:bg-[#090a0f] dark:text-slate-100 flex overflow-hidden selection:bg-amber-500/20 selection:text-amber-500">
 
@@ -1605,7 +1581,7 @@
   </div>
 
   <!-- ================= EDITABLE GST TAX INVOICE MODAL (RESIZABLE & HIGH-CONTRAST) ================= -->
-  <div id="invoice-modal" class="fixed inset-0 z-[95] overflow-hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-4 hidden">
+  <template data-tf-lazy="invoice-modal"><div id="invoice-modal" class="fixed inset-0 z-[95] overflow-hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-4 hidden">
     <div id="invoice-modal-panel" class="resizable-modal-panel relative w-full flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800" style="width: 980px; height: 92vh;">
       
       <!-- Top Modal Toolbar (Controls & Window Actions) -->
@@ -1732,10 +1708,10 @@
       <div id="invoice-resize-handle-b" class="modal-resize-handle modal-resize-b" title="Drag edge to resize height"></div>
 
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= RESIZABLE SMART NEW ORDER COCKPIT MODAL ================= -->
-  <div id="new-order-modal" class="fixed inset-0 z-[95] overflow-hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden no-print">
+  <template data-tf-lazy="new-order-modal"><div id="new-order-modal" class="fixed inset-0 z-[95] overflow-hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden no-print">
     <div id="new-order-modal-panel" class="resizable-modal-panel relative w-full flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-300 dark:border-slate-800" style="width: 1080px; height: 92vh; max-width: 96vw;">
       
       <!-- Top Modal Header & Controls -->
@@ -2091,10 +2067,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
       <div id="order-resize-handle-b" class="modal-resize-handle modal-resize-b" title="Drag edge to resize height"></div>
 
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= RESIZABLE PICKLE FACTORY PO & JOB WORK MODAL ================= -->
-  <div id="factory-po-modal" class="fixed inset-0 z-[95] overflow-hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden">
+  <template data-tf-lazy="factory-po-modal"><div id="factory-po-modal" class="fixed inset-0 z-[95] overflow-hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden">
     <div id="factory-po-modal-panel" class="resizable-modal-panel relative w-full flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800" style="width: 1000px; height: 92vh; max-width: 96vw;">
       
       <!-- Top Modal Toolbar -->
@@ -2171,10 +2147,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
       <div id="po-resize-handle-b" class="modal-resize-handle modal-resize-b" title="Drag edge to resize height"></div>
 
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= KPI BREAKDOWN & ACTION MODAL ================= -->
-  <div id="kpi-breakdown-modal" class="fixed inset-0 z-[95] overflow-y-auto bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-4 hidden no-print">
+  <template data-tf-lazy="kpi-breakdown-modal"><div id="kpi-breakdown-modal" class="fixed inset-0 z-[95] overflow-y-auto bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-4 hidden no-print">
     <div class="bg-white dark:bg-[#11141d] rounded-2xl shadow-2xl max-w-4xl lg:max-w-5xl w-full border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh] relative">
       
       <!-- Modal Header -->
@@ -2212,10 +2188,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
         </button>
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= COMPREHENSIVE COMPANY & PARTNER PROFILE DOSSIER (ENHANCED) ================= -->
-  <div id="contact-edit-modal" class="fixed inset-0 z-[60] overflow-y-auto bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden no-print">
+  <template data-tf-lazy="contact-edit-modal"><div id="contact-edit-modal" class="fixed inset-0 z-[60] overflow-y-auto bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden no-print">
     <div id="contact-edit-modal-panel" class="resizable-modal-panel tf-draggable-window relative w-full flex flex-col bg-white dark:bg-[#10141f] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="width: 980px; max-height: 94vh; max-width: 98vw; transition: all 0.2s ease;">
       
       <!-- Modal Header with Logo Avatar, Company Title, Orders Dossier Button & Window Controls -->
@@ -2744,10 +2720,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
         </div>
       </form>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= PAYMENT & DOCUMENT ANALYSIS COCKPIT (REDESIGNED) ================= -->
-  <div id="payment-modal" class="fixed inset-0 z-[175] overflow-y-auto bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden no-print">
+  <template data-tf-lazy="payment-modal"><div id="payment-modal" class="fixed inset-0 z-[175] overflow-y-auto bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden no-print">
     <div id="payment-modal-panel" class="resizable-modal-panel tf-draggable-window relative w-full flex flex-col bg-white dark:bg-[#0f1422] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="width: 860px; max-height: 92vh; max-width: 96vw; transition: all 0.2s ease;">
       
       <!-- Cockpit Header with Sticky Save & Window Controls -->
@@ -3195,10 +3171,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
       <div class="tf-window-resize-handle tf-window-resize-e" data-resize-dir="e"></div>
       <div class="tf-window-resize-handle tf-window-resize-s" data-resize-dir="s"></div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= COMPREHENSIVE ORDER & PAYMENT FULL WINDOW DOSSIER ================= -->
-  <div id="order-payment-full-modal" class="fixed inset-0 z-[60] overflow-hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden no-print">
+  <template data-tf-lazy="order-payment-full-modal"><div id="order-payment-full-modal" class="fixed inset-0 z-[60] overflow-hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden no-print">
     <div id="order-payment-full-modal-panel" class="resizable-modal-panel relative w-full flex flex-col bg-white dark:bg-[#0d111a] rounded-2xl shadow-2xl border border-slate-300 dark:border-slate-800 overflow-hidden" style="width: 1240px; height: 94vh; max-width: 96vw; transition: all 0.2s ease;">
       
       <!-- Top Modal Toolbar (Header, Badges & Dedicated Top-Right Controls) -->
@@ -3307,7 +3283,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
       </div>
 
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= PAYMENT DETAIL SLIDE-OUT DRAWER ================= -->
   <div id="payment-detail-drawer" class="fixed inset-0 z-50 overflow-hidden hidden no-print">
@@ -3422,7 +3398,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
   </div>
 
   <!-- ================= SIDE-BY-SIDE RECEIVED INVOICE & BANK RECEIPT REVIEW COCKPIT ================= -->
-  <div id="document-review-modal" class="fixed inset-0 z-[95] overflow-y-auto bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden no-print">
+  <template data-tf-lazy="document-review-modal"><div id="document-review-modal" class="fixed inset-0 z-[95] overflow-y-auto bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden no-print">
     <div id="document-review-modal-panel" class="resizable-modal-panel relative w-full flex flex-col bg-white dark:bg-[#0f1422] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="width: 1120px; height: 94vh; max-width: 96vw; transition: all 0.2s ease;">
       
       <!-- Cockpit Header -->
@@ -3643,10 +3619,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
 
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= URGENT ACTIONS COCKPIT MODAL ================= -->
-  <div id="urgent-actions-modal" class="fixed inset-0 z-[95] overflow-y-auto bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-4 hidden no-print">
+  <template data-tf-lazy="urgent-actions-modal"><div id="urgent-actions-modal" class="fixed inset-0 z-[95] overflow-y-auto bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-4 hidden no-print">
     <div class="resizable-modal-panel relative w-full flex flex-col bg-white dark:bg-[#0f1422] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="width: 960px; max-height: 90vh; max-width: 96vw;">
       
       <!-- Header -->
@@ -3689,10 +3665,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
         </button>
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= EDIT SKU & PRICING MODAL ================= -->
-  <div id="sku-edit-modal" class="fixed inset-0 z-[95] overflow-y-auto bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-4 hidden no-print">
+  <template data-tf-lazy="sku-edit-modal"><div id="sku-edit-modal" class="fixed inset-0 z-[95] overflow-y-auto bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-4 hidden no-print">
     <div class="resizable-modal-panel relative w-full flex flex-col bg-white dark:bg-[#0f1422] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="width: 720px; max-height: 92vh; max-width: 95vw;">
       
       <!-- Header with Corner Controls -->
@@ -3788,10 +3764,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
         </div>
       </form>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= TRADE MARGIN & ORDER PROFIT CALCULATOR MODAL (RESIZABLE & HIGH-CONTRAST) ================= -->
-  <div id="profit-calculator-modal" class="fixed inset-0 z-[95] overflow-y-auto bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden no-print">
+  <template data-tf-lazy="profit-calculator-modal"><div id="profit-calculator-modal" class="fixed inset-0 z-[95] overflow-y-auto bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden no-print">
     <div id="profit-calculator-modal-panel" class="resizable-modal-panel relative w-full flex flex-col bg-white dark:bg-[#0f1422] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="width: 1320px; max-width: 98vw; max-height: 94vh;">
       
       <!-- Modal Header with Corner Window Controls & View Switcher -->
@@ -4152,10 +4128,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
       <div id="calc-resize-handle-b" class="modal-resize-handle modal-resize-b" title="Drag to resize height"></div>
 
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= SMART INVOICE & BILLING STUDIO MODAL ================= -->
-  <div id="invoice-studio-modal" class="fixed inset-0 z-[96] overflow-hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden">
+  <template data-tf-lazy="invoice-studio-modal"><div id="invoice-studio-modal" class="fixed inset-0 z-[96] overflow-hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-2 sm:p-4 hidden">
     <div id="invoice-studio-modal-panel" class="resizable-modal-panel relative w-full flex flex-col bg-white dark:bg-[#0f1422] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100" style="width: 96vw; max-width: 1680px; height: 95vh; max-height: 98vh;">
       
       <!-- Studio Header / Top Executive Command Bar (Row 1: Brand + Center 5-in-1 Switcher + WhatsApp Templates & Controls) -->
@@ -4457,11 +4433,11 @@ Carrot 2case, Red chilli 1case..."></textarea>
       </div>
 
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= WHATSAPP SMART MESSAGE TEMPLATES & REUSABLES MODAL ================= -->
   <!-- ================= WHATSAPP QUICK MESSENGER & SMART DIRECTORY MODAL ================= -->
-  <div id="studio-magic-drawer-modal" class="fixed inset-0 z-[125] bg-slate-900/60 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-5 hidden no-print">
+  <template data-tf-lazy="studio-magic-drawer-modal"><div id="studio-magic-drawer-modal" class="fixed inset-0 z-[125] bg-slate-900/60 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-5 hidden no-print">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-750 rounded-2xl w-full max-w-5xl 2xl:max-w-6xl max-h-[94vh] h-[88vh] flex flex-col shadow-2xl overflow-hidden text-slate-800 dark:text-slate-100">
       
       <!-- Top Executive Header -->
@@ -4703,10 +4679,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
       </div>
 
     </div>
-  </div>
+  </div></template>
 
   <!-- Unified Smart Fill Intake -->
-  <div id="smart-fill-modal" class="fixed inset-0 z-[130] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-2 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true" aria-labelledby="smart-fill-title">
+  <template data-tf-lazy="smart-fill-modal"><div id="smart-fill-modal" class="fixed inset-0 z-[130] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-2 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true" aria-labelledby="smart-fill-title">
     <div id="smart-fill-modal-panel" class="tf-draggable-window relative w-full max-w-5xl max-h-[94vh] overflow-hidden flex flex-col rounded-2xl bg-white dark:bg-[#0f1422] border border-slate-200 dark:border-slate-700 shadow-2xl transition-all duration-300">
       
       <!-- Top Modal Header -->
@@ -5031,7 +5007,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
       <div class="tf-window-resize-handle tf-window-resize-e" data-resize-dir="e"></div>
       <div class="tf-window-resize-handle tf-window-resize-s" data-resize-dir="s"></div>
     </div>
-  </div>
+  </div></template>
 
   <!-- NVIDIA configuration pop-up inside Smart Fill -->
   <div id="smart-fill-nvidia-settings" class="hidden fixed inset-0 z-[145] bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-4 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="smart-fill-nvidia-title">
@@ -5065,7 +5041,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
   </div>
 
   <!-- ================= EXCEL IMPORT PREVIEW & CONFIRM MODAL ================= -->
-  <div id="excel-preview-modal" class="fixed inset-0 z-[110] bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-6 hidden no-print" role="dialog" aria-modal="true">
+  <template data-tf-lazy="excel-preview-modal"><div id="excel-preview-modal" class="fixed inset-0 z-[110] bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-6 hidden no-print" role="dialog" aria-modal="true">
     <div class="relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-white dark:bg-[#0f1422] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
       <!-- Header -->
       <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between">
@@ -5111,10 +5087,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
         </button>
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= BACKUP & RECOVERY CENTER MODAL ================= -->
-  <div id="backup-recovery-modal" class="fixed inset-0 z-[110] bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-6 hidden no-print" role="dialog" aria-modal="true">
+  <template data-tf-lazy="backup-recovery-modal"><div id="backup-recovery-modal" class="fixed inset-0 z-[110] bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-6 hidden no-print" role="dialog" aria-modal="true">
     <div class="relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-white dark:bg-[#0f1422] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
       <!-- Header -->
       <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between">
@@ -5147,10 +5123,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
         <!-- Rendered dynamically -->
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= CHANGE HISTORY & AUDIT TRAIL MODAL ================= -->
-  <div id="change-history-modal" class="fixed inset-0 z-[110] bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-6 hidden no-print" role="dialog" aria-modal="true">
+  <template data-tf-lazy="change-history-modal"><div id="change-history-modal" class="fixed inset-0 z-[110] bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-6 hidden no-print" role="dialog" aria-modal="true">
     <div class="relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-white dark:bg-[#0f1422] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
       <!-- Header -->
       <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between">
@@ -5185,10 +5161,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
         <!-- Rendered dynamically -->
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= PRE-FLIGHT DOCUMENT VALIDATION CHECKLIST MODAL ================= -->
-  <div id="document-validation-modal" class="fixed inset-0 z-[115] bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-6 hidden no-print" role="dialog" aria-modal="true">
+  <template data-tf-lazy="document-validation-modal"><div id="document-validation-modal" class="fixed inset-0 z-[115] bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-6 hidden no-print" role="dialog" aria-modal="true">
     <div class="relative w-full max-w-2xl max-h-[92vh] flex flex-col bg-white dark:bg-[#0f1422] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
       <!-- Header -->
       <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between">
@@ -5220,10 +5196,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
         </button>
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= DUAL-SLIP SIDE-BY-SIDE COMPARISON MODAL ================= -->
-  <div id="dual-slip-comparison-modal" class="fixed inset-0 z-[185] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-2 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
+  <template data-tf-lazy="dual-slip-comparison-modal"><div id="dual-slip-comparison-modal" class="fixed inset-0 z-[185] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-2 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
     <div class="w-full max-w-[96vw] h-[94vh] flex flex-col rounded-2xl bg-white dark:bg-[#0f1422] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
       <!-- Top Diagnostics Header -->
       <div class="px-5 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-900 text-white flex items-center justify-between">
@@ -5315,10 +5291,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
         </div>
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= DUAL-SLIP RELATED ORDER QUICK DOSSIER OVERLAY ================= -->
-  <div id="dual-slip-order-dossier-modal" class="fixed inset-0 z-[190] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-2 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
+  <template data-tf-lazy="dual-slip-order-dossier-modal"><div id="dual-slip-order-dossier-modal" class="fixed inset-0 z-[190] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-2 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
     <div class="w-full max-w-4xl max-h-[92vh] flex flex-col rounded-2xl bg-white dark:bg-[#0f1422] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
       <!-- Header -->
       <div class="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-900 text-white flex items-center justify-between">
@@ -5365,10 +5341,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
         </div>
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= IN-APP DOCUMENT & EXCEL SPREADSHEET VIEWER MODAL ================= -->
-  <div id="vault-document-viewer-modal" class="fixed inset-0 z-[150] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-2 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
+  <template data-tf-lazy="vault-document-viewer-modal"><div id="vault-document-viewer-modal" class="fixed inset-0 z-[150] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-2 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
     <div id="vdv-modal-panel" class="tf-draggable-window w-full max-w-[96vw] h-[94vh] flex flex-col rounded-2xl bg-white dark:bg-[#0f1422] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden relative">
       <!-- Header -->
       <div id="vdv-header" class="tf-draggable-header px-5 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-900 text-white flex items-center justify-between">
@@ -5436,10 +5412,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
       <div class="tf-window-resize-handle tf-window-resize-e" data-resize-dir="e"></div>
       <div class="tf-window-resize-handle tf-window-resize-s" data-resize-dir="s"></div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= MOBILE CAMERA QR-SNAP & PHONE INTAKE MODAL ================= -->
-  <div id="mobile-snap-modal" class="fixed inset-0 z-[160] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-3 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
+  <template data-tf-lazy="mobile-snap-modal"><div id="mobile-snap-modal" class="fixed inset-0 z-[160] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-3 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
     <div id="mobile-snap-modal-panel" class="tf-draggable-window w-full max-w-lg bg-white dark:bg-[#0f1422] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col relative">
       <!-- Modal Header -->
       <div class="tf-draggable-header p-3.5 px-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/60">
@@ -5558,10 +5534,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
       <div class="tf-window-resize-handle tf-window-resize-e" data-resize-dir="e"></div>
       <div class="tf-window-resize-handle tf-window-resize-s" data-resize-dir="s"></div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= 2. 1-CLICK FORMATTED WHATSAPP DISPATCH MODAL ================= -->
-  <div id="whatsapp-dispatch-modal" class="fixed inset-0 z-[160] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-3 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
+  <template data-tf-lazy="whatsapp-dispatch-modal"><div id="whatsapp-dispatch-modal" class="fixed inset-0 z-[160] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-3 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
     <div id="whatsapp-dispatch-modal-panel" class="tf-draggable-window w-full max-w-lg bg-white dark:bg-[#0f1422] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col relative">
       <!-- Header -->
       <div class="tf-draggable-header p-3.5 px-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/60">
@@ -5635,10 +5611,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
       <div class="tf-window-resize-handle tf-window-resize-e" data-resize-dir="e"></div>
       <div class="tf-window-resize-handle tf-window-resize-s" data-resize-dir="s"></div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= PARTNER SPOTLIGHT CENTERED DETAIL MODAL ================= -->
-  <div id="partner-spotlight-modal" class="fixed inset-0 z-[175] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-3 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
+  <template data-tf-lazy="partner-spotlight-modal"><div id="partner-spotlight-modal" class="fixed inset-0 z-[175] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-3 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
     <div id="partner-spotlight-modal-panel" class="tf-draggable-window w-full max-w-4xl max-h-[92vh] bg-white dark:bg-[#0f1422] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col relative">
       <!-- Drag Header -->
       <div class="tf-draggable-header p-3.5 px-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/60">
@@ -5679,10 +5655,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
       <div class="tf-window-resize-handle tf-window-resize-e" data-resize-dir="e"></div>
       <div class="tf-window-resize-handle tf-window-resize-s" data-resize-dir="s"></div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= 3. END-OF-DAY 6:00 PM DAILY BUSINESS DIARY MODAL ================= -->
-  <div id="daily-diary-modal" class="fixed inset-0 z-[160] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-3 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
+  <template data-tf-lazy="daily-diary-modal"><div id="daily-diary-modal" class="fixed inset-0 z-[160] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-3 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
     <div id="daily-diary-modal-panel" class="tf-draggable-window w-full max-w-4xl max-h-[92vh] bg-white dark:bg-[#0f1422] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col relative">
       <!-- Header -->
       <div ondblclick="app.openDailyDiaryWorkspaceTab()" class="tf-draggable-header p-3.5 px-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/60 cursor-move" title="Double click header to expand to full workspace window">
@@ -5812,10 +5788,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
       <div class="tf-window-resize-handle tf-window-resize-e" data-resize-dir="e"></div>
       <div class="tf-window-resize-handle tf-window-resize-s" data-resize-dir="s"></div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= 4. RECYCLE BIN SOFT-DELETE MODAL ================= -->
-  <div id="recycle-bin-modal" class="fixed inset-0 z-[160] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-3 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
+  <template data-tf-lazy="recycle-bin-modal"><div id="recycle-bin-modal" class="fixed inset-0 z-[160] hidden bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop p-3 sm:p-4 flex items-center justify-center no-print" role="dialog" aria-modal="true">
     <div id="recycle-bin-modal-panel" class="tf-draggable-window w-full max-w-2xl bg-white dark:bg-[#0f1422] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh] relative">
       <!-- Header -->
       <div class="tf-draggable-header p-3.5 px-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/60">
@@ -5855,7 +5831,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
       <div class="tf-window-resize-handle tf-window-resize-e" data-resize-dir="e"></div>
       <div class="tf-window-resize-handle tf-window-resize-s" data-resize-dir="s"></div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= 5. 10-SECOND FLOATING REVERSIBLE UNDO BANNER ================= -->
   <div id="floating-undo-toast" class="tf-floating-undo-toast max-w-lg w-full px-4 py-3 rounded-2xl bg-slate-900/95 dark:bg-slate-900/95 text-white shadow-2xl border border-slate-700/80 backdrop-blur-md flex flex-col gap-2">
@@ -5894,7 +5870,7 @@ Carrot 2case, Red chilli 1case..."></textarea>
   <div id="toast-container" class="fixed bottom-5 right-5 pointer-events-none flex flex-col gap-2"></div>
 
   <!-- ================= UNIVERSAL OMNIBOX MODAL (Ctrl+K) ================= -->
-  <div id="universal-omnibox-modal" class="fixed inset-0 z-[180] hidden no-print">
+  <template data-tf-lazy="universal-omnibox-modal"><div id="universal-omnibox-modal" class="fixed inset-0 z-[180] hidden no-print">
     <div onclick="app.closeOmniboxModal()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop transition-opacity"></div>
     <div class="fixed inset-0 overflow-y-auto p-4 sm:p-6 md:p-12 flex justify-center items-start">
       <div class="relative w-full max-w-3xl bg-white dark:bg-[#0c0e14] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[88vh] text-slate-800 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-150">
@@ -5943,10 +5919,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
         </div>
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= BANK DETAIL PROTECTION GUARD MODAL ================= -->
-  <div id="bank-protection-modal" class="fixed inset-0 z-[190] hidden no-print">
+  <template data-tf-lazy="bank-protection-modal"><div id="bank-protection-modal" class="fixed inset-0 z-[190] hidden no-print">
     <div onclick="app.closeBankProtectionModal()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop transition-opacity"></div>
     <div class="fixed inset-0 overflow-y-auto p-4 sm:p-6 flex justify-center items-center">
       <div class="relative w-full max-w-lg bg-white dark:bg-[#0f131d] rounded-2xl border-2 border-rose-500/60 shadow-2xl p-6 space-y-4 text-slate-900 dark:text-white animate-in zoom-in-95 duration-150">
@@ -5980,10 +5956,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
         </div>
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= TRANSPORT DISPATCH & LOGISTICS MODAL ================= -->
-  <div id="transport-dispatch-modal" class="fixed inset-0 z-[180] hidden no-print">
+  <template data-tf-lazy="transport-dispatch-modal"><div id="transport-dispatch-modal" class="fixed inset-0 z-[180] hidden no-print">
     <div onclick="app.closeTransportDispatchModal()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop transition-opacity"></div>
     <div class="fixed inset-0 overflow-y-auto p-4 sm:p-6 flex justify-center items-center">
       <div class="relative w-full max-w-xl bg-white dark:bg-[#0f131d] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xl p-5 sm:p-6 space-y-4 text-slate-900 dark:text-white animate-in zoom-in-95 duration-150">
@@ -6122,10 +6098,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
 
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= CONSIGNMENT DELIVERY CONFIRMATION MODAL ================= -->
-  <div id="delivery-confirm-modal" class="fixed inset-0 z-[180] hidden no-print">
+  <template data-tf-lazy="delivery-confirm-modal"><div id="delivery-confirm-modal" class="fixed inset-0 z-[180] hidden no-print">
     <div onclick="app.closeDeliveryConfirmModal()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop transition-opacity"></div>
     <div class="fixed inset-0 overflow-y-auto p-4 sm:p-6 flex justify-center items-center">
       <div class="relative w-full max-w-md bg-white dark:bg-[#0f131d] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xl p-5 sm:p-6 space-y-4 text-slate-900 dark:text-white animate-in zoom-in-95 duration-150">
@@ -6170,10 +6146,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
 
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= UNIVERSAL PROMPT MODAL (REPLACES WINDOW.PROMPT) ================= -->
-  <div id="universal-prompt-modal" class="fixed inset-0 z-[200] hidden no-print">
+  <template data-tf-lazy="universal-prompt-modal"><div id="universal-prompt-modal" class="fixed inset-0 z-[200] hidden no-print">
     <div onclick="app.resolveModalPrompt(null)" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop transition-opacity"></div>
     <div class="fixed inset-0 overflow-y-auto p-4 sm:p-6 flex justify-center items-center">
       <div class="relative w-full max-w-md bg-white dark:bg-[#0f131d] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xl p-5 sm:p-6 space-y-4 text-slate-900 dark:text-white animate-in zoom-in-95 duration-150">
@@ -6215,10 +6191,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
         </div>
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= SYSTEM SETTINGS CONTROL CENTER ================= -->
-  <div id="system-settings-modal" class="fixed inset-0 z-[195] hidden no-print">
+  <template data-tf-lazy="system-settings-modal"><div id="system-settings-modal" class="fixed inset-0 z-[195] hidden no-print">
     <div onclick="app.closeSettingsModal()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs tf-soft-backdrop transition-opacity"></div>
     <div class="fixed inset-0 overflow-y-auto p-2 sm:p-4 md:p-6 flex justify-center items-center">
       <div class="relative w-full max-w-5xl 2xl:max-w-6xl bg-white dark:bg-[#0f131d] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xl text-slate-900 dark:text-white flex flex-col max-h-[92vh] h-[86vh] animate-in zoom-in-95 duration-150 overflow-hidden">
@@ -6907,10 +6883,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
 
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= MAGIC ROOTS EXECUTIVE HUB MODAL ================= -->
-  <div id="company-executive-hub-modal" class="fixed inset-0 z-[115] bg-slate-900/60 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-5 hidden no-print">
+  <template data-tf-lazy="company-executive-hub-modal"><div id="company-executive-hub-modal" class="fixed inset-0 z-[115] bg-slate-900/60 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-5 hidden no-print">
     <div class="bg-white dark:bg-[#0f1422] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 text-slate-800 dark:text-slate-100">
       
       <!-- Hub Header -->
@@ -7348,10 +7324,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
       </div>
 
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= SHEETS & EXCEL LIVE SYNC HUB MODAL ================= -->
-  <div id="sheets-sync-hub-modal" class="fixed inset-0 z-[115] bg-slate-900/60 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-5 hidden no-print">
+  <template data-tf-lazy="sheets-sync-hub-modal"><div id="sheets-sync-hub-modal" class="fixed inset-0 z-[115] bg-slate-900/60 backdrop-blur-xs tf-soft-backdrop flex items-center justify-center p-3 sm:p-5 hidden no-print">
     <div class="bg-white dark:bg-[#0f1422] border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 text-slate-800 dark:text-slate-100">
       
       <!-- Hub Header -->
@@ -7534,10 +7510,10 @@ Carrot 2case, Red chilli 1case..."></textarea>
       </div>
 
     </div>
-  </div>
+  </div></template>
 
   <!-- ================= UNIVERSAL CONFIRM MODAL (REPLACES WINDOW.CONFIRM) ================= -->
-  <div id="universal-confirm-modal" class="fixed inset-0 z-[200] hidden no-print">
+  <template data-tf-lazy="universal-confirm-modal"><div id="universal-confirm-modal" class="fixed inset-0 z-[200] hidden no-print">
     <div onclick="app.resolveModalConfirm(false)" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs tf-soft-backdrop transition-opacity"></div>
     <div class="fixed inset-0 overflow-y-auto p-4 sm:p-6 flex justify-center items-center">
       <div class="relative w-full max-w-md bg-white dark:bg-[#0f131d] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xl p-5 sm:p-6 space-y-4 text-slate-900 dark:text-white animate-in zoom-in-95 duration-150">
@@ -7563,10 +7539,11 @@ Carrot 2case, Red chilli 1case..."></textarea>
         </div>
       </div>
     </div>
-  </div>
+  </div></template>
 
   <!-- Scripts -->
   <script src="data/mock-data.js"></script>
+  <script src="js/lazy-modals.js"></script>
   <script src="js/components.js"></script>
   <script src="js/partner-ui.js"></script>
   <script src="js/shell.js"></script>

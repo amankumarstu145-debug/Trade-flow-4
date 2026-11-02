@@ -156,7 +156,7 @@ To regenerate the gallery from the fictional example:
 npm run screenshots
 ```
 
-Set `BROWSER_PATH` if automatic Edge/Chrome detection cannot find your browser. Use `npm run vendor:build` to rebuild npm-sourced browser libraries after installing development dependencies. Retained versions and licenses are listed in [third-party notices](THIRD_PARTY_NOTICES.md).
+Set `BROWSER_PATH` if automatic Edge/Chrome detection cannot find your browser. Use `npm run vendor:build` to rebuild npm-sourced browser libraries after installing development dependencies. After changing page markup or classes, run `npm run css:build` (styles are built ahead of time into `css/tailwind.css` from `tailwind.config.js`); after using a new icon, run `npm run icons:build` (only the icons the app uses are bundled into `vendor/lucide.js`). Both outputs are committed, so running the app needs no build step. Retained versions and licenses are listed in [third-party notices](THIRD_PARTY_NOTICES.md).
 
 ## Security and operating scope
 

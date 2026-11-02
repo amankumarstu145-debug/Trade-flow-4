@@ -236,3 +236,5 @@ body.tf-has-inbox #dashboard-orders-panel { padding-right: 0; }
 .tf-statement tfoot td { font-weight: 700; border-top: 2px solid #0f172a; border-bottom: 0; }
 .tf-st-foot { margin-top: 14px; font-size: 11px; }
 .tf-pay-suggest .tf-btn { white-space: normal; text-align: left; height: auto; min-height: 36px; padding: 6px 10px; }
+/* Partner search hides non-matching cards in place */
+.pu-card[hidden], .pu-empty[hidden] { display: none; }

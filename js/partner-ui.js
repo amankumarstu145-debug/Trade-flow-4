@@ -243,11 +243,9 @@
       if (f === 'open' && !(x.s.openCount > 0)) return false;
       if (f === 'overdue' && !(x.s.overdue > 0)) return false;
       if (f === 'clear' && x.s.big > 0) return false;
-      if (!q) return true;
-      const p = peopleOf(x.c);
-      const hay = [x.c.name, x.c.brandName, x.c.city, x.c.state, x.c.gstin, x.c.dealsIn, x.c.id, ...p.map(pp => [pp.name, pp.phone, pp.email].join(' '))].join(' ').toLowerCase();
-      return hay.includes(q);
+      return true;
     });
+    const visibleCount = shown.filter(x => !q || searchText(x.c).includes(q)).length;
     const extra = roleTiles(app, role, rows);
     const tiles = [
       [rows[0] ? rows[0].s.bigLabel : 'Balance', inr(totalBig), `across ${rows.length} ${rows.length === 1 ? 'partner' : 'partners'}`, ''],
@@ -269,11 +267,17 @@
       <div class="pu-row-wrap">
         ${chip('all', 'All', counts.all)}${chip('balance', role === 'retailer' ? 'Balance due' : 'With balance', counts.balance)}${role === 'retailer' ? chip('overdue', 'Overdue', counts.overdue, 'pu-chip-red') : ''}${chip('open', 'Open orders', counts.open, 'pu-chip-amber')}${chip('clear', 'All clear', counts.clear)}
       </div>
-      ${shown.length ? `<div class="pu-grid">${shown.map(x => card(app, x.c, x.s)).join('')}</div>` : `<div class="pu-empty">${rows.length ? 'No partners match this search or filter.' : 'No ' + esc(r.plural.toLowerCase()) + ' yet. Use “' + esc(r.addLabel) + '” to add one.'}</div>`}
+      ${shown.length ? `<div class="pu-grid">${shown.map(x => card(app, x.c, x.s, q)).join('')}</div>` : ''}
+      <div class="pu-empty" data-pu-empty="${role}" ${visibleCount ? 'hidden' : ''}>${rows.length ? 'No partners match this search or filter.' : 'No ' + esc(r.plural.toLowerCase()) + ' yet. Use “' + esc(r.addLabel) + '” to add one.'}</div>
     </div>`;
   }
 
-  function card(app, c, s) {
+  // Text the directory search looks through: names, places, GST, products and people.
+  function searchText(c) {
+    const p = peopleOf(c);
+    return [c.name, c.brandName, c.city, c.state, c.gstin, c.dealsIn, c.id, ...p.map(pp => [pp.name, pp.phone, pp.email].join(' '))].join(' ').toLowerCase();
+  }
+  function card(app, c, s, q = '') {
     const r = roleOf(c);
     const p = primaryOf(c);
     const id = jsArg(c.id);
@@ -287,7 +291,7 @@
     const pct = s.of > 0 ? Math.min(100, Math.round(s.done * 100 / s.of)) : 0;
     const logo = c.logo || c.logoUrl;
     return `
-    <article class="pu-card" data-partner-type="${esc(c.role)}" data-name="${esc(String(c.name || '').toLowerCase())}">
+    <article class="pu-card" data-partner-type="${esc(c.role)}" data-name="${esc(String(c.name || '').toLowerCase())}" data-search="${esc(searchText(c))}" ${q && !searchText(c).includes(q) ? 'hidden' : ''}>
       <div class="pu-card-top">
         <button type="button" class="pu-icon-btn pu-card-edit" title="Edit" aria-label="Edit ${esc(c.name)}" onclick="TFPartnerUI.open(${id}, 'company', 'company')">${svg(ICON.edit, 15)}</button>
         <label class="pu-avatar-wrap" title="Change photo">
@@ -723,13 +727,20 @@
     },
     setTab(contactId, tab) { state.tab[contactId] = tab; state.editing = null; rerender(); },
     setFilter(role, f) { state.filter[role] = f; rerender(); },
+    // Search filters the cards already on screen (no redraw), a moment after typing stops.
     setQuery(role, q) {
       state.query[role] = q;
-      const a = appRef();
-      const container = document.activeElement;
-      rerender();
-      const el = document.getElementById('pu-search-' + role);
-      if (el && container && container.id === el.id) { el.focus(); el.setSelectionRange(q.length, q.length); }
+      clearTimeout(state.searchTimer);
+      const apply = () => {
+        const needle = String(q || '').toLowerCase();
+        let visible = 0;
+        document.querySelectorAll(`.pu-card[data-partner-type="${role}"]`).forEach(el => {
+          const show = !needle || (el.getAttribute('data-search') || '').includes(needle);
+          el.hidden = !show; if (show) visible++;
+        });
+        document.querySelectorAll(`[data-pu-empty="${role}"]`).forEach(el => { el.hidden = visible > 0; });
+      };
+      if (typeof setTimeout === 'function' && q) state.searchTimer = setTimeout(apply, 120); else apply();
     },
     setPrevQuery(q) {
       state.prevQuery = q; rerender();
