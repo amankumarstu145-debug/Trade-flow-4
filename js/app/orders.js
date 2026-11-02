@@ -119,25 +119,29 @@ TradeFlowApp.addMethods(class {
 
     const kpiWorkingCount = document.getElementById('kpi-working-count');
     const kpiWorkingSub = document.getElementById('kpi-working-sub');
-    if (kpiWorkingCount) kpiWorkingCount.innerText = `${workingOrders.length} Batches`;
-    if (kpiWorkingSub) kpiWorkingSub.innerText = `${inBottling} Bottling · ${inTransit} In Transit`;
+    const setText = (id, text) => { const el = document.getElementById(id); if (el) { el.textContent = text; el.title = text; } };
+    const ordersLink = n => n ? `View ${n} order${n === 1 ? '' : 's'}` : 'No orders yet';
+    const advanceIdle = upcomingOrders.reduce((t, o) => t + (Number(o.customerAdvanceReceived) || 0), 0);
+    const settledCount = completedOrders.filter(o => o.status === 'settled').length;
+    const payPending = completedOrders.length - settledCount;
+    if (kpiWorkingCount) kpiWorkingCount.textContent = String(workingOrders.length);
+    setText('kpi-working-sub', `${inBottling} bottling · ${inTransit} in transit`);
+    setText('kpi-working-link', ordersLink(workingOrders.length));
 
     const kpiUpcomingCount = document.getElementById('kpi-upcoming-count');
-    const kpiUpcomingSub = document.getElementById('kpi-upcoming-sub');
-    if (kpiUpcomingCount) kpiUpcomingCount.innerText = `${upcomingOrders.length} Batches`;
-    if (kpiUpcomingSub) kpiUpcomingSub.innerText = `Advance in Hand · PO Pending`;
+    if (kpiUpcomingCount) kpiUpcomingCount.textContent = String(upcomingOrders.length);
+    setText('kpi-upcoming-sub', upcomingOrders.length ? `${this.formatCurrency(advanceIdle)} advance waiting` : 'Nothing waiting');
+    setText('kpi-upcoming-link', ordersLink(upcomingOrders.length));
 
     const kpiCompletedCount = document.getElementById('kpi-completed-count');
-    const kpiCompletedSub = document.getElementById('kpi-completed-sub');
-    if (kpiCompletedCount) kpiCompletedCount.innerText = `${completedOrders.length} Batches`;
-    if (kpiCompletedSub) kpiCompletedSub.innerText = `Delivered & Settled`;
+    if (kpiCompletedCount) kpiCompletedCount.textContent = String(completedOrders.length);
+    setText('kpi-completed-sub', payPending ? `${settledCount} settled · ${payPending} payment due` : `${settledCount} delivered and settled`);
+    setText('kpi-completed-link', ordersLink(completedOrders.length));
 
     const kpiFinanceRecv = document.getElementById('kpi-finance-recv');
     const kpiFinancePay = document.getElementById('kpi-finance-pay');
     if (kpiFinanceRecv) kpiFinanceRecv.innerText = this.formatCurrency(totalReceivables);
     if (kpiFinancePay) kpiFinancePay.innerText = this.formatCurrency(totalVendorPayables);
-    const kpiFinanceSummary = document.getElementById('kpi-finance-summary');
-    if (kpiFinanceSummary && !kpiFinanceRecv) kpiFinanceSummary.innerText = `${this.formatCurrency(totalReceivables)} Recv · ${this.formatCurrency(totalVendorPayables)} Pay`;
 
     // Quick Filter Chips Counts
     const missingLrCount = orders.filter(o => (o.status === 'in_transit' || o.status === 'delivered_overdue') && !o.lrNumber).length;
@@ -216,6 +220,8 @@ TradeFlowApp.addMethods(class {
       if (this.statusFilter !== 'all') {
         if (this.statusFilter === 'working') {
           if (order.status !== 'in_production' && order.status !== 'in_transit') return false;
+        } else if (this.statusFilter === 'completed') {
+          if (order.status !== 'settled' && order.status !== 'delivered_overdue') return false;
         } else if (this.statusFilter === 'action_needed' && order.status !== 'action_needed') {
           return false;
         } else if (this.statusFilter === 'in_production' && order.status !== 'in_production') {
@@ -555,6 +561,114 @@ TradeFlowApp.addMethods(class {
       localStorage.setItem('tradeflow_audit_panel_width', '325px');
       this.showToast('Panels reset to default split width (325px)');
     });
+  }
+
+  // Bottom part of a dashboard card: show exactly those orders in the table below.
+  showKpiOrders(kind) {
+    const filter = { working: 'working', upcoming: 'action_needed', completed: 'completed' }[kind] || 'all';
+    this.setOrdersFilter(filter);
+    // Working and completed have no pill of their own in the filter row: add one, so it is clear what the table shows.
+    const allPill = document.querySelector('[data-filter-status="all"]');
+    const label = { working: 'Working orders', completed: 'Completed orders' }[kind];
+    if (allPill && label) {
+      const pill = document.createElement('button');
+      pill.type = 'button';
+      pill.id = 'kpi-filter-pill';
+      pill.className = 'tf-kpi-pill';
+      pill.title = 'Show all orders again';
+      pill.innerHTML = `${tfEscapeHtml(label)}<i data-lucide="x" class="w-3.5 h-3.5"></i>`;
+      pill.onclick = () => this.setOrdersFilter('all');
+      allPill.insertAdjacentElement('afterend', pill);
+      allPill.classList.remove('bg-emerald-700', 'text-white', 'dark:bg-emerald-700', 'dark:text-white');
+      if (window.lucide) window.lucide.createIcons();
+    }
+    requestAnimationFrame(() => {
+      const box = (allPill && allPill.parentElement && allPill.parentElement.parentElement) || document.getElementById('orders-table-body');
+      if (!box) return;
+      box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      box.classList.remove('tf-flash'); void box.offsetWidth; box.classList.add('tf-flash');
+    });
+  }
+
+  // Top part of a dashboard card: performance of that group of orders (or of money, for Finance).
+  openKpiPerformance(kind) {
+    const modal = document.getElementById('kpi-breakdown-modal');
+    const bodyEl = document.getElementById('kpi-modal-body');
+    if (!modal || !bodyEl) return;
+    this.activeKpiType = 'performance:' + kind;
+    const esc = v => tfEscapeHtml(String(v ?? ''));
+    const num = v => Number(v) || 0;
+    const inr = v => this.formatCurrency(num(v));
+    const all = (this.data.orders || []).filter(o => !o.isDeleted);
+    const groups = {
+      working: { title: 'Working orders', icon: 'cog', list: all.filter(o => o.status === 'in_production' || o.status === 'in_transit'), filter: 'working' },
+      upcoming: { title: 'Upcoming orders', icon: 'clock', list: all.filter(o => o.status === 'action_needed'), filter: 'action_needed' },
+      completed: { title: 'Completed orders', icon: 'circle-check', list: all.filter(o => o.status === 'settled' || o.status === 'delivered_overdue'), filter: 'completed' },
+      finance: { title: 'Finance', icon: 'wallet', list: all }
+    };
+    const g = groups[kind] || groups.working;
+    const list = g.list;
+    const casesOf = o => (o.items || []).reduce((t, i) => t + num(i.cases), 0);
+    const profitOf = o => (o.netProfit !== undefined && o.netProfit !== null) ? num(o.netProfit) : num(o.totalInvoiceAmount) - num(o.totalDirectCosts);
+    const value = list.reduce((t, o) => t + num(o.totalInvoiceAmount), 0);
+    const profit = list.reduce((t, o) => t + profitOf(o), 0);
+    const cases = list.reduce((t, o) => t + casesOf(o), 0);
+    const due = list.reduce((t, o) => t + Math.max(0, num(o.customerBalanceDue)), 0);
+    const received = Math.max(0, value - due);
+    const pct = (a, b) => (b > 0 ? Math.round((a / b) * 100) : 0);
+    const tile = (label, val, hint = '', tone = '') => `<div class="kp-tile ${tone}"><span>${esc(label)}</span><b>${esc(val)}</b>${hint ? `<small>${esc(hint)}</small>` : ''}</div>`;
+    const bars = (title, rows, fmt) => {
+      const max = Math.max(1, ...rows.map(r => r[1]));
+      return `<div class="kp-box"><h4>${esc(title)}</h4>${rows.length ? rows.map(([name, v, extra]) => `<div class="kp-bar"><span class="kp-bar__name" title="${esc(name)}">${esc(name)}</span><span class="kp-bar__track"><span style="width:${Math.max(4, Math.round((v / max) * 100))}%"></span></span><span class="kp-bar__val">${esc(fmt(v))}${extra ? ` <small>${esc(extra)}</small>` : ''}</span></div>`).join('') : '<p class="kp-empty">Nothing to show yet.</p>'}</div>`;
+    };
+    const top = (keyOf, valOf, n = 5) => {
+      const m = new Map();
+      for (const o of list) for (const [k, v] of keyOf(o)) if (k) m.set(k, (m.get(k) || 0) + v);
+      return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
+    };
+    let html = '';
+    let subtitle = '';
+    if (kind === 'finance') {
+      const today = new Date().toISOString().slice(0, 10);
+      const since = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+      const overdue = all.filter(o => num(o.customerBalanceDue) > 0 && o.dueDate && o.dueDate < today && o.status !== 'settled').reduce((t, o) => t + num(o.customerBalanceDue), 0);
+      const payable = all.reduce((t, o) => t + Math.max(0, num(o.manufacturerTotalCost) - num(o.manufacturerAdvancePaid) - (o.damageDeductedFrom === 'manufacturer' ? num(o.damageAmount) : 0)) + Math.max(0, num(o.packagingCost) - num(o.packagingAdvancePaid)), 0);
+      const pays = (this.data.payments || []).filter(p => !p.isDeleted && p.date >= since);
+      const inflow = pays.filter(p => p.direction === 'received').reduce((t, p) => t + num(p.amount), 0);
+      const outflow = pays.filter(p => p.direction === 'paid').reduce((t, p) => t + num(p.amount), 0);
+      subtitle = `To receive ${inr(due)} · to pay ${inr(payable)}`;
+      html = `<div class="kp-tiles">${tile('To receive', inr(due), `${list.filter(o => num(o.customerBalanceDue) > 0).length} orders`)}${tile('Overdue', inr(overdue), 'past due date', overdue > 0 ? 'is-bad' : '')}${tile('To pay', inr(payable), 'factory and packaging')}${tile('Net position', inr(due - payable), due - payable >= 0 ? 'more to receive than to pay' : 'more to pay than to receive', due - payable >= 0 ? 'is-good' : 'is-bad')}${tile('Received, last 30 days', inr(inflow))}${tile('Paid out, last 30 days', inr(outflow))}</div>
+        <div class="kp-two">${bars('Who owes you most', top(o => [[o.retailerName, Math.max(0, num(o.customerBalanceDue))]], v => v).filter(r => r[1] > 0), inr)}
+        ${bars('Whom you owe most', (() => { const m = new Map(); for (const o of all) { const a = Math.max(0, num(o.manufacturerTotalCost) - num(o.manufacturerAdvancePaid)); const b = Math.max(0, num(o.packagingCost) - num(o.packagingAdvancePaid)); if (a && o.manufacturerName) m.set(o.manufacturerName, (m.get(o.manufacturerName) || 0) + a); if (b && o.packagingVendorName) m.set(o.packagingVendorName, (m.get(o.packagingVendorName) || 0) + b); } return [...m.entries()].sort((x, y) => y[1] - x[1]).slice(0, 5); })(), inr)}</div>`;
+    } else {
+      const margin = pct(profit, value);
+      const avg = list.length ? value / list.length : 0;
+      const extra = kind === 'working'
+        ? tile('In bottling / in transit', `${list.filter(o => o.status === 'in_production').length} / ${list.filter(o => o.status === 'in_transit').length}`)
+        : kind === 'upcoming'
+          ? tile('Advance in hand', inr(list.reduce((t, o) => t + num(o.customerAdvanceReceived), 0)), 'waiting for a factory order', 'is-warn')
+          : tile('Settled / payment due', `${list.filter(o => o.status === 'settled').length} / ${list.filter(o => o.status !== 'settled').length}`);
+      subtitle = `${list.length} ${list.length === 1 ? 'order' : 'orders'} · ${inr(value)}`;
+      html = `<div class="kp-tiles">${tile('Order value', inr(value), `${list.length} orders`)}${tile('Profit', inr(profit), `${margin}% margin`, profit >= 0 ? 'is-good' : 'is-bad')}${tile('Cases', cases.toLocaleString('en-IN'), list.length ? `${Math.round(cases / list.length)} per order` : '')}${tile('Average order', inr(avg))}${tile('Received', inr(received), `${pct(received, value)}% of value`)}${extra}</div>
+        <div class="kp-two">${bars('Top buyers by value', top(o => [[o.retailerName, num(o.totalInvoiceAmount)]]), inr)}
+        ${bars('Top products by cases', top(o => (o.items || []).map(i => [`${i.name || i.shortName || 'Item'}${i.variant ? ' ' + String(i.variant).replace(/ PET Jar$/, '') : ''}`, num(i.cases)])), v => v.toLocaleString('en-IN') + ' cases')}</div>
+        ${bars('Profit margin by order', list.slice().sort((a, b) => profitOf(b) / Math.max(1, num(b.totalInvoiceAmount)) - profitOf(a) / Math.max(1, num(a.totalInvoiceAmount))).slice(0, 8).map(o => [`${o.invoiceNumber || o.id} · ${o.retailerName || ''}`, Math.max(0, pct(profitOf(o), num(o.totalInvoiceAmount))), inr(profitOf(o))]), v => v + '%')}`;
+    }
+    const footer = g.filter
+      ? `<div class="kp-foot"><button type="button" class="tf-btn tf-btn--primary tf-btn--sm" onclick="app.closeKpiBreakdownModal(); app.showKpiOrders('${esc(kind)}')">View these orders<i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>`
+      : `<div class="kp-foot"><button type="button" class="tf-btn tf-btn--primary tf-btn--sm" onclick="app.closeKpiBreakdownModal(); app.openFinanceCockpitTab()">Open finance tab<i data-lucide="arrow-right" class="w-4 h-4"></i></button></div>`;
+    const titleEl = document.getElementById('kpi-modal-title');
+    const subtitleEl = document.getElementById('kpi-modal-subtitle');
+    const iconContainer = document.getElementById('kpi-modal-icon-container');
+    const iconEl = document.getElementById('kpi-modal-icon');
+    if (titleEl) titleEl.innerText = `${g.title} · performance`;
+    if (subtitleEl) subtitleEl.innerText = subtitle;
+    if (iconContainer) iconContainer.className = 'p-2 rounded-xl bg-emerald-500/10 text-emerald-700 border border-emerald-500/20';
+    if (iconEl) iconEl.setAttribute('data-lucide', g.icon);
+    bodyEl.innerHTML = `<div class="kp">${html}${footer}</div>`;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    if (window.lucide) window.lucide.createIcons();
   }
 
   // ================= KPI BREAKDOWN & ACTION MODAL CONTROLLER =================
@@ -1347,6 +1461,8 @@ TradeFlowApp.addMethods(class {
   // ================= OPERATIONAL & QUICK FILTER CONTROLLERS =================
   setOrdersFilter(filter) {
     this.statusFilter = filter;
+    const kpiPill = document.getElementById('kpi-filter-pill');
+    if (kpiPill) kpiPill.remove();
     this.quickFilterChip = null;
     const clearBtn = document.getElementById('chip-clear-filter');
     if (clearBtn) clearBtn.classList.add('hidden');

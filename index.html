@@ -369,126 +369,40 @@
         <!-- Urgent Alert Banner (Only shown on Dashboard Home) -->
         <div id="urgent-action-banner" class="hidden no-print"></div>
         
-        <!-- Operational Throughput Metric Cards -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 no-print">
-          
-          <!-- Card 1: Working Orders (Active Production & Transit) -->
-          <div 
-            onclick="app.setOrdersFilter('working')" 
-            class="tf-kpi-interactive kpi-blue group cursor-pointer relative overflow-hidden tf-hover-lift"
-            title="Click to view batches currently in factory bottling or in transit"
-          >
-            <div class="kpi-accent-bar kpi-accent-bar-blue"></div>
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="cog" class="w-3.5 h-3.5 group-hover:rotate-90 transition-transform duration-300"></i>
-                <span>Working Orders</span>
-              </span>
-              <div class="flex items-center gap-1.5">
-                <span class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
-                  <i data-lucide="truck" class="w-4 h-4"></i>
-                </span>
-              </div>
-            </div>
-            <div class="mt-3">
-              <div id="kpi-working-count" class="text-2xl font-black font-mono-num text-slate-900 dark:text-white">0 Batches</div>
-              <div class="flex items-center justify-between gap-2 mt-0.5">
-                <span id="kpi-working-sub" class="min-w-0 line-clamp-2 text-xs font-medium text-slate-500 dark:text-slate-400">0 Bottling · 0 In Transit</span>
-                <span class="shrink-0 text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:underline">View Pipeline</span>
-              </div>
-            </div>
+        <!-- Dashboard number cards: top part = performance details, bottom part = the orders behind the number -->
+        <section class="tf-kpi2-grid no-print" aria-label="Order summary">
+          <div class="tf-kpi2 tf-kpi2--blue" data-kpi="working">
+            <button type="button" class="tf-kpi2__top" onclick="app.openKpiPerformance('working')" title="Performance details" aria-label="Performance details">
+              <span class="tf-kpi2__head"><i data-lucide="cog" class="w-4 h-4"></i><span class="tf-kpi2__title">Working orders</span><span class="tf-kpi2__perf" aria-hidden="true"><i data-lucide="chart-no-axes-column" class="w-4 h-4"></i></span></span>
+              <span class="tf-kpi2__value"><b id="kpi-working-count">0</b> <span>batches</span></span>
+              <span class="tf-kpi2__sub" id="kpi-working-sub">0 bottling · 0 in transit</span>
+            </button>
+            <button type="button" class="tf-kpi2__bottom" onclick="app.showKpiOrders('working')" title="Show these orders in the table below"><span id="kpi-working-link">View orders</span><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
           </div>
-
-          <!-- Card 2: Upcoming Orders (Advance In Hand / PO Pending) -->
-          <div 
-            onclick="app.setOrdersFilter('action_needed')" 
-            class="tf-kpi-interactive kpi-amber border-amber-300 dark:border-amber-700/60 bg-gradient-to-b from-amber-500/5 to-transparent group cursor-pointer relative overflow-hidden tf-hover-lift"
-            title="Click to view upcoming batches with advance received needing factory PO placement"
-          >
-            <div class="kpi-accent-bar kpi-accent-bar-amber"></div>
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                <span class="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse"></span>
-                <span>Upcoming Orders</span>
-              </span>
-              <div class="flex items-center gap-1.5">
-                <span class="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300">
-                  <i data-lucide="clock" class="w-4 h-4"></i>
-                </span>
-              </div>
-            </div>
-            <div class="mt-3">
-              <div id="kpi-upcoming-count" class="text-2xl font-black font-mono-num text-amber-600 dark:text-amber-400">0 Batches</div>
-              <div class="flex items-center justify-between gap-2 mt-0.5">
-                <span id="kpi-upcoming-sub" class="min-w-0 line-clamp-2 text-xs font-bold text-amber-700 dark:text-amber-300">Advance in Hand · PO Pending</span>
-                <span class="shrink-0 text-xs font-bold text-emerald-700 dark:text-emerald-400 group-hover:underline">Forward POs</span>
-              </div>
-            </div>
+          <div class="tf-kpi2 tf-kpi2--amber" data-kpi="upcoming">
+            <button type="button" class="tf-kpi2__top" onclick="app.openKpiPerformance('upcoming')" title="Performance details" aria-label="Performance details">
+              <span class="tf-kpi2__head"><i data-lucide="clock" class="w-4 h-4"></i><span class="tf-kpi2__title">Upcoming orders</span><span class="tf-kpi2__perf" aria-hidden="true"><i data-lucide="chart-no-axes-column" class="w-4 h-4"></i></span></span>
+              <span class="tf-kpi2__value"><b id="kpi-upcoming-count">0</b> <span>batches</span></span>
+              <span class="tf-kpi2__sub" id="kpi-upcoming-sub">Advance waiting</span>
+            </button>
+            <button type="button" class="tf-kpi2__bottom" onclick="app.showKpiOrders('upcoming')" title="Show these orders in the table below"><span id="kpi-upcoming-link">View orders</span><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
           </div>
-
-          <!-- Card 3: Completed Orders (Delivered & Settled) -->
-          <div 
-            onclick="app.setOrdersFilter('settled')" 
-            class="tf-kpi-interactive kpi-emerald group cursor-pointer relative overflow-hidden tf-hover-lift"
-            title="Click to view fulfilled and settled orders"
-          >
-            <div class="kpi-accent-bar kpi-accent-bar-emerald"></div>
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i>
-                <span>Completed Orders</span>
-              </span>
-              <div class="flex items-center gap-1.5">
-                <span class="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
-                  <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                </span>
-              </div>
-            </div>
-            <div class="mt-3">
-              <div id="kpi-completed-count" class="text-2xl font-black font-mono-num text-slate-900 dark:text-white">0 Batches</div>
-              <div class="flex items-center justify-between gap-2 mt-0.5">
-                <span id="kpi-completed-sub" class="min-w-0 line-clamp-2 text-xs font-medium text-slate-500 dark:text-slate-400">Delivered & Closed</span>
-                <span class="shrink-0 text-xs font-bold text-emerald-600 dark:text-emerald-400 group-hover:underline">Inspect</span>
-              </div>
-            </div>
+          <div class="tf-kpi2 tf-kpi2--green" data-kpi="completed">
+            <button type="button" class="tf-kpi2__top" onclick="app.openKpiPerformance('completed')" title="Performance details" aria-label="Performance details">
+              <span class="tf-kpi2__head"><i data-lucide="circle-check" class="w-4 h-4"></i><span class="tf-kpi2__title">Completed orders</span><span class="tf-kpi2__perf" aria-hidden="true"><i data-lucide="chart-no-axes-column" class="w-4 h-4"></i></span></span>
+              <span class="tf-kpi2__value"><b id="kpi-completed-count">0</b> <span>batches</span></span>
+              <span class="tf-kpi2__sub" id="kpi-completed-sub">Delivered and settled</span>
+            </button>
+            <button type="button" class="tf-kpi2__bottom" onclick="app.showKpiOrders('completed')" title="Show these orders in the table below"><span id="kpi-completed-link">View orders</span><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
           </div>
-
-          <!-- Card 4: Commercial & Finance Cockpit Gateway -->
-          <div 
-            onclick="app.openFinanceCockpitTab()" 
-            class="tf-kpi-interactive border-2 border-amber-400/80 dark:border-amber-500/60 bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 dark:from-amber-950/40 dark:via-slate-900 dark:to-amber-950/20 group cursor-pointer shadow-sm hover:shadow-md transition-all relative overflow-hidden tf-hover-lift"
-            title="Click to open the dedicated Finance & Commercial Cockpit tab"
-          >
-            <div class="kpi-accent-bar kpi-accent-bar-gold"></div>
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="badge-indian-rupee" class="w-3.5 h-3.5 text-amber-500"></i>
-                <span>Finance Cockpit</span>
-              </span>
-              <div class="flex items-center gap-1.5">
-                <span class="p-1.5 rounded-lg bg-amber-500/20 text-amber-700 dark:text-amber-300">
-                  <i data-lucide="wallet" class="w-4 h-4"></i>
-                </span>
-              </div>
-            </div>
-            <div class="mt-2.5">
-              <div id="kpi-finance-summary" class="flex items-center gap-1.5 flex-wrap">
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-black font-mono-num bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25">
-                  <span class="text-xs uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400">Recv</span>
-                  <span id="kpi-finance-recv">₹0</span>
-                </span>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-black font-mono-num bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/25">
-                  <span class="text-xs uppercase tracking-wider font-bold text-amber-600 dark:text-amber-400">Pay</span>
-                  <span id="kpi-finance-pay">₹0</span>
-                </span>
-              </div>
-              <div class="flex items-center justify-between gap-2 mt-1">
-                <span class="min-w-0 line-clamp-2 text-xs font-semibold text-amber-700 dark:text-amber-300">Receivables & Payables Hub</span>
-                <span class="shrink-0 text-xs font-bold text-emerald-700 dark:text-emerald-400 group-hover:underline">Open Tab ↗</span>
-              </div>
-            </div>
+          <div class="tf-kpi2 tf-kpi2--gold" data-kpi="finance">
+            <button type="button" class="tf-kpi2__top" onclick="app.openKpiPerformance('finance')" title="Performance details" aria-label="Performance details">
+              <span class="tf-kpi2__head"><i data-lucide="wallet" class="w-4 h-4"></i><span class="tf-kpi2__title">Finance</span><span class="tf-kpi2__perf" aria-hidden="true"><i data-lucide="chart-no-axes-column" class="w-4 h-4"></i></span></span>
+              <span class="tf-kpi2__money"><span>To receive</span><b id="kpi-finance-recv">₹0</b></span>
+              <span class="tf-kpi2__money tf-kpi2__money--pay"><span>To pay</span><b id="kpi-finance-pay">₹0</b></span>
+            </button>
+            <button type="button" class="tf-kpi2__bottom" onclick="app.openFinanceCockpitTab()" title="Open the Finance tab: receivables and payables"><span id="kpi-finance-link">Open finance tab</span><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
           </div>
-
         </section>
 
         <!-- Main Dashboard Split: Orders Table on Left, Resizable Splitter, Attention & Missing Files on Right -->
