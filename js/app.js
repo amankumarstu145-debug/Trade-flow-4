@@ -438,6 +438,8 @@ class TradeFlowApp {
     if (clockEl) {
       clockEl.textContent = this.formatTime(d, true);
     }
+    const clockDate = document.getElementById('topbar-clock-date');
+    if (clockDate) clockDate.textContent = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
 
     const popoverTime = document.getElementById('clock-popover-time');
     const popoverDate = document.getElementById('clock-popover-date');

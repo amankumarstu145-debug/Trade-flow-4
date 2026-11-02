@@ -415,35 +415,23 @@ TradeFlowApp.addMethods(class {
     // 2. Render KPI Metric Tiles
     const kpiGrid = document.getElementById('payments-kpi-grid');
     if (kpiGrid) {
-      kpiGrid.innerHTML = `
-        <div class="bg-white dark:bg-[#11141d] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Total Received</span>
-          <div class="text-xl font-black font-mono-num text-emerald-600 dark:text-emerald-400">${tfEscapeHtml(this.formatCurrency(totalReceived))}</div>
-          <span class="text-xs text-slate-400 font-medium">${tfEscapeHtml(payments.filter(p => p.direction === 'received').length)} receipts</span>
-        </div>
-        <div class="bg-white dark:bg-[#11141d] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Total Paid Out</span>
-          <div class="text-xl font-black font-mono-num text-rose-600 dark:text-rose-400">${tfEscapeHtml(this.formatCurrency(totalPaid))}</div>
-          <span class="text-xs text-slate-400 font-medium">${tfEscapeHtml(payments.filter(p => p.direction === 'paid').length)} dispatches</span>
-        </div>
-        <div class="bg-white dark:bg-[#11141d] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Net Balance</span>
-          <div class="text-xl font-black font-mono-num ${tfEscapeHtml(netBalance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400')}">
-            ${tfEscapeHtml(this.formatCurrency(Math.abs(netBalance)))}
-          </div>
-          <span class="text-xs text-slate-400 font-medium">${tfEscapeHtml(netBalance >= 0 ? 'Surplus Reserve' : 'Deficit Outstanding')}</span>
-        </div>
-        <div class="bg-white dark:bg-[#11141d] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">This Month In</span>
-          <div class="text-xl font-black font-mono-num text-amber-600 dark:text-amber-400">${tfEscapeHtml(this.formatCurrency(thisMonthIn))}</div>
-          <span class="text-xs text-slate-400 font-medium">${tfEscapeHtml(this.formatMonthYear(new Date()))}</span>
-        </div>
-        <div class="bg-white dark:bg-[#11141d] p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">Proofs Filed</span>
-          <div class="text-xl font-black font-mono-num text-blue-600 dark:text-blue-400">${tfEscapeHtml(proofsCount)}</div>
-          <span class="text-xs text-slate-400 font-medium">of ${tfEscapeHtml(payments.length)} entries</span>
-        </div>
-      `;
+      // Each tile filters the ledger below; the tile that matches the current filter is marked.
+      const monthStart = curMonth + '-01';
+      const active = state.proof === 'missing' ? 'proofs'
+        : (state.dateFrom === monthStart && state.direction === 'received' && !state.dateTo) ? 'month'
+        : (!state.dateFrom && !state.dateTo && state.category === 'all' && !state.query) ? ({ received: 'received', paid: 'paid', all: 'net' }[state.direction] || '') : '';
+      const tile = (key, label, value, valueClass, hint, title) => `
+        <button type="button" class="tf-hcard tf-ledger-tile${active === key ? ' is-active' : ''}" aria-pressed="${active === key}" onclick="app.ledgerTileFilter('${key}')" title="${tfEscapeHtml(title)}">
+          <span class="tf-ledger-tile__label">${tfEscapeHtml(label)}</span>
+          <span class="tf-ledger-tile__value ${valueClass}">${tfEscapeHtml(value)}</span>
+          <span class="tf-ledger-tile__hint">${tfEscapeHtml(hint)}</span>
+        </button>`;
+      kpiGrid.innerHTML =
+        tile('received', 'Total received', this.formatCurrency(totalReceived), 'is-in', `${payments.filter(p => p.direction === 'received').length} receipts`, 'Show money received') +
+        tile('paid', 'Total paid out', this.formatCurrency(totalPaid), 'is-out', `${payments.filter(p => p.direction === 'paid').length} payments`, 'Show money paid out') +
+        tile('net', 'Net balance', this.formatCurrency(Math.abs(netBalance)), netBalance >= 0 ? 'is-in' : 'is-out', netBalance >= 0 ? 'More in than out' : 'More out than in', 'Show all entries') +
+        tile('month', 'This month in', this.formatCurrency(thisMonthIn), 'is-warn', this.formatMonthYear(new Date()), 'Show money received this month') +
+        tile('proofs', 'Proofs filed', `${proofsCount} of ${payments.length}`, 'is-info', `${payments.length - proofsCount} without proof`, 'Show entries without a proof');
     }
 
     // 3. Filter Payments
@@ -473,6 +461,9 @@ TradeFlowApp.addMethods(class {
     }
     if (state.dateTo) {
       list = list.filter(p => (p.date || '') <= state.dateTo);
+    }
+    if (state.proof === 'missing') {
+      list = list.filter(p => !(p.hasProof || p.pd));
     }
 
     // 4. Sort
@@ -698,7 +689,25 @@ TradeFlowApp.addMethods(class {
     this.renderPaymentsLedger();
   }
 
+  // Payment Ledger summary tiles: one click filters the list below.
+  ledgerTileFilter(kind) {
+    this.clearPaymentFilters();
+    const st = this.paymentsState;
+    if (kind === 'received' || kind === 'paid') { this.setPaymentDirectionFilter(kind); return; }
+    if (kind === 'month') {
+      const from = new Date().toISOString().slice(0, 7) + '-01';
+      const df = document.getElementById('payments-date-from');
+      if (df) df.value = from;
+      st.dateFrom = from;
+      this.setPaymentDirectionFilter('received');
+      return;
+    }
+    if (kind === 'proofs') st.proof = 'missing';
+    this.renderPaymentsLedger();
+  }
+
   clearPaymentFilters() {
+    this.paymentsState.proof = '';
     this.paymentsState.query = '';
     this.paymentsState.direction = 'all';
     this.paymentsState.category = 'all';

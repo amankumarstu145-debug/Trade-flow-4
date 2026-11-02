@@ -250,6 +250,32 @@
 
       <!-- Slim top bar: Scan with phone, Inbox, New and More (the other tools live in the More menu) -->
       <div class="tf-topbar-actions flex items-center gap-2 shrink-0 ml-auto">
+        <!-- Live clock: always visible in the top bar; click for the full date -->
+        <div class="relative tf-clock-wrap">
+          <button id="topbar-live-clock" type="button" onclick="app.toggleClockPopover()" class="tf-btn tf-btn--sm tf-clock" title="Current date and time · click for the full date" aria-haspopup="dialog">
+            <span class="tf-clock-dot" aria-hidden="true"></span>
+            <span id="topbar-clock-text" class="tf-clock-time">Time</span>
+            <span id="topbar-clock-date" class="tf-clock-date"></span>
+          </button>
+          <!-- Precision Date & Timezone Popover Dropdown -->
+          <div id="topbar-clock-popover" class="hidden absolute right-0 top-full mt-2 w-64 p-3.5 rounded-xl bg-white dark:bg-[#0e1422] border border-slate-200 dark:border-slate-800 text-xs shadow-2xl z-50 space-y-2">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+              <span class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-4 h-4 text-amber-500"></i>
+                <span>Trade Calendar</span>
+              </span>
+              <span class="text-xs font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold">IST (UTC+5:30)</span>
+            </div>
+            <div class="space-y-1">
+              <div id="clock-popover-date" class="text-xs font-extrabold text-slate-800 dark:text-slate-100">Tuesday, 29 September 2026</div>
+              <div id="clock-popover-time" class="text-xs font-mono font-bold text-amber-600 dark:text-amber-400">18:00:00</div>
+            </div>
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
+              <span>Operational Shift:</span>
+              <span class="font-semibold text-emerald-600 dark:text-emerald-400">Active</span>
+            </div>
+          </div>
+        </div>
         <button id="tf-scan-btn" type="button" class="tf-btn tf-btn--sm" onclick="app.openMobileSnapModal('smart-fill')" title="Scan a bill, slip or document with your phone">
           <i data-lucide="smartphone" class="w-4 h-4"></i><span class="tf-hide-sm">Scan with phone</span>
         </button>
@@ -308,32 +334,6 @@
           <span class="hidden md:inline">History</span>
         </button>
 
-        <!-- Compact Live Clock with Click-to-Expand Full Date Popover -->
-        <div class="relative">
-          <button id="topbar-live-clock" type="button" onclick="app.toggleClockPopover()" class="tf-topbar-pill btn-tactile bg-slate-100 dark:bg-slate-800/90 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700/80 shadow-2xs cursor-pointer group" title="Click to view full day, date & timezone details">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0 shadow-xs shadow-emerald-500/50"></span>
-            <span id="topbar-clock-text" class="font-mono tracking-tight font-bold text-slate-900 dark:text-amber-400">Time</span>
-          </button>
-
-          <!-- Precision Date & Timezone Popover Dropdown -->
-          <div id="topbar-clock-popover" class="hidden absolute right-0 top-full mt-2 w-64 p-3.5 rounded-xl bg-white dark:bg-[#0e1422] border border-slate-200 dark:border-slate-800 text-xs shadow-2xl z-50 space-y-2">
-            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-              <span class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <i data-lucide="calendar" class="w-4 h-4 text-amber-500"></i>
-                <span>Trade Calendar</span>
-              </span>
-              <span class="text-xs font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold">IST (UTC+5:30)</span>
-            </div>
-            <div class="space-y-1">
-              <div id="clock-popover-date" class="text-xs font-extrabold text-slate-800 dark:text-slate-100">Tuesday, 29 September 2026</div>
-              <div id="clock-popover-time" class="text-xs font-mono font-bold text-amber-600 dark:text-amber-400">18:00:00</div>
-            </div>
-            <div class="pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
-              <span>Operational Shift:</span>
-              <span class="font-semibold text-emerald-600 dark:text-emerald-400">Active</span>
-            </div>
-          </div>
-        </div>
           </div>
         </div>
         <!-- Compact Icon-Only Theme Toggle Button (Saves Space) -->
@@ -629,7 +629,7 @@
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Folder Card 1: PDF Documents & Invoices -->
-            <div class="p-4 rounded-xl bg-gradient-to-b from-blue-500/5 via-white to-white dark:from-blue-500/10 dark:via-[#11141d] dark:to-[#11141d] border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-blue-500/50 transition-all flex flex-col justify-between group tf-hover-lift">
+            <div class="tf-hcard p-4 rounded-xl bg-gradient-to-b from-blue-500/5 via-white to-white dark:from-blue-500/10 dark:via-[#11141d] dark:to-[#11141d] border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-blue-500/50 transition-all flex flex-col justify-between group tf-hover-lift">
               <div>
                 <div class="flex items-center justify-between mb-2.5">
                   <span class="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/40 group-hover:scale-105 transition-transform">
@@ -653,7 +653,7 @@
             </div>
 
             <!-- Folder Card 2: Excel Master & Automated Backups -->
-            <div class="p-4 rounded-xl bg-gradient-to-b from-emerald-500/5 via-white to-white dark:from-emerald-500/10 dark:via-[#11141d] dark:to-[#11141d] border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-emerald-500/50 transition-all flex flex-col justify-between group tf-hover-lift">
+            <div class="tf-hcard p-4 rounded-xl bg-gradient-to-b from-emerald-500/5 via-white to-white dark:from-emerald-500/10 dark:via-[#11141d] dark:to-[#11141d] border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-emerald-500/50 transition-all flex flex-col justify-between group tf-hover-lift">
               <div>
                 <div class="flex items-center justify-between mb-2.5">
                   <span class="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 group-hover:scale-105 transition-transform">
@@ -677,7 +677,7 @@
             </div>
 
             <!-- Folder Card 3: Payment Proofs & Bank Receipts -->
-            <div class="p-4 rounded-xl bg-gradient-to-b from-purple-500/5 via-white to-white dark:from-purple-500/10 dark:via-[#11141d] dark:to-[#11141d] border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-purple-500/50 transition-all flex flex-col justify-between group tf-hover-lift">
+            <div class="tf-hcard p-4 rounded-xl bg-gradient-to-b from-purple-500/5 via-white to-white dark:from-purple-500/10 dark:via-[#11141d] dark:to-[#11141d] border border-slate-200 dark:border-slate-800 shadow-2xs hover:border-purple-500/50 transition-all flex flex-col justify-between group tf-hover-lift">
               <div>
                 <div class="flex items-center justify-between mb-2.5">
                   <span class="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-900/40 group-hover:scale-105 transition-transform">
@@ -744,7 +744,7 @@
               <div id="fc-receivables-val" class="text-xl font-black font-mono-num text-rose-600 dark:text-rose-400">₹0</div>
               <div class="flex items-center justify-between mt-1 text-xs">
                 <span id="fc-receivables-sub" class="text-slate-400 font-medium">0 Overdue</span>
-                <span class="text-rose-600 dark:text-rose-400 font-bold group-hover:underline whitespace-nowrap shrink-0">Drill-down →</span>
+                <span class="text-rose-600 dark:text-rose-400 font-bold group-hover:underline whitespace-nowrap shrink-0"><span class="sr-only">Show details </span>→</span>
               </div>
             </div>
           </div>
@@ -759,7 +759,7 @@
               <div id="fc-payables-val" class="text-xl font-black font-mono-num text-amber-600 dark:text-amber-400">₹0</div>
               <div class="flex items-center justify-between mt-1 text-xs">
                 <span id="fc-payables-sub" class="text-slate-400 font-medium">Factory &amp; Pkg</span>
-                <span class="text-emerald-700 dark:text-emerald-400 font-bold group-hover:underline whitespace-nowrap shrink-0">Drill-down →</span>
+                <span class="text-emerald-700 dark:text-emerald-400 font-bold group-hover:underline whitespace-nowrap shrink-0"><span class="sr-only">Show details </span>→</span>
               </div>
             </div>
           </div>
@@ -774,7 +774,7 @@
               <div id="fc-adv-hand-val" class="text-xl font-black font-mono-num text-emerald-600 dark:text-emerald-400">₹0</div>
               <div class="flex items-center justify-between mt-1 text-xs">
                 <span id="fc-adv-hand-sub" class="text-slate-400 font-medium">Cash Collected</span>
-                <span class="text-emerald-600 dark:text-emerald-400 font-bold group-hover:underline whitespace-nowrap shrink-0">Drill-down →</span>
+                <span class="text-emerald-600 dark:text-emerald-400 font-bold group-hover:underline whitespace-nowrap shrink-0"><span class="sr-only">Show details </span>→</span>
               </div>
             </div>
           </div>
@@ -789,7 +789,7 @@
               <div id="fc-adv-paid-val" class="text-xl font-black font-mono-num text-blue-600 dark:text-blue-400">₹0</div>
               <div class="flex items-center justify-between mt-1 text-xs">
                 <span id="fc-adv-paid-sub" class="text-slate-400 font-medium">Disbursed with UTR</span>
-                <span class="text-blue-600 dark:text-blue-400 font-bold group-hover:underline whitespace-nowrap shrink-0">Drill-down →</span>
+                <span class="text-blue-600 dark:text-blue-400 font-bold group-hover:underline whitespace-nowrap shrink-0"><span class="sr-only">Show details </span>→</span>
               </div>
             </div>
           </div>

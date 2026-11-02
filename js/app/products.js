@@ -18,7 +18,7 @@ TradeFlowApp.addMethods(class {
       const marginPercent = ((profitPerJar / p.standardSellingRate) * 100).toFixed(1);
 
       return `
-        <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xs flex flex-col justify-between">
+        <div class="tf-hcard p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xs flex flex-col justify-between">
           <div>
             <div class="flex items-start justify-between gap-2 mb-2">
               <div>

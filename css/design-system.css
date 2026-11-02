@@ -417,3 +417,93 @@ body.wa-lock { overflow: hidden; }
 .kp-foot { display: flex; justify-content: flex-end; }
 .tf-kpi-pill { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; padding: 6px 12px; border-radius: var(--tf-r-sm); border: 0; background: var(--tf-brand); color: #fff; font: inherit; font-size: var(--tf-fs-12); font-weight: var(--tf-fw-semibold); cursor: pointer; white-space: nowrap; }
 .tf-kpi-pill:hover { background: var(--tf-brand-hover); }
+
+/* ===================================================================== One hover feel for the whole app
+   Every card lifts 3px with a stronger shadow and a soft green border; every button lifts 1px.
+   Table rows stay flat and get the same soft green tint. The !important only beats the older
+   one-off hover utilities (coloured borders, scale) on these component classes. */
+:root { --tf-hover-line: color-mix(in srgb, var(--tf-brand) 45%, var(--tf-line)); --tf-hover-tint: color-mix(in srgb, var(--tf-brand) 6%, transparent); }
+html.dark { --tf-hover-line: color-mix(in srgb, #34d399 45%, var(--tf-line)); --tf-hover-tint: rgba(52, 211, 153, .08); }
+
+:is(.tf-kpi2, .tf-finance-kpi-card, .tf-hcard, .pu-card, .pu-kpi, .tf-card-v4, .kp-tile,
+    :is(div, article, li, a)[onclick]:is([class*="rounded-xl"], [class*="rounded-2xl"]):is([class*="border"])) {
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background-color .16s ease !important;
+}
+:is(.tf-kpi2, .tf-finance-kpi-card, .tf-hcard, .pu-card, .pu-kpi, .tf-card-v4,
+    :is(div, article, li, a)[onclick]:is([class*="rounded-xl"], [class*="rounded-2xl"]):is([class*="border"])):hover {
+  transform: translateY(-3px) !important; box-shadow: var(--tf-shadow-2) !important; border-color: var(--tf-hover-line) !important;
+}
+:is(.tf-kpi2, .tf-finance-kpi-card, .tf-hcard, .pu-card, .pu-kpi, .tf-card-v4,
+    :is(div, article, li, a)[onclick]:is([class*="rounded-xl"], [class*="rounded-2xl"]):is([class*="border"])):active {
+  transform: translateY(-1px) !important;
+}
+/* Info tiles that are not clickable: colour change only. */
+.kp-tile:hover { border-color: var(--tf-hover-line) !important; }
+
+/* Rows in lists: colour change and a 1px lift, so lists do not jump. */
+:is(.tf-inbox-row, .wa-row) { transition: transform .14s ease, background-color .14s ease, border-color .14s ease, box-shadow .14s ease; }
+:is(.tf-inbox-row, .wa-row):hover { transform: translateY(-1px); background-color: var(--tf-hover-tint); border-color: var(--tf-hover-line); box-shadow: var(--tf-shadow-1); }
+
+/* Buttons and chips: 1px lift, light shadow; press = slight shrink. */
+:is(.tf-btn, .pu-btn, .tf-chip, .pu-chip, .wa-kind, .wa-filter, .wa-person, .tf-kpi-pill, .btn-tactile, .pu-badge-add, .pu-remind-link, [data-filter-status], [data-pay-dir]):not(:disabled):not(.tf-menu-item) {
+  transition-property: transform, box-shadow, background-color, border-color, color; transition-duration: .14s; transition-timing-function: ease;
+}
+:is(.tf-btn, .pu-btn, .tf-chip, .pu-chip, .wa-kind, .wa-filter, .wa-person, .tf-kpi-pill, .btn-tactile, .pu-badge-add, .pu-remind-link, [data-filter-status], [data-pay-dir]):not(:disabled):not(.tf-menu-item):hover {
+  transform: translateY(-1px) !important; box-shadow: var(--tf-shadow-1);
+}
+:is(.tf-btn, .pu-btn, .tf-chip, .pu-chip, .wa-kind, .wa-filter, .wa-person, .tf-kpi-pill, .btn-tactile, .pu-badge-add, .pu-remind-link, [data-filter-status], [data-pay-dir]):not(:disabled):not(.tf-menu-item):active {
+  transform: translateY(0) scale(.97) !important; box-shadow: none;
+}
+.tf-btn:not(.tf-btn--primary):not(.tf-btn--ai):not(:disabled):hover, .pu-btn:not(.pu-primary):not(:disabled):hover { border-color: var(--tf-hover-line); }
+
+/* Table rows everywhere: same soft tint, no movement. */
+main table tbody tr:hover, [id$="-modal"] table tbody tr:hover { background-color: var(--tf-hover-tint) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.tf-kpi2, .tf-finance-kpi-card, .tf-hcard, .pu-card, .pu-kpi, .tf-card-v4, .tf-inbox-row, .wa-row, .tf-btn, .pu-btn, .tf-chip, .pu-chip, .btn-tactile, [onclick]):hover { transform: none !important; }
+}
+
+/* ===================================================================== Partner cards: two halves, wider grid */
+.pu-grid-wrap { container-type: inline-size; }
+.pu-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+@container (min-width: 600px) { .pu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (min-width: 900px) { .pu-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container (min-width: 1250px) { .pu-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.pu-card:hover { box-shadow: 0 0 0 2px var(--tf-hover-line), var(--tf-shadow-2) !important; }
+.pu-card-top, .pu-card-body { cursor: pointer; transition: background-color .16s ease; }
+.pu-card-body { position: relative; }
+.pu-card-top:hover { background: color-mix(in srgb, var(--tf-brand) 5%, var(--pu-warm, var(--tf-warm))); }
+.pu-card-body:hover { background: var(--tf-hover-tint); }
+.pu-half-hint { position: absolute; top: 10px; left: 12px; z-index: 1; padding: 2px 10px; border-radius: var(--tf-r-full); border: 1px solid var(--tf-hover-line); background: var(--tf-surface); color: var(--tf-brand-text); font-size: var(--tf-fs-12); font-weight: var(--tf-fw-semibold); opacity: 0; transform: translateY(-2px); transition: opacity .16s ease, transform .16s ease; pointer-events: none; white-space: nowrap; }
+.pu-card-body > .pu-half-hint { left: auto; right: 12px; top: 12px; }
+.pu-card-top:hover > .pu-half-hint, .pu-card-body:hover > .pu-half-hint { opacity: 1; transform: none; }
+.pu-card-top :is(button, label, a), .pu-card-body :is(button, label, a) { cursor: pointer; }
+/* Summary tiles above the cards are buttons now (they filter the list). */
+button.pu-kpi { font: inherit; color: inherit; text-align: left; cursor: pointer; width: 100%; }
+.pu-kpi.is-active { border-color: var(--tf-brand) !important; box-shadow: 0 0 0 3px var(--tf-brand-ring); }
+
+/* ===================================================================== Payment Ledger summary tiles (click = filter) */
+#payments-kpi-grid { gap: 16px; }
+.tf-ledger-tile { display: flex; flex-direction: column; gap: 2px; min-width: 0; text-align: left; padding: 14px 16px; border: 1px solid var(--tf-line); border-radius: var(--tf-r-md); background: var(--tf-surface); color: var(--tf-text); font: inherit; cursor: pointer; box-shadow: var(--tf-shadow-1); }
+.tf-ledger-tile__label { font-size: var(--tf-fs-13); color: var(--tf-muted); font-weight: var(--tf-fw-medium); }
+.tf-ledger-tile__value { font-size: var(--tf-fs-22); font-weight: var(--tf-fw-bold); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tf-ledger-tile__value.is-in { color: var(--tf-ok-fg); }
+.tf-ledger-tile__value.is-out { color: var(--tf-danger); }
+.tf-ledger-tile__value.is-warn { color: var(--tf-warn-fg); }
+.tf-ledger-tile__value.is-info { color: var(--tf-info-fg); }
+.tf-ledger-tile__hint { font-size: var(--tf-fs-12); color: var(--tf-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tf-ledger-tile.is-active { border-color: var(--tf-brand) !important; box-shadow: 0 0 0 3px var(--tf-brand-ring); }
+
+/* Finance Cockpit cards: one line per text, ending in an ellipsis when narrow */
+.tf-finance-kpi-card [id^="fc-"][id$="-sub"] { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.tf-finance-kpi-card .flex.items-center.justify-between { gap: 8px; }
+.tf-finance-kpi-card .uppercase { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+/* ===================================================================== Live clock in the top bar */
+.tf-clock { gap: 8px; font-variant-numeric: tabular-nums; }
+.tf-clock-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, .18); flex-shrink: 0; }
+.tf-clock-time { font-family: var(--tf-font) !important; font-weight: var(--tf-fw-bold); color: var(--tf-text); }
+.tf-clock, .tf-clock-date { font-family: var(--tf-font) !important; }
+.tf-clock-date { font-weight: var(--tf-fw-medium); color: var(--tf-muted); }
+.tf-clock-date:empty { display: none; }
+@media (max-width: 1279px) { .tf-clock-date { display: none; } }

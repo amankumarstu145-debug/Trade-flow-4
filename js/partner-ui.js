@@ -263,11 +263,11 @@
           <button type="button" class="pu-btn pu-primary" onclick="app.openEditContactModal(null, '${role}')">${esc(r.addLabel)}</button>
         </div>
       </div>
-      <div class="pu-kpis">${tiles.map(t => `<div class="pu-kpi"><span class="pu-label">${esc(t[0])}</span><span class="pu-kpi-val ${t[3]}">${esc(t[1])}</span><span class="pu-hint">${esc(t[2])}</span></div>`).join('')}</div>
+      <div class="pu-kpis">${tiles.map((t, i) => { const fk = i === 0 ? 'balance' : /overdue/i.test(t[0]) ? 'overdue' : /open|production|transit/i.test(t[0]) ? 'open' : 'all'; return `<button type="button" class="pu-kpi ${f === fk && fk !== 'all' ? 'is-active' : ''}" onclick="TFPartnerUI.setFilter('${role}','${fk}')" title="${fk === 'all' ? 'Show all partners' : 'Show only these partners'}"><span class="pu-label">${esc(t[0])}</span><span class="pu-kpi-val ${t[3]}">${esc(t[1])}</span><span class="pu-hint">${esc(t[2])}</span></button>`; }).join('')}</div>
       <div class="pu-row-wrap">
         ${chip('all', 'All', counts.all)}${chip('balance', role === 'retailer' ? 'Balance due' : 'With balance', counts.balance)}${role === 'retailer' ? chip('overdue', 'Overdue', counts.overdue, 'pu-chip-red') : ''}${chip('open', 'Open orders', counts.open, 'pu-chip-amber')}${chip('clear', 'All clear', counts.clear)}
       </div>
-      ${shown.length ? `<div class="pu-grid">${shown.map(x => card(app, x.c, x.s, q)).join('')}</div>` : ''}
+      ${shown.length ? `<div class="pu-grid-wrap"><div class="pu-grid">${shown.map(x => card(app, x.c, x.s, q)).join('')}</div></div>` : ''}
       <div class="pu-empty" data-pu-empty="${role}" ${visibleCount ? 'hidden' : ''}>${rows.length ? 'No partners match this search or filter.' : 'No ' + esc(r.plural.toLowerCase()) + ' yet. Use “' + esc(r.addLabel) + '” to add one.'}</div>
     </div>`;
   }
@@ -292,7 +292,8 @@
     const logo = c.logo || c.logoUrl;
     return `
     <article class="pu-card" data-partner-type="${esc(c.role)}" data-name="${esc(String(c.name || '').toLowerCase())}" data-search="${esc(searchText(c))}" ${q && !searchText(c).includes(q) ? 'hidden' : ''}>
-      <div class="pu-card-top">
+      <div class="pu-card-top" onclick="TFPartnerUI.cardClick(event, ${id}, 'company')">
+        <span class="pu-half-hint" aria-hidden="true">Open details</span>
         <button type="button" class="pu-icon-btn pu-card-edit" title="Edit" aria-label="Edit ${esc(c.name)}" onclick="TFPartnerUI.open(${id}, 'company', 'company')">${svg(ICON.edit, 15)}</button>
         <label class="pu-avatar-wrap" title="Change photo">
           <span class="pu-avatar">${logo ? `<img src="${esc(logo)}" alt="">` : esc(initials(c.name))}</span>
@@ -307,7 +308,8 @@
             : `<button type="button" class="pu-line is-empty" onclick="TFPartnerUI.open(${id}, 'company', '${k === 'gst' ? 'kyc' : k === 'place' ? 'address' : 'person:' + esc((p && p.id) || 'p1')}')">${svg(ICON[k], 15, 'class="pu-line-icon"')}<span class="pu-line-text">Add ${esc(label.toLowerCase())}</span></button>`).join('')}
         </div>
       </div>
-      <div class="pu-card-body">
+      <div class="pu-card-body" onclick="TFPartnerUI.cardClick(event, ${id}, 'work')">
+        <span class="pu-half-hint" aria-hidden="true">${esc(r.workTab)}</span>
         <div class="pu-money">
           <div class="pu-between"><span class="pu-label">${esc(s.bigLabel)}</span><span class="pu-hint">of ${esc(inr(s.of))} ${esc(s.ofLabel)}</span></div>
           <span class="pu-big ${s.overdue > 0 ? 'pu-red' : ''}">${esc(inr(s.big))}</span>
@@ -724,6 +726,12 @@
       state.editing = editSection ? contactId + '|' + editSection : null;
       state.overlay = null;
       appRef().navigateToContact(contactId, tab);
+    },
+    // Partner card: a click on the upper half opens Company & contact, on the lower half the money/work tab.
+    // Real controls inside (copy lines, edit, photo, reminder, the two buttons) keep their own action.
+    cardClick(event, contactId, tab) {
+      if (event && event.target && event.target.closest('button, a, input, label, select, textarea')) return;
+      this.open(contactId, tab);
     },
     setTab(contactId, tab) { state.tab[contactId] = tab; state.editing = null; rerender(); },
     setFilter(role, f) { state.filter[role] = f; rerender(); },

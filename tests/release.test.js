@@ -570,3 +570,20 @@ test('windows: work windows get the full-window button, small confirm and warnin
   for (const id of ['universal-confirm-modal', 'universal-prompt-modal', 'bank-protection-modal', 'delivery-confirm-modal', 'mobile-snap-modal', 'universal-omnibox-modal']) assert(!work.has(id), id);
   for (const id of work) if (id.endsWith('-modal') && id !== 'tf-inbox-modal') assert(html.includes(`id="${id}"`), id + ' exists in index.html');
 });
+test('layout: the live clock is in the top bar, not hidden in the More menu', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const bar = html.slice(html.indexOf('class="tf-topbar-actions'), html.indexOf('id="tf-more-menu"'));
+  assert(bar.includes('id="topbar-live-clock"'), 'clock sits in the top bar actions');
+  const more = html.slice(html.indexOf('id="tf-more-menu"'), html.indexOf('</header>'));
+  assert(!more.includes('id="topbar-live-clock"'), 'clock is no longer inside the More menu');
+});
+test('partners: a card click on the top half opens Company, on the lower half Orders & money; controls keep their job', () => {
+  const ui = loadPartnerUI();
+  const opened = [];
+  ui.open = (id, tab) => opened.push(id + ':' + tab);
+  const target = closestMatch => ({ target: { closest: sel => (closestMatch && /button/.test(sel) ? {} : null) } });
+  ui.cardClick(target(false), 'RET-1', 'company');
+  ui.cardClick(target(false), 'RET-1', 'work');
+  ui.cardClick(target(true), 'RET-1', 'company');
+  assert.equal(opened.join(','), 'RET-1:company,RET-1:work');
+});
