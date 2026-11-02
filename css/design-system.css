@@ -182,3 +182,57 @@ header.tf-topbar { background: var(--tf-surface); border-color: var(--tf-line); 
 [id$="-modal"] input:focus-visible, [id$="-modal"] select:focus-visible, [id$="-modal"] textarea:focus-visible { outline: 2px solid var(--tf-brand); outline-offset: 1px; }
 .tf-icon-tile { display: inline-flex; align-items: center; justify-content: center; padding: 5px; border-radius: var(--tf-r-sm); background: var(--tf-surface); border: 1px solid var(--tf-line); color: var(--tf-brand-text); }
 .tf-strip-soft { background: var(--tf-soft); border-color: var(--tf-line); }
+
+/* =====================================================================================
+   Step 4: Inbox, payment matching, Ctrl+K actions, reminders, statements
+   ===================================================================================== */
+/* The Inbox replaces the old banner, the missing-files side panel and the Exception Center entry */
+body.tf-has-inbox #urgent-action-banner, body.tf-has-inbox #dashboard-audit-panel, body.tf-has-inbox #dashboard-split-resizer, body.tf-has-inbox #btn-show-audit-panel,
+body.tf-has-inbox #app-sidebar [data-sidebar-tab="exceptions"] { display: none; }
+body.tf-has-inbox #dashboard-orders-panel { padding-right: 0; }
+.tf-inbox-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 16px; border-radius: var(--tf-r-lg); background: var(--tf-warn-bg); border: 1px solid var(--tf-warn-line); color: var(--tf-warn-fg); font-size: var(--tf-fs-14); }
+.tf-inbox-strip[hidden] { display: none; }
+.tf-inbox-strip .tf-hint { color: var(--tf-warn-fg); flex: 1 1 200px; }
+.tf-inbox-strip-dot { width: 10px; height: 10px; border-radius: 999px; background: #d97706; flex-shrink: 0; }
+.tf-inbox-modal { position: fixed; inset: 0; z-index: var(--tf-z-modal); background: rgba(15, 23, 42, .45); display: flex; justify-content: center; align-items: flex-start; padding: 48px 16px; overflow-y: auto; }
+.tf-inbox-modal.hidden { display: none; }
+.tf-inbox-panel { width: 100%; max-width: 760px; }
+.tf-inbox-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--tf-line); }
+.tf-inbox-chips .tf-chip b { margin-left: 4px; }
+.tf-inbox-list { padding: 8px; display: flex; flex-direction: column; gap: 6px; max-height: 64vh; overflow-y: auto; }
+.tf-inbox-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--tf-r-md); border: 1px solid var(--tf-line-2); background: var(--tf-surface); }
+.tf-inbox-row.sev-3 { border-color: var(--tf-danger-line); background: var(--tf-danger-bg); }
+.tf-inbox-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--tf-soft); border: 1px solid var(--tf-line); color: var(--tf-text-2); }
+.tf-inbox-icon.g-money { color: var(--tf-danger); } .tf-inbox-icon.g-documents { color: var(--tf-warn-fg); } .tf-inbox-icon.g-orders { color: var(--tf-info-fg); } .tf-inbox-icon.g-partners { color: var(--tf-brand-text); }
+.tf-inbox-text { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tf-inbox-text b { font-size: var(--tf-fs-14); color: var(--tf-text); }
+.tf-inbox-text span { font-size: var(--tf-fs-12); color: var(--tf-muted); overflow-wrap: anywhere; }
+.tf-inbox-amt { font-weight: var(--tf-fw-bold); color: var(--tf-text); }
+.tf-inbox-actions { display: flex; gap: 6px; margin-left: auto; }
+/* Payment matching */
+.tf-pay-suggest { margin: 8px 0; padding: 10px 12px; border-radius: var(--tf-r-md); background: var(--tf-brand-tint); border: 1px solid rgba(4, 120, 87, .25); display: flex; flex-direction: column; gap: 6px; }
+.tf-pay-suggest[hidden] { display: none; }
+.tf-pay-suggest-list { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Ctrl+K actions */
+.tf-cmd-group { padding: 4px; margin-bottom: 6px; border-bottom: 1px solid var(--tf-line); }
+.tf-cmd { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: var(--tf-r-sm); border: 1px solid transparent; background: transparent; font: inherit; color: var(--tf-text); text-align: left; cursor: pointer; }
+.tf-cmd:hover { background: var(--tf-soft); }
+.tf-cmd-text { flex: 1 1 auto; display: flex; flex-direction: column; gap: 1px; }
+.tf-cmd-text b { font-size: var(--tf-fs-14); }
+/* Partner pages: suggestions and reminders */
+.pu-badge-suggest { border-style: dashed; color: var(--tf-brand-text); background: transparent; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600; }
+.pu-remind-link { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; border-radius: var(--tf-r-sm); border: 1px solid var(--tf-danger-line); background: var(--tf-danger-bg); color: var(--tf-danger-fg); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.pu-btn-remind { color: var(--tf-danger-fg); border-color: var(--tf-danger-line); }
+/* Statement PDF (rendered off-screen for html2pdf; always light) */
+.tf-statement { position: fixed; left: -10000px; top: 0; width: 760px; padding: 24px; background: #fff; color: #0f172a; font-family: var(--tf-font); font-size: 12px; }
+.tf-statement h1 { margin: 0; font-size: 19px; } .tf-statement h2 { margin: 0; font-size: 16px; } .tf-statement p { margin: 2px 0 0; color: #475569; }
+.tf-st-head { display: flex; justify-content: space-between; gap: 16px; border-bottom: 2px solid #047857; padding-bottom: 10px; }
+.tf-st-right { text-align: right; }
+.tf-st-party { margin: 12px 0; padding: 10px 12px; background: #faf8f3; border: 1px solid #e7e2d6; border-radius: 8px; line-height: 1.5; }
+.tf-statement table { width: 100%; border-collapse: collapse; }
+.tf-statement th, .tf-statement td { padding: 6px 8px; border-bottom: 1px solid #e7e2d6; text-align: left; vertical-align: top; }
+.tf-statement th { background: #faf8f3; font-weight: 600; color: #334155; }
+.tf-statement .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tf-statement tfoot td { font-weight: 700; border-top: 2px solid #0f172a; border-bottom: 0; }
+.tf-st-foot { margin-top: 14px; font-size: 11px; }
+.tf-pay-suggest .tf-btn { white-space: normal; text-align: left; height: auto; min-height: 36px; padding: 6px 10px; }

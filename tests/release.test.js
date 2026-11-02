@@ -424,3 +424,19 @@ test('partner images: saved as files under data/partners, served back, and non-i
     assert.equal((await fetch(env.base + url)).status, 404);
   } finally { await env.close(); }
 });
+test('partners: statement balance and reminder text come from orders and payments', () => {
+  const vm = require('vm');
+  const sandbox = { console, document: { addEventListener: () => {} } };
+  sandbox.window = sandbox;
+  sandbox.app = { data: { businessProfile: { bankName: 'Bank X', accountNumber: '123', ifsc: 'ABCD0000001', upiId: 'me@upi', legalName: 'Us' }, contacts: [{ id: 'R', role: 'retailer', name: 'Buyer', contactPerson: 'Asha', phone: '9876543210' }],
+    orders: [{ id: 'A', invoiceNumber: 'INV-1', retailerId: 'R', date: '2026-01-01', dueDate: '2000-01-01', status: 'delivered_overdue', totalInvoiceAmount: 1000, customerBalanceDue: 600, items: [{ name: 'Mango Pickle', cases: 2 }] }],
+    payments: [{ id: 'P', direction: 'received', partyName: 'Buyer', amount: 400, date: '2026-01-05', mode: 'NEFT', utr: 'U1' }] }, paymentsPaidToContact: () => 0 };
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'js', 'partner-ui.js'), 'utf8'), sandbox);
+  const st = sandbox.TFPartnerUI.statementRows('R');
+  assert.equal(st.rows.length, 2);
+  assert.equal(st.closing, 600);
+  const msg = sandbox.TFPartnerUI.reminderText('R');
+  assert.equal(msg.count, 1);
+  assert.match(msg.text, /INV-1/); assert.match(msg.text, /Total due: ₹600/); assert.match(msg.text, /UPI: me@upi/);
+  assert.equal(JSON.stringify(sandbox.TFPartnerUI.dealSuggestions('R')), JSON.stringify(['Mango Pickle']));
+});

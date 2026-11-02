@@ -311,6 +311,7 @@
           <span class="pu-hint">${esc(inr(s.done))} ${esc(s.doneLabel)} · ${pct}%</span>
         </div>
         <div class="pu-tiles">${s.tiles.map(t => `<div class="pu-tile ${t[2] ? 'is-bad' : ''}"><span class="pu-label">${esc(t[0])}</span><b>${esc(t[1])}</b></div>`).join('')}</div>
+        ${s.overdue > 0 ? `<button type="button" class="pu-remind-link" onclick="TFPartnerUI.remind(${id})">${svg('M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z', 14)} Send WhatsApp reminder for ${esc(inr(s.overdue))} overdue</button>` : ''}
         <div class="pu-two">
           <button type="button" class="pu-btn" onclick="TFPartnerUI.open(${id}, 'company')">Company &amp; contact</button>
           <button type="button" class="pu-btn pu-primary" onclick="TFPartnerUI.open(${id}, 'work')">${esc(r.workTab)}</button>
@@ -353,6 +354,7 @@
             <span class="pu-label">${esc(r.badge)}</span>
             ${deals.map(d => `<span class="pu-badge">${svg(ICON.tag, 12)}${esc(d)}</span>`).join('')}
             <button type="button" class="pu-icon-btn pu-icon-sm" title="${deals.length ? 'Edit' : 'Add'} ${esc(r.badge.toLowerCase())}" aria-label="${deals.length ? 'Edit' : 'Add'} ${esc(r.badge.toLowerCase())}" onclick="TFPartnerUI.edit(${id}, 'company')">${svg(deals.length ? ICON.edit : 'M12 5v14 M5 12h14', 14)}</button>
+            ${dealSuggestions(app, c).map(x => `<button type="button" class="pu-badge pu-badge-suggest" title="Seen in their orders – tap to add" onclick="TFPartnerUI.addDeal(${id}, ${jsArg(x)})">+ ${esc(x)}</button>`).join('')}
           </div>
           ${p && p.name ? `<div class="pu-hint pu-contact-line">Contact person: <b>${esc(p.name)}</b>${p.role ? ' · ' + esc(p.role) : ''}</div>` : ''}
           <div class="pu-chip-grid">${chips.map(([k, label, v]) => `<button type="button" class="pu-copychip ${v ? '' : 'is-empty'}" ${v ? `onclick="TFPartnerUI.copy(${jsArg(v)}, '${label}')" title="Click to copy"` : `onclick="TFPartnerUI.edit(${id}, '${k === 'phone' || k === 'email' ? 'person:' + esc(p ? p.id : 'p1') : k === 'gst' ? 'kyc' : 'address'}')"`}>${svg(ICON[k], 14)}<span>${esc(v ? (k === 'gst' ? 'GST ' + v : v) : 'Add ' + label.toLowerCase())}</span></button>`).join('')}</div>
@@ -360,6 +362,7 @@
         <div class="pu-row-wrap pu-hero-actions">
           ${phone ? `<a class="pu-btn" href="tel:${esc(phone)}">Call</a>` : ''}
           ${wa ? `<a class="pu-btn" href="https://wa.me/${esc(wa.length === 10 ? '91' + wa : wa)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+          ${s.overdue > 0 ? `<button type="button" class="pu-btn pu-btn-remind" onclick="TFPartnerUI.remind(${id})">Send reminder</button>` : ''}
           <button type="button" class="pu-btn pu-dark" onclick="TFPartnerUI.edit(${id}, 'company')">${svg(ICON.edit, 15)} Edit company</button>
         </div>
       </section>
@@ -528,6 +531,8 @@
       <div class="pu-kpis pu-kpis-5">${kpis.map(t => `<div class="pu-kpi"><span class="pu-label">${esc(t[0])}</span><span class="pu-kpi-val ${t[3]}">${esc(t[1])}</span><span class="pu-hint">${esc(t[2])}</span></div>`).join('')}</div>
       <div class="pu-dir-head"><h2 class="pu-h2">Current orders <span class="pu-hint">· ${current.length} open</span></h2>
         <div class="pu-row-wrap">
+          <button type="button" class="pu-btn" onclick="TFPartnerUI.statement(${id})">${svg(ICON.download, 15)} Statement (PDF)</button>
+          ${c.role === 'retailer' && s.overdue > 0 ? `<button type="button" class="pu-btn" onclick="TFPartnerUI.remind(${id})">Send reminder</button>` : ''}
           <button type="button" class="pu-btn" onclick="app.openPaymentModal(null, ${jsArg(c.name)}, '${direction}')">Record payment</button>
           ${c.role === 'retailer' ? '<button type="button" class="pu-btn pu-primary" onclick="app.openNewOrderModal()">+ New order</button>' : ''}
         </div></div>
@@ -578,6 +583,52 @@
           : '<div class="pu-empty">No files saved for this order yet.</div>'}
         <div class="pu-form-foot"><span class="pu-grow"></span>${c.role === 'retailer' ? `<button type="button" class="pu-btn" onclick="TFPartnerUI.closeOverlay(); app.openInvoiceModal(${jsArg(o.id)})">View invoice</button>` : ''}<button type="button" class="pu-btn" onclick="TFPartnerUI.closeOverlay(); app.openDocumentReviewModalForOrder(${jsArg(o.id)})">+ Add file</button><button type="button" class="pu-btn pu-dark" onclick="app.openOrderFolder(${jsArg(o.id)})">Open in File Explorer</button></div>
       </div></div></div>`;
+  }
+
+  /* ------------------------------------------------------------------ smart helpers (v5 step 4) */
+  // Products this partner actually deals in, taken from their orders, that are not in "Deals in" yet.
+  function dealSuggestions(app, c) {
+    const have = splitList(c.dealsIn).map(x => x.toLowerCase());
+    const names = new Map();
+    for (const o of linkedOrders(app, c)) for (const i of (o.items || [])) {
+      const label = c.role === 'packaging' ? String(i.variant || '').replace(/^\d+\s*(g|kg|ml|l)\s*/i, '').trim() || i.variant : (i.name || i.shortName);
+      if (label) names.set(label.toLowerCase(), label);
+    }
+    return [...names.values()].filter(n => !have.some(h => h === n.toLowerCase() || n.toLowerCase().includes(h) || h.includes(n.toLowerCase()))).slice(0, 3);
+  }
+  function overdueOrders(app, c) {
+    return linkedOrders(app, c).filter(o => c.role === 'retailer' && num(o.customerBalanceDue) > 0 && o.dueDate && o.dueDate < today() && o.status !== 'settled');
+  }
+  function reminderText(app, c) {
+    const p = primaryOf(c) || {};
+    const prof = (app.data && app.data.businessProfile) || {};
+    const list = overdueOrders(app, c);
+    const open = list.length ? list : linkedOrders(app, c).filter(o => num(o.customerBalanceDue) > 0 && o.status !== 'settled');
+    const total = open.reduce((t, o) => t + num(o.customerBalanceDue), 0);
+    const lines = [`Namaste ${p.name || c.name},`, '', list.length ? 'A gentle reminder about these overdue invoices:' : 'A reminder about these open invoices:'];
+    open.forEach(o => lines.push(`• ${o.invoiceNumber || o.id} dated ${longDate(o.date)} – balance ${inr(o.customerBalanceDue)}${o.dueDate ? ' (due ' + longDate(o.dueDate) + ')' : ''}`));
+    lines.push('', `Total due: ${inr(total)}`);
+    const bank = [prof.bankName && `Bank: ${prof.bankName}`, prof.accountNumber && `A/c: ${prof.accountNumber}`, prof.ifsc && `IFSC: ${prof.ifsc}`, (prof.accountHolder || prof.legalName) && `Name: ${prof.accountHolder || prof.legalName}`].filter(Boolean);
+    if (bank.length) lines.push('', 'Bank details:', ...bank);
+    if (prof.upiId) lines.push(`UPI: ${prof.upiId}`);
+    lines.push('', 'Please share the UTR once paid. Thank you!', `– ${prof.brandName || prof.legalName || ''}`.trim());
+    return { text: lines.join('\n'), total, count: open.length };
+  }
+  function statementRows(app, c) {
+    const r = roleOf(c);
+    const rows = [];
+    for (const o of linkedOrders(app, c)) { const m = orderMoney(app, c, o); if (m.total) rows.push({ date: o.date, ref: o.invoiceNumber || o.id, what: c.role === 'retailer' ? 'Invoice' : c.role === 'marketeer' ? 'Commission' : c.role === 'transporter' ? 'Freight' : 'Bill', debit: m.total, credit: 0 }); }
+    const name = String(c.name || '').trim().toLowerCase();
+    const dir = c.role === 'retailer' ? 'received' : 'paid';
+    for (const pay of (app.data.payments || [])) {
+      if (pay.isDeleted || pay.direction !== dir) continue;
+      if (!((pay.partyId && pay.partyId === c.id) || String(pay.partyName || '').trim().toLowerCase() === name)) continue;
+      rows.push({ date: pay.date, ref: [pay.mode, pay.utr].filter(Boolean).join(' · ') || 'Payment', what: dir === 'received' ? 'Payment received' : 'Payment made', debit: 0, credit: num(pay.amount), order: pay.orderRef });
+    }
+    rows.sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
+    let bal = num(c.openingBalance);
+    rows.forEach(x => { bal += x.debit - x.credit; x.balance = bal; });
+    return { rows, opening: num(c.openingBalance), closing: bal, label: r.single };
   }
 
   /* ------------------------------------------------------------------ actions */
@@ -773,6 +824,50 @@
     viewImage(contactId, side) { state.overlay = { kind: 'image', contactId, side }; rerender(); },
     folder(contactId, orderId) { state.overlay = { kind: 'folder', contactId, orderId }; rerender(); },
     closeOverlay() { state.overlay = null; rerender(); },
+    dealSuggestions(contactId) { const c = contactById(contactId); return c ? dealSuggestions(appRef(), c) : []; },
+    reminderText(contactId) { const c = contactById(contactId); return c ? reminderText(appRef(), c) : null; },
+    statementRows(contactId) { const c = contactById(contactId); return c ? statementRows(appRef(), c) : null; },
+    addDeal(contactId, label) {
+      const c = contactById(contactId); if (!c) return;
+      c.dealsIn = [...splitList(c.dealsIn), label].join(', ');
+      stamp(c, `Added "${label}" to ${c.name}`); toast(`✓ Added ${label}`);
+    },
+    remind(contactId) {
+      const c = contactById(contactId); if (!c) return;
+      const p = primaryOf(c) || {};
+      const phone = String(p.whatsapp || p.phone || c.whatsappPhone || c.phone || '').replace(/[^0-9]/g, '');
+      const { text, count } = reminderText(appRef(), c);
+      if (!count) { toast('Nothing is due from ' + c.name + '.'); return; }
+      const to = phone.length === 10 ? '91' + phone : phone;
+      const url = (to ? 'https://wa.me/' + to : 'https://wa.me/') + '?text=' + encodeURIComponent(text);
+      window.open(url, '_blank', 'noopener');
+      if (!to) toast('No WhatsApp number saved – choose the contact in WhatsApp.');
+    },
+    async statement(contactId) {
+      const a = appRef(); const c = contactById(contactId); if (!c) return;
+      const st = statementRows(a, c);
+      const prof = a.data.businessProfile || {};
+      const el = document.createElement('div');
+      el.className = 'tf-statement';
+      el.innerHTML = `<div class="tf-st-head"><div><h1>${esc(prof.legalName || prof.brandName || 'Statement')}</h1><p>${esc([prof.gstin && 'GSTIN ' + prof.gstin, prof.city].filter(Boolean).join(' · '))}</p></div>
+          <div class="tf-st-right"><h2>Statement of account</h2><p>${esc(new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }))}</p></div></div>
+        <div class="tf-st-party"><b>${esc(c.name)}</b> · ${esc(st.label)}${c.gstin ? ' · GSTIN ' + esc(c.gstin) : ''}<br>${esc(c.billingAddress || [c.city, c.state].filter(Boolean).join(', '))}</div>
+        <table><thead><tr><th>Date</th><th>Particulars</th><th>Reference</th><th class="n">${c.role === 'retailer' ? 'Billed' : 'Bill'} (₹)</th><th class="n">${c.role === 'retailer' ? 'Received' : 'Paid'} (₹)</th><th class="n">Balance (₹)</th></tr></thead><tbody>
+          ${st.opening ? `<tr><td></td><td>Opening balance</td><td></td><td></td><td></td><td class="n">${esc(inr(st.opening).slice(1))}</td></tr>` : ''}
+          ${st.rows.map(x => `<tr><td>${esc(longDate(x.date))}</td><td>${esc(x.what)}</td><td>${esc(x.ref)}${x.order ? ' · ' + esc(x.order) : ''}</td><td class="n">${x.debit ? esc(inr(x.debit).slice(1)) : ''}</td><td class="n">${x.credit ? esc(inr(x.credit).slice(1)) : ''}</td><td class="n">${esc(inr(x.balance).slice(1))}</td></tr>`).join('')}
+        </tbody><tfoot><tr><td colspan="5">${st.closing >= 0 ? (c.role === 'retailer' ? 'Balance due from ' : 'Balance payable to ') + esc(c.name) : 'Advance with ' + esc(c.name)}</td><td class="n">${esc(inr(Math.abs(st.closing)))}</td></tr></tfoot></table>
+        <p class="tf-st-foot">Computer-generated statement from TradeFlow. Please report any difference within 7 days.</p>`;
+      const file = `Statement_${String(c.name || c.id).replace(/[^A-Za-z0-9]+/g, '_')}_${today()}.pdf`;
+      if (typeof window.html2pdf === 'function') {
+        document.body.appendChild(el);
+        try { await window.html2pdf().set({ margin: 10, filename: file, html2canvas: { scale: 2, backgroundColor: '#ffffff' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).from(el).save(); toast('✓ Statement downloaded'); }
+        catch (e) { toast('Could not create the PDF: ' + e.message); }
+        finally { el.remove(); }
+      } else {
+        const w = window.open('', '_blank'); if (!w) return;
+        w.document.write('<title>' + esc(file) + '</title>'); w.document.body.appendChild(el); w.print();
+      }
+    },
     async deleteInvoice(contactId, orderId) {
       const a = appRef(); const c = contactById(contactId); const o = (a.data.orders || []).find(x => x.id === orderId);
       if (!c || !o) return;
